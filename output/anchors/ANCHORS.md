@@ -1,23 +1,23 @@
 # LAP — Bitcoin Anchors (OpenTimestamps)
 
-*Stamped 2026-08-29 via 4 independent public calendar servers (a.pool.opentimestamps.org, b.pool.opentimestamps.org, a.pool.eternitywall.com, ots.btc.catallaxy.com). Each `.ots` file sits beside its artifact. This is the spec §19 pattern in miniature: Merkle aggregation by calendars → one Bitcoin transaction anchors thousands of digests, no per-file fees, no personal data on-chain.*
+*Current stamping: **2026-08-29, release freeze v0.4.3** — submitted to 4 independent public calendar servers (a.pool.opentimestamps.org, b.pool.opentimestamps.org, a.pool.eternitywall.com, ots.btc.catallaxy.com). Each `.ots` proof sits beside its artifact. This is spec §19's pattern in miniature: calendars Merkle-aggregate thousands of digests into one Bitcoin transaction — no per-file fees, no personal data on-chain.*
 
 | SHA-256 | Artifact |
 |---|---|
-| `5e6fd275d1a30394c86c672456eb831d4f95ac233b69a6d93317b785dd2ab865` | LAP-founding-document.md (v0.4.2) |
-| `27d88e7d315c1ef200f76f996036f6d63c3a6e36d961019bf064ffd4ea978406` | lip/LIP-1-agent-passport-draft.md |
-| `9286af182704bde1de310552c10c47527dbcf1f301f2021361bf27d1325e15a1` | lip/LIP-2-meet-draft.md |
-| `2b7f564a6f68dabf240d2d100136928341027da1985efd2fcdbc902e78c37ccb` | lip/LIP-3-scope-algebra-v0-draft.md |
-| `e89823bd513d6d83801507bf53a7dfca47a7e0c90eee71d0f81009a8915d4905` | lip/LIP-4-micro-core-draft.md |
-| `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json |
-| `6e2817b74059ee537cd483889f7379525818f4407b13e34097099f09b0a84532` | LAP-position-paper.md |
-| `5b50772f8ea3753450f10959c3b9edf604ced936eafa8016350f7b5ca8c760cf` | LAP-essay.md |
+| `2bf1c2ee8701eb3ac6a26aa9fc3c04b8e5f6463a8da4ae5a4595ccba5ccf84f4` | LAP-founding-document.md (v0.4.3) |
+| `acbc13ecfe9926bdbfb94d1db8a458dcd2e88c6b7f2e311017625fed041d2dca` | lip/LIP-1-agent-passport-draft.md |
+| `81747e9475cc9c4125934dea4f2d9d83854f1fdfe997ea879d2abf5c172e88ac` | lip/LIP-2-meet-draft.md |
+| `2b7f564a6f68dabf240d2d100136928341027da1985efd2fcdbc902e78c37ccb` | lip/LIP-3-scope-algebra-v0-draft.md (unchanged since first stamp) |
+| `205060cb70efbebdea6fc75baa7db621027f96d1cb355926fff8bbe59be24fa5` | lip/LIP-4-micro-core-draft.md |
+| `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
+| `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
+| `ec1312916569715dd020ac1f749870f5860a0d7e230f477e314dbad78692f124` | LAP-essay.md |
+| `4c258ddf265784865c410fd6227f92ebb83e43950724fa8cfe3d4903594cc00d` | ../README.md |
 
 ## Status and how to use
 
-- **Now**: proofs are *pending attestations* — the calendars have the digests and will fold them into their next Bitcoin aggregation transaction (typically within hours).
-- **Upgrade to full on-chain proof** (any time later, from any machine with the `ots` tool): `ots upgrade <file>.ots` then `ots verify <file>.ots` — verification then states the Bitcoin block that commits to the file's existence.
-- **What this proves**: these exact bytes existed no later than the anchored Bitcoin block's time — priority/prior-art evidence for the spec, independent of any company, platform, or this machine.
-- **Rule going forward** (per the adoption plan): every spec release gets stamped at release time; edit an artifact ⇒ its old proof still proves the old version; restamp the new one (`python output/anchors/lap_stamp.py <files>`).
-
-*Note: the founding-document proof covers v0.4.2 as of stamping; the file is actively edited, so expect to restamp at the next version cut. The stable priority anchors are the LIPs, vectors, paper, and essay.*
+- **Now**: proofs are *pending calendar attestations* — the calendars fold these digests into their next Bitcoin aggregation transaction (typically within hours). Until then the honest claim is "OpenTimestamps-stamped, pending Bitcoin confirmation."
+- **Upgrade to full on-chain proof** (any later time, any machine with an OTS tool): `ots upgrade <file>.ots` then `ots verify <file>.ots` — verification then names the Bitcoin block committing to the file's existence. (The stock `ots` CLI is broken on Windows; stamping here uses `lap_stamp.py`.)
+- **What a proof establishes**: these exact bytes existed no later than the anchored block's time — priority evidence independent of any company, platform, or machine.
+- **Prior generations**: the first stamping (2026-08-29, pre-freeze — v0.4.2-era spec, pre-round-3 LIPs) is preserved in **git history** (initial commit `bb77edf`): those `.ots` files still prove those exact prior versions. Superseded proofs are never invalid — they just prove older bytes.
+- **Rule**: every release freeze gets restamped (`python output/anchors/lap_stamp.py <files>`); stamp *after* the last edit, never before.
