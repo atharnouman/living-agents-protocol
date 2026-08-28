@@ -1,0 +1,7 @@
+{
+  "name": "@living-agents/overnight-demo",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": { "demo": "node demo.js", "replay": "node replay.js" }
+}

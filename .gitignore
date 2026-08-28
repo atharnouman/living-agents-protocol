@@ -1,0 +1,11 @@
+# generated / regenerable
+node_modules/
+__pycache__/
+*.pyc
+lap-demo/out/
+
+# local editor & OS noise
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

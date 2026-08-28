@@ -1,0 +1,410 @@
+<title>Living Agents Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#0D1322; --surface:#151D31; --surface2:#111a2c;
+    --text:#E9EEF8; --muted:#8FA0BC; --line:#2A3550;
+    --pulse:#F0A63C; --pulse-dim:rgba(240,166,60,.14); --pulse-line:rgba(240,166,60,.45);
+    --osi-ghost:#3A4A6E; --code-bg:#0A1020;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --ground:#F3F5F9; --surface:#FFFFFF; --surface2:#EDF0F6;
+      --text:#1B2438; --muted:#5A6883; --line:#D6DDEA;
+      --pulse:#A96B0E; --pulse-dim:rgba(169,107,14,.10); --pulse-line:rgba(169,107,14,.5);
+      --osi-ghost:#A9B6CE; --code-bg:#1B2438;
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#F3F5F9; --surface:#FFFFFF; --surface2:#EDF0F6;
+    --text:#1B2438; --muted:#5A6883; --line:#D6DDEA;
+    --pulse:#A96B0E; --pulse-dim:rgba(169,107,14,.10); --pulse-line:rgba(169,107,14,.5);
+    --osi-ghost:#A9B6CE; --code-bg:#1B2438;
+  }
+  *{box-sizing:border-box; margin:0}
+  body{
+    background:var(--ground); color:var(--text);
+    font-family:"Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size:1.05rem; line-height:1.68;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:76rem; margin:0 auto; padding:0 1.25rem}
+  .col{max-width:44rem}
+  h1,h2,h3{font-family:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif; text-wrap:balance; line-height:1.12}
+  .mono{font-family:"IBM Plex Mono","Courier New",monospace}
+  a{color:var(--pulse); text-decoration-thickness:1px; text-underline-offset:3px}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--pulse); outline-offset:3px; border-radius:2px}
+
+  /* ---------- hero ---------- */
+  header{border-bottom:1px solid var(--line); padding:4.5rem 0 0}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); display:flex; flex-wrap:wrap; gap:.6rem 1.4rem; align-items:center}
+  .livechip{display:inline-flex; align-items:center; gap:.45rem; color:var(--pulse); border:1px solid var(--pulse-line); padding:.18rem .6rem; border-radius:999px; font-size:.72rem}
+  .dot{width:.5rem; height:.5rem; border-radius:50%; background:var(--pulse); animation:beat 2.4s ease-in-out infinite}
+  @keyframes beat{0%,100%{opacity:1}50%{opacity:.25}}
+  h1{font-size:clamp(4.2rem,14vw,9.5rem); font-weight:800; letter-spacing:-.02em; margin:.8rem 0 0}
+  .tagline{font-family:"Schibsted Grotesk",Arial,sans-serif; font-weight:500; font-size:clamp(1.15rem,2.6vw,1.6rem); color:var(--muted); margin:.4rem 0 0}
+  .tagline b{color:var(--text); font-weight:700}
+  .pulsewrap{margin:2.2rem 0 0; overflow:hidden}
+  .pulsewrap svg{display:block; width:100%; height:74px}
+  .ekg{fill:none; stroke:var(--pulse); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round;
+       stroke-dasharray:2400; stroke-dashoffset:2400; animation:draw 3.2s ease-out forwards}
+  .ekg2{fill:none; stroke:var(--pulse-line); stroke-width:1; stroke-dasharray:3 6}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @media (prefers-reduced-motion: reduce){
+    .ekg{animation:none; stroke-dashoffset:0}
+    .dot{animation:none}
+  }
+  .thesis{padding:2.6rem 0 3rem; font-size:clamp(1.15rem,2.2vw,1.45rem); line-height:1.55; font-weight:400}
+  .thesis em{font-style:italic}
+  .thesis .hot{color:var(--pulse); font-style:normal; font-weight:600}
+
+  /* ---------- sections ---------- */
+  section{padding:3.6rem 0; border-bottom:1px solid var(--line)}
+  .secno{font-family:"IBM Plex Mono",monospace; font-size:.8rem; letter-spacing:.16em; text-transform:uppercase; color:var(--pulse); margin-bottom:.9rem}
+  h2{font-size:clamp(1.7rem,3.6vw,2.5rem); font-weight:700; letter-spacing:-.01em; margin-bottom:1.1rem}
+  h3{font-size:1.12rem; font-weight:700; margin:1.6rem 0 .5rem}
+  p{margin:.85rem 0}
+  p.lead{font-size:1.14rem}
+  .muted{color:var(--muted)}
+  .kw{color:var(--pulse); font-weight:600}
+
+  /* history rhyme */
+  .rhyme{list-style:none; padding:0; margin:1.6rem 0 0; font-family:"IBM Plex Mono",monospace; font-size:.88rem}
+  .rhyme li{display:grid; grid-template-columns:5.2rem 1fr; gap:1rem; padding:.55rem 0; border-top:1px dashed var(--line); align-items:baseline}
+  .rhyme .yr{color:var(--muted)}
+  .rhyme .what b{color:var(--text); font-weight:600}
+  .rhyme li.now{border-top:1px solid var(--pulse-line)}
+  .rhyme li.now .yr,.rhyme li.now .what,.rhyme li.now b{color:var(--pulse)}
+
+  /* white space grid */
+  .gaps{display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:1.8rem}
+  .gap{background:var(--surface); padding:1.1rem 1.2rem}
+  .gap .g-t{font-family:"Schibsted Grotesk",Arial,sans-serif; font-weight:700; font-size:.98rem; margin-bottom:.3rem}
+  .gap .g-d{font-size:.9rem; color:var(--muted); line-height:1.5}
+
+  /* twin stacks */
+  .stacks{display:grid; grid-template-columns:minmax(8rem,16rem) 1fr; gap:1.4rem; margin-top:2rem; align-items:stretch}
+  .stackcol{display:flex; flex-direction:column; gap:.45rem}
+  .stacklabel{font-family:"IBM Plex Mono",monospace; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:.35rem}
+  .osi .lay{border:1px dashed var(--osi-ghost); color:var(--osi-ghost); font-family:"IBM Plex Mono",monospace; font-size:.8rem; padding:.6rem .8rem; flex:1; display:flex; align-items:center}
+  .aeon .lay{border:1px solid var(--line); background:var(--surface); padding:.7rem .95rem; flex:1; display:grid; grid-template-columns:2.4rem 9.5rem 1fr; gap:.9rem; align-items:center}
+  .aeon .lay .n{font-family:"IBM Plex Mono",monospace; color:var(--muted); font-size:.8rem}
+  .aeon .lay .nm{font-family:"Schibsted Grotesk",Arial,sans-serif; font-weight:700; font-size:1rem}
+  .aeon .lay .q{font-size:.88rem; color:var(--muted); font-style:italic}
+  .aeon .lay.vital{border-color:var(--pulse-line); background:var(--pulse-dim)}
+  .aeon .lay.vital .nm,.aeon .lay.vital .n{color:var(--pulse)}
+  @media (max-width:640px){
+    .stacks{grid-template-columns:1fr}
+    .osi{display:none}
+    .aeon .lay{grid-template-columns:2.2rem 1fr; grid-template-rows:auto auto}
+    .aeon .lay .q{grid-column:2}
+  }
+  .slotnote{font-size:.9rem; color:var(--muted); margin-top:1rem; font-style:italic}
+
+  /* layer detail list */
+  .laydetail{margin-top:2.4rem; display:grid; gap:0}
+  .ld{border-top:1px solid var(--line); padding:1.15rem 0; display:grid; grid-template-columns:6.5rem 1fr; gap:1.2rem}
+  .ld .h{font-family:"IBM Plex Mono",monospace; font-size:.82rem; color:var(--muted); padding-top:.2rem}
+  .ld.vital .h{color:var(--pulse)}
+  .ld .b{font-size:.95rem}
+  .ld .b b{font-family:"Schibsted Grotesk",Arial,sans-serif; font-size:1.02rem}
+  @media (max-width:560px){ .ld{grid-template-columns:1fr; gap:.3rem} }
+
+  /* ALIVE acrostic */
+  .alive{display:flex; flex-direction:column; gap:.5rem; margin-top:2rem}
+  .arow{display:grid; grid-template-columns:5.5rem 12rem 1fr; gap:1.2rem; align-items:center; border:1px solid var(--line); background:var(--surface); padding:.9rem 1.2rem}
+  .arow .big{font-family:"Schibsted Grotesk",Arial,sans-serif; font-weight:800; font-size:2.6rem; line-height:1; color:var(--pulse)}
+  .arow .lname{font-family:"IBM Plex Mono",monospace; font-size:.85rem; letter-spacing:.08em; text-transform:uppercase}
+  .arow .duty{font-size:.95rem; color:var(--muted)}
+  .arow .duty b{color:var(--text)}
+  @media (max-width:560px){ .arow{grid-template-columns:3.2rem 1fr} .arow .duty{grid-column:1 / -1} .arow .big{font-size:2rem} }
+
+  /* handshake */
+  .meet{counter-reset:step; margin-top:1.8rem; display:grid; gap:.5rem}
+  .step{display:grid; grid-template-columns:3.2rem 8.5rem 1fr; gap:1.1rem; border:1px solid var(--line); background:var(--surface); padding:1rem 1.2rem; align-items:baseline}
+  .step::before{counter-increment:step; content:counter(step); font-family:"IBM Plex Mono",monospace; color:var(--muted); font-size:1.4rem}
+  .step .verb{font-family:"IBM Plex Mono",monospace; font-weight:600; letter-spacing:.1em; color:var(--pulse)}
+  .step .what{font-size:.95rem}
+  .step .what b{font-weight:600}
+  .step.novel{border-left:3px solid var(--pulse)}
+  @media (max-width:600px){ .step{grid-template-columns:2.2rem 1fr} .step .what{grid-column:2} }
+  .novelnote{font-size:.85rem; color:var(--muted); margin-top:.8rem}
+  .novelnote .tick{color:var(--pulse); font-weight:700}
+
+  /* AL levels */
+  .levels{width:100%; border-collapse:collapse; margin-top:1.8rem; font-size:.93rem}
+  .levels th{font-family:"IBM Plex Mono",monospace; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-align:left; padding:.5rem .8rem; border-bottom:1px solid var(--line)}
+  .levels td{padding:.7rem .8rem; border-bottom:1px solid var(--line); vertical-align:top}
+  .levels .al{font-family:"IBM Plex Mono",monospace; font-weight:600; white-space:nowrap}
+  .levels .nm2{font-family:"Schibsted Grotesk",Arial,sans-serif; font-weight:700; white-space:nowrap}
+  .levels tr.hot td{background:var(--pulse-dim)}
+  .levels tr.res td{color:var(--muted); font-style:italic}
+  .tblwrap{overflow-x:auto}
+
+  /* artifacts */
+  .arts{display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:1.8rem}
+  .art{background:var(--surface); padding:1.1rem 1.2rem}
+  .art .a-t{font-family:"IBM Plex Mono",monospace; font-size:.85rem; font-weight:600; color:var(--pulse); margin-bottom:.35rem}
+  .art .a-l{font-family:"IBM Plex Mono",monospace; font-size:.7rem; color:var(--muted); float:right}
+  .art .a-d{font-size:.9rem; color:var(--muted); line-height:1.5}
+  pre{background:var(--code-bg); color:#DDE6F5; border:1px solid var(--line); padding:1.1rem 1.2rem; overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:.8rem; line-height:1.6; margin-top:1.6rem}
+  pre .c{color:#6E7FA3} pre .k{color:#F0A63C}
+
+  /* compliance tiers */
+  .tiers{display:grid; grid-template-columns:repeat(auto-fit,minmax(14rem,1fr)); gap:1rem; margin-top:1.8rem}
+  .tier{border:1px solid var(--line); background:var(--surface); padding:1.2rem 1.3rem}
+  .tier .t-k{font-family:"IBM Plex Mono",monospace; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  .tier h3{margin:.4rem 0 .4rem}
+  .tier p{font-size:.92rem; color:var(--muted); margin:.3rem 0 0}
+
+  /* roadmap */
+  .road{list-style:none; padding:0; margin:1.6rem 0 0}
+  .road li{display:grid; grid-template-columns:8rem 1fr; gap:1.2rem; padding:.7rem 0; border-top:1px dashed var(--line); font-size:.95rem}
+  .road .d{font-family:"IBM Plex Mono",monospace; font-size:.82rem; color:var(--pulse); padding-top:.15rem}
+  @media (max-width:560px){ .road li{grid-template-columns:1fr; gap:.2rem} }
+
+  footer{padding:3.5rem 0 4.5rem}
+  .credo{font-family:"Schibsted Grotesk",Arial,sans-serif; font-weight:700; font-size:clamp(1.3rem,3vw,1.9rem); text-wrap:balance}
+  .credo .hot{color:var(--pulse)}
+  .fineprint{font-family:"IBM Plex Mono",monospace; font-size:.75rem; color:var(--muted); margin-top:2rem; line-height:2}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>LIP-0 · Draft 0.3</span><span>Open standard proposal · red-team revised</span><span>2026-08-28</span>
+      <span class="livechip"><span class="dot"></span>LIVE DOCUMENT</span>
+    </div>
+    <h1>LAP</h1>
+    <p class="tagline"><b>Living Agents Protocol</b> — identity, authority, and lifecycle for always-on AI agents.</p>
+    <div class="pulsewrap" aria-hidden="true">
+      <svg viewBox="0 0 1200 74" preserveAspectRatio="none">
+        <line class="ekg2" x1="0" y1="46" x2="1200" y2="46"/>
+        <polyline class="ekg" points="0,46 120,46 150,38 180,46 260,46 285,46 295,14 308,66 320,46 420,46 470,40 520,46 620,46 645,46 655,10 668,68 680,46 800,46 850,39 900,46 990,46 1015,46 1025,16 1038,64 1050,46 1200,46"/>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="thesis col">
+    <p>OSI standardized how machines <em>talk</em>. TLS standardized how strangers <em>trust</em>. MCP and A2A standardized how agents <em>reach tools</em> and <em>trade tasks</em>.</p>
+    <p style="margin-top:1.2rem">Nothing standardizes how agents <span class="hot">exist</span>.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§1 · The rhyme of history</div>
+      <h2>The trust layer arrives right before the economy does</h2>
+      <p class="lead">An always-on agent is not a request/response endpoint. It is an entity with a lifecycle: an identity that must survive restarts, memory that must survive vendor changes, authority that must hold while its human sleeps, and a human who must ultimately answer for it. Every one of those is unstandardized — and every one is a prerequisite for the agent economy everyone keeps predicting.</p>
+      <ul class="rhyme">
+        <li><span class="yr">1974</span><span class="what"><b>TCP/IP</b> — packets move → networks</span></li>
+        <li><span class="yr">1984</span><span class="what"><b>OSI</b> — a shared 7-layer map → an industry that could talk about itself</span></li>
+        <li><span class="yr">1994</span><span class="what"><b>SSL/TLS + PKI</b> — strangers trust → e-commerce</span></li>
+        <li><span class="yr">2007</span><span class="what"><b>OAuth</b> — delegated authority → the API economy</span></li>
+        <li><span class="yr">2024</span><span class="what"><b>MCP</b> — agents reach tools → the tool ecosystem</span></li>
+        <li><span class="yr">2025</span><span class="what"><b>A2A · AP2 · x402</b> — agents task &amp; pay → agent commerce begins</span></li>
+        <li class="now"><span class="yr">2026</span><span class="what"><b>LAP</b> — agents exist, persist, and are trusted → the agent economy proper</span></li>
+      </ul>
+      <p style="margin-top:1.6rem">Agents now have hands, mouths, and wallets — but <span class="kw">no birth certificate, no leash, no pulse, no black box, and no estate plan</span>. This is the 1994 moment, again.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§2 · The white space</div>
+      <h2>Eight concerns with no standard at all</h2>
+      <p>LAP deliberately competes with nobody. MCP, A2A, AP2 and x402 keep their layers. These eight are the scope fence — and nothing else is in scope:</p>
+    </div>
+    <div class="gaps">
+      <div class="gap"><div class="g-t">Persistent identity</div><div class="g-d">Who is this agent, who does it act for, who spawned it, what policy does it run — provably.</div></div>
+      <div class="gap"><div class="g-t">Presence &amp; lifecycle</div><div class="g-d">Is it alive right now? Sleeping? Incapacitated? Retired? No heartbeat or lifecycle norm exists.</div></div>
+      <div class="gap"><div class="g-t">Autonomy envelopes</div><div class="g-d">A signed, machine-readable statement of what it may do unsupervised: budgets, scopes, quiet hours.</div></div>
+      <div class="gap"><div class="g-t">Portable memory</div><div class="g-d">An agent's mind is 100% vendor-locked today. No interchange format for what it remembers.</div></div>
+      <div class="gap"><div class="g-t">Delegation chains</div><div class="g-d">A hires B, B spawns C — nobody can prove C's authority is a subset of A's grant.</div></div>
+      <div class="gap"><div class="g-t">The handshake</div><div class="g-d">No ceremony for two stranger agents to verify, disclose limits, and commit before transacting.</div></div>
+      <div class="gap"><div class="g-t">The flight recorder</div><div class="g-d">No tamper-evident, replayable record an insurer, court, or regulator can consume.</div></div>
+      <div class="gap"><div class="g-t">Death</div><div class="g-d">No retirement, revocation, or memory-bequest standard. Agents that never die hoard zombie authority.</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§3 · The reference model</div>
+      <h2>LAP-7 — seven layers of being</h2>
+      <p>OSI gave every networking protocol coordinates without replacing any of them. LAP-7 does the same for agents: existing protocols slot into Layer 6; the six layers of <em>being</em> beneath it, and the layer of <em>answering</em> above it, are the new work.</p>
+    </div>
+
+    <div class="stacks">
+      <div class="stackcol osi">
+        <div class="stacklabel">OSI · 1984 — how machines talk</div>
+        <div class="lay">7 · Application</div>
+        <div class="lay">6 · Presentation</div>
+        <div class="lay">5 · Session</div>
+        <div class="lay">4 · Transport</div>
+        <div class="lay">3 · Network</div>
+        <div class="lay">2 · Data Link</div>
+        <div class="lay">1 · Physical</div>
+      </div>
+      <div class="stackcol aeon">
+        <div class="stacklabel">LAP · 2026 — how agents live</div>
+        <div class="lay"><span class="n">L7</span><span class="nm">Accountability</span><span class="q">How do humans see, steer, and answer for it?</span></div>
+        <div class="lay"><span class="n">L6</span><span class="nm">Society</span><span class="q">How does it deal with others? — MCP · A2A · AP2 slot here</span></div>
+        <div class="lay"><span class="n">L5</span><span class="nm">Volition</span><span class="q">What may it do without a human?</span></div>
+        <div class="lay vital"><span class="n">L4</span><span class="nm">Vitality</span><span class="q">Is it alive right now — and where in its life is it?</span></div>
+        <div class="lay"><span class="n">L3</span><span class="nm">Memory</span><span class="q">What does it remember, and whose is it?</span></div>
+        <div class="lay"><span class="n">L2</span><span class="nm">Identity</span><span class="q">Who is it, provably?</span></div>
+        <div class="lay"><span class="n">L1</span><span class="nm">Substrate</span><span class="q">Where does it run?</span></div>
+      </div>
+    </div>
+    <p class="slotnote">Security is not a layer — it is a conformance requirement at every layer, exactly as in OSI.</p>
+
+    <div class="col laydetail">
+      <div class="ld"><div class="h">L1 Substrate</div><div class="b"><b>Continuity of existence.</b> Runtime, isolation, metering — with token spend as a first-class resource — plus a snapshot format so an agent can migrate hosts <em>without dying</em>.</div></div>
+      <div class="ld"><div class="h">L2 Identity</div><div class="b"><b>The Agent Passport.</b> Signed identity carrying its <em>principal</em> (the human or org it acts for, with proof), <em>lineage</em> (who spawned it), and a <em>constitution hash</em> — a committed digest of its governing policy that behavior can be audited against. The rule: <span class="kw">no orphan agents</span> — every passport resolves to a responsible legal person.</div></div>
+      <div class="ld"><div class="h">L3 Memory</div><div class="b"><b>PMIF — portable memory.</b> Typed memories with provenance, consent class, and retention clocks. Export your agent's mind and move it between vendors. Forget-requests cascade down every delegation chain. <span class="kw">Memory belongs to the principal, never the platform.</span></div></div>
+      <div class="ld vital"><div class="h">L4 Vitality</div><div class="b"><b>The signature layer.</b> Lifecycle (<span class="mono">conceived → active ⇄ dormant → retired → archived</span>), signed <em>Pulse</em> heartbeats as proof of life, store-and-forward so agents in different time zones of existence can converse across sleep, sessions bound to the passport — a restart is a nap, not a death — and an <em>estate protocol</em>: revocation, archive, memory bequest.</div></div>
+      <div class="ld"><div class="h">L5 Volition</div><div class="b"><b>The Autonomy Envelope.</b> A signed, <em>attenuable</em> mandate: scopes, budgets (money · tokens · hours), counterparty classes, quiet hours, escalation tree, expiry. And <span class="kw">autonomy decay</span>: envelope validity is conditioned on Layer-4 pulses — an agent that goes dark loses its powers by protocol, not by cleanup script.</div></div>
+      <div class="ld"><div class="h">L6 Society</div><div class="b"><b>Where existing protocols live.</b> MCP for tools, A2A for tasks, AP2/x402 for payment — plus the MEET handshake, small signed <em>Interaction Contracts</em> per relationship, provable delegation chains, and portable reputation built from counterparty-signed receipts instead of platform scores.</div></div>
+      <div class="ld"><div class="h">L7 Accountability</div><div class="b"><b>The stack terminates in a human.</b> A hash-chained <em>Flight Recorder</em> that insurers can underwrite and courts can replay; standardized override verbs every agent must honor; a compliance crosswalk to the EU AI Act, NIST AI RMF, and ISO 42001; and <span class="kw">habeas humanum</span> — the enforceable right of anyone to reach the human behind any agent.</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§4 · The implementer's profile</div>
+      <h2>Five layers that spell their own name</h2>
+      <p>LAP-7 is the map for standards work. <b>ALIVE</b> is the condensed profile implementers build against — the TCP/IP to LAP's OSI. Read top-down, the stack names itself:</p>
+    </div>
+    <div class="alive col" style="max-width:52rem">
+      <div class="arow"><span class="big">A</span><span class="lname">Accountability</span><span class="duty"><b>A human answers.</b> Recorder, override, red phone. <span class="mono">= L7</span></span></div>
+      <div class="arow"><span class="big">L</span><span class="lname">Liaison</span><span class="duty"><b>Strangers can meet, verify, and commit.</b> <span class="mono">= L6</span></span></div>
+      <div class="arow"><span class="big">I</span><span class="lname">Intent</span><span class="duty"><b>Authority is explicit, bounded, and decays.</b> <span class="mono">= L5</span></span></div>
+      <div class="arow"><span class="big">V</span><span class="lname">Vitality</span><span class="duty"><b>Aliveness is proven, sleep is normal, death is clean.</b> <span class="mono">= L4</span></span></div>
+      <div class="arow"><span class="big">E</span><span class="lname">Essence</span><span class="duty"><b>One being:</b> a body, a self, a past. <span class="mono">= L1–L3</span></span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§5 · The handshake</div>
+      <h2>MEET — when two living agents encounter each other</h2>
+      <p>Six steps. Three of them exist in no protocol today — they are the core invention.</p>
+    </div>
+    <div class="meet col" style="max-width:52rem">
+      <div class="step"><span class="verb">HAIL</span><span class="what"><b>Discovery.</b> Exchange Agent Passports — capabilities plus principal, lineage, constitution hash, autonomy level, presence schedule.</span></div>
+      <div class="step"><span class="verb">PROVE</span><span class="what"><b>Mutual verification.</b> Challenge–response, revocation check, principal binding. "Who do you act for?" answered with proof, not a string.</span></div>
+      <div class="step novel"><span class="verb">CHARTER</span><span class="what"><b>Envelope disclosure.</b> Each side reveals the relevant slice of its mandate: <em>"I may spend $50/day with class-B counterparties; I cannot sign contracts; my principal wakes at 07:00."</em> Strangers learn each other's limits before transacting.</span></div>
+      <div class="step"><span class="verb">TUNE</span><span class="what"><b>Protocol negotiation.</b> Agree the roads: A2A for tasking, MCP resources, AP2/x402 if payment is in scope.</span></div>
+      <div class="step novel"><span class="verb">BIND</span><span class="what"><b>Interaction contract.</b> Sign purpose, data-handling terms, retention, logging duties, dispute pointer. Both flight recorders log it — the relationship becomes evidence.</span></div>
+      <div class="step novel"><span class="verb">PULSE</span><span class="what"><b>Presence contract.</b> Agree heartbeat cadence, store-and-forward across sleep, resumption keys bound to passports — the relationship survives restarts by design.</span></div>
+    </div>
+    <p class="novelnote col"><span class="tick">▎</span> Amber-edged steps are unstandardized anywhere today. Teardown mirrors setup: a signed receipt that feeds portable reputation.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§6 · Autonomy levels</div>
+      <h2>AL-0 → AL-5, the way SAE named self-driving</h2>
+      <p>Declared in the passport, bounded by the envelope, printed on the certificate. A shared vocabulary for "how unsupervised is this thing?"</p>
+    </div>
+    <div class="tblwrap col" style="max-width:52rem">
+      <table class="levels">
+        <tr><th>Level</th><th>Name</th><th>Meaning</th></tr>
+        <tr><td class="al">AL-0</td><td class="nm2">Tool</td><td>Runs only when invoked. No persistence.</td></tr>
+        <tr><td class="al">AL-1</td><td class="nm2">Session agent</td><td>Multi-step autonomy within a session; nothing survives it.</td></tr>
+        <tr><td class="al">AL-2</td><td class="nm2">Supervised persistent</td><td>Persists and schedules its own wake-ups; every outward action needs approval.</td></tr>
+        <tr class="hot"><td class="al">AL-3</td><td class="nm2">Bounded autonomous</td><td>Acts unsupervised <em>inside</em> a signed envelope; escalates outside it. The 24/7 workhorse.</td></tr>
+        <tr><td class="al">AL-4</td><td class="nm2">Delegating autonomous</td><td>May spawn and hire sub-agents, attenuating mandates down the chain — fully auditable.</td></tr>
+        <tr class="res"><td class="al">AL-5</td><td class="nm2">Self-governing fleet</td><td>Defined but not certifiable. The standard reserves the level and states the evidence bar publicly — a governance feature, not a gap.</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§7 · Wire artifacts</div>
+      <h2>Six small documents make it concrete</h2>
+    </div>
+    <div class="arts">
+      <div class="art"><span class="a-l">L2</span><div class="a-t">Agent Passport</div><div class="a-d">Identity + principal + lineage + constitution hash + autonomy level. The birth certificate.</div></div>
+      <div class="art"><span class="a-l">L5</span><div class="a-t">Autonomy Envelope</div><div class="a-d">Signed, attenuable mandate with budgets, scopes, quiet hours — and a pulse-decay clause.</div></div>
+      <div class="art"><span class="a-l">L4</span><div class="a-t">Pulse</div><div class="a-d">Signed heartbeat carrying status and the recorder head-hash — you can't claim life while hiding your log.</div></div>
+      <div class="art"><span class="a-l">L3</span><div class="a-t">PMIF Record</div><div class="a-d">A typed memory with provenance, consent class, retention clock, and forget-chain.</div></div>
+      <div class="art"><span class="a-l">L6</span><div class="a-t">Interaction Contract</div><div class="a-d">Purpose, data terms, logging duties, dispute pointer — signed by both agents at BIND.</div></div>
+      <div class="art"><span class="a-l">L7</span><div class="a-t">Flight Recorder</div><div class="a-d">Hash-chained, privacy-tiered, replayable. The artifact that makes agents insurable.</div></div>
+    </div>
+    <div class="col">
+<pre><span class="c">// Autonomy Envelope — the decay clause is the point</span>
+{
+  <span class="k">"kind"</span>: "envelope",
+  <span class="k">"subject"</span>: "did:lap:z6Mk…9fR",
+  <span class="k">"scopes"</span>: ["calendar:write", "purchase:approve&lt;=USD50/day"],
+  <span class="k">"budgets"</span>: { "usd_daily": 50, "tokens_daily": 2000000 },
+  <span class="k">"quiet_hours"</span>: "22:00-06:00 UTC+5",
+  <span class="k">"escalation"</span>: ["signal:+92…"],
+  <span class="k">"valid"</span>: { "until": "2026-09-28", <span class="k">"requires_pulse_within"</span>: "PT2H" },
+  <span class="k">"attenuation"</span>: { "max_delegation_depth": 2 }
+}
+<span class="c">// no heartbeat for 2 hours ⇒ the mandate suspends itself</span></pre>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§8 · Compliance</div>
+      <h2>The program that turns a spec into an economy</h2>
+      <p>Modeled on what worked — conformance suites and certification marks — not on paper standards. One implementation feeds many regimes: the crosswalk maps LAP artifacts to EU AI Act logging duties, NIST AI RMF, ISO 42001, and SOC 2-style attestation. Honest scope: certification attests that an endpoint implements the protocol — never that an agent is "safe" — and the tiers below are a blueprint held in reserve, activated only once independent implementations exist.</p>
+    </div>
+    <div class="tiers col" style="max-width:60rem">
+      <div class="tier"><div class="t-k">Tier 1 · self-assessed</div><h3>LAP Ready</h3><p>Run the open conformance suite, publish the report, wear the badge. Zero friction — the top of the funnel.</p></div>
+      <div class="tier"><div class="t-k">Tier 2 · suite-verified</div><h3>ALIVE Certified, AL-n</h3><p>The open harness probes a live endpoint: identity challenge, envelope disclosure, pulse behavior, kill-switch obedience, log integrity. Can your agent pass its physical?</p></div>
+      <div class="tier"><div class="t-k">Tier 3 · audited</div><h3>ALIVE Audited</h3><p>For AL-3+ in regulated domains: an accredited auditor replays the flight recorder against constitution and envelope.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <div class="secno">§9 · The alliance</div>
+      <h2>Open by construction, neutral by design</h2>
+      <p>Spec text CC-BY-4.0, reference code Apache-2.0, RFC-style <b>LAP Improvement Proposals</b>, working groups per layer, and a stated intent to donate to a neutral foundation once three independent implementations exist. The certification mark is the consortium's only hard asset; everything else is free.</p>
+      <p>Strategy honors the two brutal truths of standards. <b>XKCD 927:</b> LAP offers no competing protocol at any layer that has one — it is the map, not another road. <b>The FIPA lesson, correctly diagnosed:</b> FIPA asked these questions in 1996 and had real implementations (JADE ran for a decade) — it died because the stranger-agent economy hadn't arrived. So LAP hedges timing, not just code: every mechanism is adoptable piecemeal by a single operator, with value before any ecosystem exists — and the demo precedes the evangelism. LAP ships as a byline, not a body: a position paper, a reference library, and proposals filed into the venues that already have distribution (A2A extensions, the W3C AI Agent community, OWASP). The consortium below is a blueprint held in reserve, activated only once independent implementations exist.</p>
+      <h3>The killer demo</h3>
+      <p class="muted">Overnight, across time zones: two strangers' AL-3 agents MEET, prove their principals, disclose envelopes, transact under budget — both humans asleep. In the morning, each human replays a signed flight-recorder trail. Ninety seconds of video. That demo <em>is</em> the pitch.</p>
+      <ul class="road">
+        <li><span class="d">Days 1–15</span><span>Position paper + essay published; LIP-1 Passport &amp; LIP-2 MEET drafts on GitHub.</span></li>
+        <li><span class="d">Days 16–45</span><span>Passport + MEET reference library (TypeScript + Python); the overnight demo, built and filmed.</span></li>
+        <li><span class="d">Days 46–75</span><span>Filed where distribution lives: W3C AI Agent CG (lifecycle/Pulse), A2A envelope extension, OWASP mapping.</span></li>
+        <li><span class="d">Days 76–90</span><span>ERC-8004 / AGNTCY commentary; insurer-track outreach; double down wherever anyone bites.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap col">
+    <p class="credo">OSI standardized how machines talk.<br>LAP standardizes how agents <span class="hot">live</span>.</p>
+    <p class="fineprint">LAP · Living Agents Protocol — draft 0.3 · 2026-08-28<br>
+    We are the map; MCP, A2A, and AP2 are the roads.<br>
+    Spec CC-BY-4.0 · Code Apache-2.0 · No orphan agents · Habeas humanum</p>
+  </div>
+</footer>

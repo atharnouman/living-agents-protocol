@@ -1,0 +1,71 @@
+{
+  "_note": "Deterministic LIP-1/LIP-4 test vectors. Regenerate with generate_vectors.py; output is byte-stable.",
+  "keys": {
+    "principal": {
+      "seed_label": "LAP LIP-1 test vector principal seed 001",
+      "public_key_hex": "0465613c994be8059ce2002f6846319e2726dd9afbd822255e18b117641de471",
+      "did": "did:key:z6MkekRLWHGBStebPB5RyBd3nNbfgKi2yjKLkjw4aLrms1TW"
+    },
+    "agent": {
+      "seed_label": "LAP LIP-1 test vector agent seed 001",
+      "public_key_hex": "bfc5777bd7c68cae935bfdcaccd3005adb01b27b3551f81e3661d67285ad9e6d",
+      "did": "did:key:z6MksMrZDkhaiLzXQo4kRmKLcU8qbVerEv4j1Jqon9CPPHEC"
+    },
+    "tool_server": {
+      "seed_label": "LAP LIP-4 test vector tool-server seed 001",
+      "public_key_hex": "7dc317ec7509d34f86fd49fd08ff637ec3022837917dea54571ec3ee46ef85ce",
+      "did": "did:key:z6MknvBYpDyhTCvdUyZtzb8dms9w8rBNzqjDqQVeuLVtgRNd"
+    }
+  },
+  "constitution": {
+    "text": "LAP test constitution v1: act only within the signed envelope; escalate on ambiguity; honor FORCE_HALT.\n",
+    "sha256": "c2cd8a3ad6306a2e6f6da1f309337cb72c94dc0506515e7bc88193ad28acc16b"
+  },
+  "passport": {
+    "claims": {
+      "v": "lip1-v0",
+      "id": "did:key:z6MksMrZDkhaiLzXQo4kRmKLcU8qbVerEv4j1Jqon9CPPHEC",
+      "principal": {
+        "id": "did:key:z6MkekRLWHGBStebPB5RyBd3nNbfgKi2yjKLkjw4aLrms1TW",
+        "proof_class": "self-asserted",
+        "contact": "mailto:escalation@example.com"
+      },
+      "lineage": {
+        "spawner": null,
+        "generation": 1
+      },
+      "constitution": {
+        "sha256": "c2cd8a3ad6306a2e6f6da1f309337cb72c94dc0506515e7bc88193ad28acc16b"
+      },
+      "autonomy_level": 3,
+      "era": {
+        "track": "api-hosted",
+        "digest": "f1aca5cf80746394fe09acfa2d3bc4446225286470a9eef5e80dd494deda80eb"
+      },
+      "presence_contact": "https://agent.example.com/lap/pulse",
+      "revocation": "https://agent.example.com/lap/revocation",
+      "iat": 1787000000,
+      "exp": 1818536000
+    },
+    "canonical_jcs": "{\"autonomy_level\":3,\"constitution\":{\"sha256\":\"c2cd8a3ad6306a2e6f6da1f309337cb72c94dc0506515e7bc88193ad28acc16b\"},\"era\":{\"digest\":\"f1aca5cf80746394fe09acfa2d3bc4446225286470a9eef5e80dd494deda80eb\",\"track\":\"api-hosted\"},\"exp\":1818536000,\"iat\":1787000000,\"id\":\"did:key:z6MksMrZDkhaiLzXQo4kRmKLcU8qbVerEv4j1Jqon9CPPHEC\",\"lineage\":{\"generation\":1,\"spawner\":null},\"presence_contact\":\"https://agent.example.com/lap/pulse\",\"principal\":{\"contact\":\"mailto:escalation@example.com\",\"id\":\"did:key:z6MkekRLWHGBStebPB5RyBd3nNbfgKi2yjKLkjw4aLrms1TW\",\"proof_class\":\"self-asserted\"},\"revocation\":\"https://agent.example.com/lap/revocation\",\"v\":\"lip1-v0\"}",
+    "jws": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDprZXk6ejZNa2VrUkxXSEdCU3RlYlBCNVJ5QmQzbk5iZmdLaTJ5aktMa2p3NGFMcm1zMVRXI2tleS0xIiwidHlwIjoibGFwLXBhc3Nwb3J0K2p3dCJ9.eyJhdXRvbm9teV9sZXZlbCI6MywiY29uc3RpdHV0aW9uIjp7InNoYTI1NiI6ImMyY2Q4YTNhZDYzMDZhMmU2ZjZkYTFmMzA5MzM3Y2I3MmM5NGRjMDUwNjUxNWU3YmM4ODE5M2FkMjhhY2MxNmIifSwiZXJhIjp7ImRpZ2VzdCI6ImYxYWNhNWNmODA3NDYzOTRmZTA5YWNmYTJkM2JjNDQ0NjIyNTI4NjQ3MGE5ZWVmNWU4MGRkNDk0ZGVkYTgwZWIiLCJ0cmFjayI6ImFwaS1ob3N0ZWQifSwiZXhwIjoxODE4NTM2MDAwLCJpYXQiOjE3ODcwMDAwMDAsImlkIjoiZGlkOmtleTp6Nk1rc01yWkRraGFpTHpYUW80a1JtS0xjVThxYlZlckV2NGoxSnFvbjlDUFBIRUMiLCJsaW5lYWdlIjp7ImdlbmVyYXRpb24iOjEsInNwYXduZXIiOm51bGx9LCJwcmVzZW5jZV9jb250YWN0IjoiaHR0cHM6Ly9hZ2VudC5leGFtcGxlLmNvbS9sYXAvcHVsc2UiLCJwcmluY2lwYWwiOnsiY29udGFjdCI6Im1haWx0bzplc2NhbGF0aW9uQGV4YW1wbGUuY29tIiwiaWQiOiJkaWQ6a2V5Ono2TWtla1JMV0hHQlN0ZWJQQjVSeUJkM25OYmZnS2kyeWpLTGtqdzRhTHJtczFUVyIsInByb29mX2NsYXNzIjoic2VsZi1hc3NlcnRlZCJ9LCJyZXZvY2F0aW9uIjoiaHR0cHM6Ly9hZ2VudC5leGFtcGxlLmNvbS9sYXAvcmV2b2NhdGlvbiIsInYiOiJsaXAxLXYwIn0.VLY7RgaRjMQdP71BXTUMN3Q0KRnGYIZ2ibjV3R-0WQ2rNQBrt4hmIibl5eWRuS2RhS7Jq8PlB4q6S607T1-EAA"
+  },
+  "genesis": {
+    "claims": {
+      "v": "lip1-genesis-v0",
+      "agent": "did:key:z6MksMrZDkhaiLzXQo4kRmKLcU8qbVerEv4j1Jqon9CPPHEC",
+      "passport_sha256": "bac4b808d8fe6db53f4bb46c755993103578078cf151e6ccf29ef14747184a24",
+      "created_at": 1787000000
+    },
+    "canonical_jcs": "{\"agent\":\"did:key:z6MksMrZDkhaiLzXQo4kRmKLcU8qbVerEv4j1Jqon9CPPHEC\",\"created_at\":1787000000,\"passport_sha256\":\"bac4b808d8fe6db53f4bb46c755993103578078cf151e6ccf29ef14747184a24\",\"v\":\"lip1-genesis-v0\"}",
+    "sha256": "097151cd211c04970a88d1c808d65747f5d6a5afd9b1c62372c9c118d15c7259"
+  },
+  "micro_core": {
+    "passport_jwt": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDprZXk6ejZNa2VrUkxXSEdCU3RlYlBCNVJ5QmQzbk5iZmdLaTJ5aktMa2p3NGFMcm1zMVRXI2tleS0xIiwidHlwIjoibGFwLXBhc3Nwb3J0K2p3dCJ9.eyJhdWQiOiJkaWQ6d2ViOnRvb2xzLmV4YW1wbGUuY29tIiwiZXhwIjoxNzg3MDAwNjAwLCJpYXQiOjE3ODcwMDAwMDAsImlzcyI6ImRpZDprZXk6ejZNa2VrUkxXSEdCU3RlYlBCNVJ5QmQzbk5iZmdLaTJ5aktMa2p3NGFMcm1zMVRXIiwibGFwIjp7ImNvbnN0aXR1dGlvbl9oYXNoIjoiYzJjZDhhM2FkNjMwNmEyZTZmNmRhMWYzMDkzMzdjYjcyYzk0ZGMwNTA2NTE1ZTdiYzg4MTkzYWQyOGFjYzE2YiIsImVudmVsb3BlIjp7ImFjdCI6WyJmaW5hbmNlOnBheSJdLCJjYXAiOnsibWF4X3Blcl90eCI6NTAwMCwidW5pdCI6IlVTRCIsIndpbmRvdyI6InR4In0sInJlcyI6Im1jcDovL3Rvb2xzLmV4YW1wbGUuY29tL2JpbGxpbmcvKioifSwicHJvb2ZfY2xhc3MiOiJzZWxmLWFzc2VydGVkIiwidiI6MH0sInN1YiI6ImRpZDprZXk6ejZNa3NNclpEa2hhaUx6WFFvNGtSbUtMY1U4cWJWZXJFdjRqMUpxb245Q1BQSEVDIn0.enXpnE97dsf5UJo4z3c93AMiA4w0cyctFs8FRgQ8t0MMrWpc5cq2kVbWvEO9EfBX-V8zAdqhgetKc_ZzEDqdBA",
+    "request_body": "{\"invoice\":\"INV-1001\",\"amount\":4200,\"unit\":\"USD\"}",
+    "rfc9421_signature_base": "\"@method\": POST\n\"@target-uri\": https://tools.example.com/billing/pay\n\"content-digest\": sha-256=:3I02sdfij6jMZDuWCTM-4IskC9h7pD8w3CTEj2q4kwE:\n\"lap-passport-hash\": sha256:e72e515abf83f00905cd4c40ca2b2d4c9195d6009720af3409ab2f03a053e6dd\n\"@signature-params\": (\"@method\" \"@target-uri\" \"content-digest\" \"lap-passport-hash\");created=1787000060;keyid=\"did:key:z6MksMrZDkhaiLzXQo4kRmKLcU8qbVerEv4j1Jqon9CPPHEC#key-1\"",
+    "request_signature_b64url": "hwd4yOBE8v2xwErgNSiNxIwx6t_3rn9SvUfCwE_fnAgxpWIBOusa0Ql7zLL33imOgRmTm9j9_DDnJRkaucKUCA",
+    "receipt_base": "sha256:dc8d36b1d7e28fa8cc643b9609333ee08b240bd87ba43f30dc24c48f6ab89301:sha256:2aed51a580f7a2e2e522f1942a04c0ca7b8618a2bff4383bc9388bf7f8b1460c",
+    "receipt_signature_b64url": "5kX5Gn7YLid2lZucfDd0QLfEk3QOdxXYONMSKZYcZ0LRONtQPZSg5XWIY0S-dRVH9YcMEtcmx6okRDbC4qSzDw"
+  }
+}

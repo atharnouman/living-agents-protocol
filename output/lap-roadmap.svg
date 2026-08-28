@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="820" viewBox="0 0 680 820" role="img">
+<title>LAP progress roadmap — 2026-08-29</title>
+<desc>Living Agents Protocol: concept and build phases complete; current position is Publish, then venue filings, the 60-day pull-signal gate, the two-external-implementations tripwire, and three forms of real success.</desc>
+<style>
+text{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;fill:#2C2C2A}
+.th{font-size:14px;font-weight:500}
+.ts{font-size:12px;font-weight:400;fill:#5F5E5A}
+.lbl{font-size:14px;font-weight:500;fill:#444441}
+.cont{fill:none;stroke:#D3D1C7;stroke-width:1;stroke-dasharray:4 4}
+.arr{stroke:#888780;stroke-width:1.5;fill:none}
+.c-teal rect{fill:#E1F5EE;stroke:#0F6E56;stroke-width:0.75}
+.c-teal .th{fill:#085041}.c-teal .ts{fill:#0F6E56}
+.c-purple rect{fill:#EEEDFE;stroke:#534AB7;stroke-width:0.75}
+.c-purple .th{fill:#3C3489}.c-purple .ts{fill:#534AB7}
+.c-amber rect{fill:#FAEEDA;stroke:#854F0B;stroke-width:0.75}
+.c-amber .th{fill:#633806}.c-amber .ts{fill:#854F0B}
+.c-green rect{fill:#EAF3DE;stroke:#3B6D11;stroke-width:0.75}
+.c-green .th{fill:#27500A}.c-green .ts{fill:#3B6D11}
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="680" height="820" fill="#FFFFFF"/>
+
+<rect class="cont" x="36" y="40" width="608" height="94" rx="8"/>
+<text class="lbl" x="48" y="58">Done · concept phase</text>
+<g class="c-teal"><rect x="50" y="68" width="130" height="54" rx="4"/><text x="115" y="90" class="th" text-anchor="middle">Idea &amp; scan</text><text x="115" y="108" class="ts" text-anchor="middle">gap identified</text></g>
+<g class="c-teal"><rect x="200" y="68" width="130" height="54" rx="4"/><text x="265" y="90" class="th" text-anchor="middle">Spec v0.4</text><text x="265" y="108" class="ts" text-anchor="middle">25 sections</text></g>
+<g class="c-teal"><rect x="350" y="68" width="130" height="54" rx="4"/><text x="415" y="90" class="th" text-anchor="middle">4 review rounds</text><text x="415" y="108" class="ts" text-anchor="middle">~115 fixes merged</text></g>
+<g class="c-teal"><rect x="500" y="68" width="130" height="54" rx="4"/><text x="565" y="90" class="th" text-anchor="middle">Renamed LAP</text><text x="565" y="108" class="ts" text-anchor="middle">namespace clear</text></g>
+
+<line class="arr" x1="340" y1="134" x2="340" y2="156" marker-end="url(#arrow)"/>
+
+<rect class="cont" x="36" y="158" width="608" height="94" rx="8"/>
+<text class="lbl" x="48" y="176">Build · complete, ahead of the 45-day line</text>
+<g class="c-teal"><rect x="50" y="186" width="180" height="54" rx="4"/><text x="140" y="208" class="th" text-anchor="middle">LIP-1…4 specs</text><text x="140" y="226" class="ts" text-anchor="middle">4 drafts + vectors</text></g>
+<g class="c-teal"><rect x="250" y="186" width="180" height="54" rx="4"/><text x="340" y="208" class="th" text-anchor="middle">Reference library</text><text x="340" y="226" class="ts" text-anchor="middle">21/21 tests green</text></g>
+<g class="c-teal"><rect x="450" y="186" width="180" height="54" rx="4"/><text x="540" y="208" class="th" text-anchor="middle">Overnight demo</text><text x="540" y="226" class="ts" text-anchor="middle">runs, replay verified</text></g>
+
+<line class="arr" x1="340" y1="252" x2="340" y2="274" marker-end="url(#arrow)"/>
+
+<rect x="36" y="276" width="608" height="94" rx="8" fill="none" stroke="#7F77DD" stroke-width="1.25" stroke-dasharray="4 4"/>
+<text class="lbl" x="48" y="294">Publish · you are here</text>
+<g class="c-purple"><rect x="50" y="304" width="180" height="54" rx="4"/><text x="140" y="326" class="th" text-anchor="middle">Demo film (90s)</text><text x="140" y="344" class="ts" text-anchor="middle">screen-record the run</text></g>
+<g class="c-purple"><rect x="250" y="304" width="180" height="54" rx="4"/><text x="340" y="326" class="th" text-anchor="middle">Public repo</text><text x="340" y="344" class="ts" text-anchor="middle">README + licenses</text></g>
+<g class="c-purple"><rect x="450" y="304" width="180" height="54" rx="4"/><text x="540" y="326" class="th" text-anchor="middle">Essay + arXiv</text><text x="540" y="344" class="ts" text-anchor="middle">code-first order</text></g>
+
+<line class="arr" x1="340" y1="370" x2="340" y2="392" marker-end="url(#arrow)"/>
+
+<rect class="cont" x="36" y="394" width="608" height="94" rx="8"/>
+<text class="lbl" x="48" y="412">Infiltrate · days 55–90</text>
+<g class="c-purple"><rect x="50" y="422" width="180" height="54" rx="4"/><text x="140" y="444" class="th" text-anchor="middle">MCP / A2A filings</text><text x="140" y="462" class="ts" text-anchor="middle">60% of effort</text></g>
+<g class="c-purple"><rect x="250" y="422" width="180" height="54" rx="4"/><text x="340" y="444" class="th" text-anchor="middle">W3C CG + OWASP</text><text x="340" y="462" class="ts" text-anchor="middle">lifecycle &amp; floor</text></g>
+<g class="c-purple"><rect x="450" y="422" width="180" height="54" rx="4"/><text x="540" y="444" class="th" text-anchor="middle">ITU + NIST watch</text><text x="540" y="462" class="ts" text-anchor="middle">new 2026 venues</text></g>
+
+<line class="arr" x1="340" y1="488" x2="340" y2="510" marker-end="url(#arrow)"/>
+
+<g class="c-amber"><rect x="220" y="512" width="240" height="54" rx="8"/><text x="340" y="534" class="th" text-anchor="middle">Pull-signal gate · day 60</text><text x="340" y="552" class="ts" text-anchor="middle">no pull → re-aim tracks</text></g>
+<path class="arr" d="M220 539 L90 539 L90 492" marker-end="url(#arrow)"/>
+
+<line class="arr" x1="340" y1="566" x2="340" y2="588" marker-end="url(#arrow)"/>
+
+<g class="c-green"><rect x="210" y="590" width="260" height="54" rx="4"/><text x="340" y="612" class="th" text-anchor="middle">2+ external implementations</text><text x="340" y="630" class="ts" text-anchor="middle">the tripwire event</text></g>
+
+<line class="arr" x1="340" y1="644" x2="340" y2="666" marker-end="url(#arrow)"/>
+
+<rect class="cont" x="36" y="668" width="608" height="94" rx="8"/>
+<text class="lbl" x="48" y="686">Real success · years 1–3</text>
+<g class="c-green"><rect x="50" y="696" width="180" height="54" rx="4"/><text x="140" y="718" class="th" text-anchor="middle">Concepts adopted</text><text x="140" y="736" class="ts" text-anchor="middle">with attribution</text></g>
+<g class="c-green"><rect x="250" y="696" width="180" height="54" rx="4"/><text x="340" y="718" class="th" text-anchor="middle">Reputation &amp; roles</text><text x="340" y="736" class="ts" text-anchor="middle">editor lines, offers</text></g>
+<g class="c-green"><rect x="450" y="696" width="180" height="54" rx="4"/><text x="540" y="718" class="th" text-anchor="middle">LAP referenced</text><text x="540" y="736" class="ts" text-anchor="middle">if economy arrives</text></g>
+
+<g class="c-teal"><rect x="50" y="780" width="12" height="12" rx="2"/></g>
+<text class="ts" x="68" y="791">done</text>
+<g class="c-purple"><rect x="130" y="780" width="12" height="12" rx="2"/></g>
+<text class="ts" x="148" y="791">next</text>
+<g class="c-amber"><rect x="210" y="780" width="12" height="12" rx="2"/></g>
+<text class="ts" x="228" y="791">decision gate</text>
+<g class="c-green"><rect x="330" y="780" width="12" height="12" rx="2"/></g>
+<text class="ts" x="348" y="791">success</text>
+<text class="ts" x="630" y="791" text-anchor="end">Living Agents Protocol · status 2026-08-29</text>
+</svg>

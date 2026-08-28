@@ -1,0 +1,15 @@
+{
+  "name": "@living-agents/reference",
+  "version": "0.0.1",
+  "description": "Living Agents Protocol (LAP) reference implementation: passport (LIP-1), scope algebra (LIP-3), Micro-Core (LIP-4). Zero dependencies.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/" },
+  "exports": {
+    "./jws": "./src/jws.js",
+    "./algebra": "./src/algebra.js",
+    "./microcore": "./src/microcore.js",
+    "./crypto-util": "./src/crypto-util.js"
+  }
+}
