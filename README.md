@@ -1,0 +1,56 @@
+# Living Agents Protocol (LAP)
+
+**The existence layer for always-on AI agents** — identity, authority, liveness, and accountability for agents that never log off.
+
+`spec v0.4.3 (draft)` · `31/31 tests` · `zero dependencies` · `4 adversarial review rounds, ~140 verified fixes` · `Bitcoin-timestamped`
+
+---
+
+AI agents recently got standard ways to use tools ([MCP](https://modelcontextprotocol.io)), exchange tasks ([A2A](https://a2a-protocol.org)), and pay (AP2, x402). Nothing standardizes an agent's **existence**: who it is, which human answers for it, what it may do while unsupervised, whether it is running right now, what it remembers, and how its actions are proven afterwards. We built the roads before the license plates.
+
+LAP is a reference model plus wire mechanisms for that missing control plane — the handshake-layer role: it never carries the work, it decides *whether, and under whose authority*, work may flow. The one-line version: **agents need a birth certificate, a leash, a black box, and an estate plan.**
+
+## Try it in two minutes
+
+```bash
+cd lap-reference && node --test test/     # 31 tests: crypto, algebra, Micro-Core, Merkle log
+```
+
+```bash
+cd lap-demo && node demo.js && node replay.js
+```
+
+The demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**. Then run `node replay.js --tamper` and watch a single modified log entry get caught to the exact record.
+
+Requirements: Node ≥ 20. No `npm install` — the entire implementation uses platform built-ins.
+
+## The protocol drafts (LIPs)
+
+| Draft | What it specifies |
+|---|---|
+| [LIP-1 — Agent Passport & Genesis](output/lip/LIP-1-agent-passport-draft.md) | Identity bound to a responsible human (labeled proof classes), witnessed birth, amendment chain, the no-orphan rule |
+| [LIP-2 — MEET](output/lip/LIP-2-meet-draft.md) | The six-step stranger handshake: transcript-hashed, collision-safe, with reservation tickets, fair-exchange turns, and split-view defense |
+| [LIP-3 — Scope Algebra v0](output/lip/LIP-3-scope-algebra-v0-draft.md) | A deliberately tiny permission language where subset-checking is decidable — delegation can be *proven* narrower, budgets conserve across children |
+| [LIP-4 — Micro-Core](output/lip/LIP-4-micro-core-draft.md) | The afternoon-sized profile: two HTTP headers + a receipt, single-server adoptable, upgrade-compatible with everything above |
+
+The full reference model (LAP-7 layers, trust states, ownership & transfer, lifecycle from witnessed birth to economic mortality and the unbroken **Accountability Chain** of responsible humans) lives in the [founding document](output/LAP-founding-document.md). Deterministic cross-language test vectors (Python ↔ JS byte-identical): [`output/lip/test-vectors/`](output/lip/test-vectors/).
+
+## Repository map
+
+| Path | Contents |
+|---|---|
+| `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log |
+| `lap-demo/` | The two-agent overnight demo + morning replay verifier |
+| `output/` | The founding document, LIP drafts, position paper, essay, project brief, roadmap |
+| `output/anchors/` | OpenTimestamps proofs — every release is hash-committed to Bitcoin |
+| `llm-collab/` | The multi-model review kit and the full improvements log (every merged, softened, and rejected finding, with reasons) |
+
+## How this was built — and why that's part of the point
+
+The spec was drafted with Claude (Anthropic) as co-designer, then attacked across **four structured adversarial review rounds** including external reviews by Gemini (Google) under a fixed kit: every finding verified before merging (several reviewer-proposed fixes were themselves caught introducing bugs), duplicates deduplicated, and every rejection logged with its reason in [`llm-collab/IMPROVEMENTS-LOG.md`](llm-collab/IMPROVEMENTS-LOG.md). We believe this is among the first protocol specifications hardened by cross-model adversarial review with a public audit trail — which is fitting, because *accountable human-plus-AI engineering* is what the protocol itself is for.
+
+**Honest status**: this is a v0 draft by one author. There is no consortium, no certification program, and no claim that the stranger-agent economy is imminent — the [position paper](output/LAP-position-paper.md) states the open problems (key custody, principal proofing, scope-vocabulary governance) as plainly as the contributions. Several mechanisms pay their way in single-operator deployments today; the rest is a bet on where always-on agents are heading, with the history of FIPA, UDDI, and P3P studied rather than repeated.
+
+## Contributing & licenses
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the LIP process and review culture. Code: [Apache-2.0](LICENSE). Specification texts: [CC-BY-4.0](LICENSE-SPEC.md). © 2026 Athar Nouman.

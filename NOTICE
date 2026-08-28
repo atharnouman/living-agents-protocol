@@ -1,0 +1,10 @@
+Living Agents Protocol (LAP)
+Copyright 2026 Athar Nouman
+
+Developed with AI collaboration: Anthropic Claude (co-design, red-team review),
+Google Gemini (external structured review). Review provenance is recorded in
+llm-collab/IMPROVEMENTS-LOG.md.
+
+Reference implementation licensed under the Apache License, Version 2.0 (see LICENSE).
+Specification texts licensed under CC-BY-4.0 (see LICENSE-SPEC.md).
+Attribution in derivative works is required per those licenses.
