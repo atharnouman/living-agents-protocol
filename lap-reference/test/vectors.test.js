@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { jcs, didKeyToRawPublicKey, sha256Hex } from "../src/crypto-util.js";
+import { jcs, didKeyToRawPublicKey, sha256Hex, b58Decode, b58Encode } from "../src/crypto-util.js";
 import { verifyPassport, verifyJws } from "../src/jws.js";
-import { verifyMicroCorePassport, verifyRequestSignature, checkInvocation, verifyReceipt } from "../src/microcore.js";
+import { verifyMicroCorePassport, verifyRequestSignature, checkInvocation, verifyReceipt, makeIdempotencyCache } from "../src/microcore.js";
 
 const vectors = JSON.parse(
   readFileSync(new URL("../../output/lip/test-vectors/vectors.json", import.meta.url), "utf8"),
@@ -105,4 +105,27 @@ test("receipt verifies against tool-server key and both body hashes", () => {
 
 test("passport JWS rejects wrong signer", () => {
   assert.throws(() => verifyJws(vectors.passport.jws, vectors.keys.agent.did), /LAP_ERR_SIG/);
+});
+
+test("b58Decode handles leading zeros, empty strings, and roundtrips raw keys", () => {
+  assert.equal(b58Decode("").length, 0);
+  assert.deepEqual(b58Decode("1"), Buffer.from([0x00]));
+  assert.deepEqual(b58Decode("11"), Buffer.from([0x00, 0x00]));
+  assert.deepEqual(b58Decode("111"), Buffer.from([0x00, 0x00, 0x00]));
+
+  const rawKeyWithZero = Buffer.concat([Buffer.from([0x00]), Buffer.alloc(31, 0xFF)]);
+  const encoded = b58Encode(rawKeyWithZero);
+  assert.deepEqual(b58Decode(encoded), rawKeyWithZero);
+});
+
+test("makeIdempotencyCache stores and retrieves cached receipts by agent and key", () => {
+  const cache = makeIdempotencyCache();
+  const agentDid = vectors.keys.agent.did;
+  const key = "idem-key-12345";
+  const receipt = { status: "paid", receipt_base: "sha256:req:sha256:resp" };
+
+  assert.equal(cache.check(agentDid, key), undefined);
+  cache.store(agentDid, key, receipt);
+  assert.deepEqual(cache.check(agentDid, key), receipt);
+  assert.equal(cache.check("did:key:z6MkOtherAgent...", key), undefined);
 });
