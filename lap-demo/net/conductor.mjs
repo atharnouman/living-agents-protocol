@@ -8,6 +8,9 @@ import readline from "node:readline";
 import { rmSync } from "node:fs";
 
 const PORT = 4107;
+const PRESENT = process.argv.includes("--present");   // filmable ~70s pacing
+const BUYER_ENV = PRESENT ? { ...process.env, LAP_PACE: "3400" } : process.env;
+const RESTART_MS = PRESENT ? 3600 : 2000;
 // fresh identity per full run; it persists only across the mid-run restart
 try { rmSync(new URL("./out/seller-identity.json", import.meta.url)); } catch { /* first run */ }
 const C = { buyer: "\x1b[36m", seller: "\x1b[35m", cond: "\x1b[33m", dim: "\x1b[90m", reset: "\x1b[0m" };
@@ -35,7 +38,7 @@ async function main() {
   await waitReady();
   note("seller is live; starting buyer as a separate process\n");
 
-  const buyer = spawn(process.execPath, ["buyer.mjs", String(PORT)], { cwd: new URL(".", import.meta.url) });
+  const buyer = spawn(process.execPath, ["buyer.mjs", String(PORT)], { cwd: new URL(".", import.meta.url), env: BUYER_ENV });
   readline.createInterface({ input: buyer.stderr }).on("line", (l) => console.log(`${C.buyer}[buyer:err] ${l}${C.reset}`));
 
   let killed = false;
@@ -49,8 +52,8 @@ async function main() {
       continue;
     }
     if (line.includes("__MARK_HELD__")) {
-      note("buyer safely held its order through the outage. Restarting the seller in 2s…");
-      await new Promise((r) => setTimeout(r, 2000));
+      note("buyer safely held its order through the outage. Restarting the seller…");
+      await new Promise((r) => setTimeout(r, RESTART_MS));
       seller = spawnSeller();
       await waitReady();
       note("*** seller process RESTARTED and listening again — a restart is a nap, not a death ***\n");

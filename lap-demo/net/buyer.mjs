@@ -14,6 +14,9 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const NOW = 1787019000;
 const say = (m) => console.log(`[buyer]  ${m}`);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const BEAT = Number(process.env.LAP_PACE || 0);      // presentation pacing (ms between beats); 0 = fast
+const beat = () => (BEAT ? sleep(BEAT) : Promise.resolve());
+const PULSE_MS = BEAT ? 900 : 700;
 
 function keypair() {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
@@ -76,18 +79,22 @@ async function pulseAlive(sellerAgent) {
 }
 
 async function main() {
+  await beat();
   say(`agent ${agent.did.slice(0, 22)}…  →  seller at ${BASE}`);
 
   // MEET 1-2 — HAIL/PROVE over the wire
+  await beat();
   const sellerPassportRes = await get("/passport");
   const sp = verifyPassport(sellerPassportRes.passport, { now: NOW });
   say(`MEET HAIL/PROVE: fetched + verified seller passport ${sp.id.slice(0, 22)}… → VERIFIED`);
   const hail = await post("/meet", { step: "HAIL", passport });
   const sellerAgent = hail.sellerAgent;
+  await beat();
   say(`  ↕ real HTTP: sent our passport, seller replied ${JSON.stringify({ step: hail.step, ok: hail.ok }).slice(0, 40)} (both sides verified each other's Ed25519 signatures)`);
 
   // MEET 3 — CHARTER: authorizer-signed reservation ticket
   const ticket = { nonce: sha256Hex(String(NOW)).slice(0, 12), amount: 50, unit: "USD", expiry: NOW + 3600, counterparty: sellerAgent };
+  await beat();
   say(`MEET CHARTER: authorizer reservation $${ticket.amount} bound to seller, disclosed before transacting`);
 
   // MEET 5 — BIND: sign contract, seller countersigns over the wire
@@ -95,16 +102,18 @@ async function main() {
   const aliceSig = b64urlEncode(sign(null, Buffer.from(jcs(contractCore)), agent.privateKey));
   const bind = await post("/meet", { step: "BIND", contract: contractCore, aliceSig });
   const bindOk = verifyEd25519(publicKeyFromDid(sellerAgent), Buffer.from(jcs({ contract: contractCore, countersigning: aliceSig })), Buffer.from(bind.countersig, "base64url"));
+  await beat();
   say(`MEET BIND: interaction contract dual-signed (seller countersignature verified: ${bindOk}) → session ACTIVE\n`);
 
   // Transact order 1
+  await beat();
   await pay("A-001", 3, 12, sellerAgent);
   console.log("[buyer]  __MARK_PAID_A1__"); // conductor watches this to kill the seller
 
   // Pulse-gated liveness: poll the seller; a real outage = real connection failures
   let misses = 0, held = false;
   for (let i = 0; i < 40; i++) {
-    await sleep(700);
+    await sleep(PULSE_MS);
     const alive = await pulseAlive(sellerAgent);
     if (alive) {
       if (held) {
