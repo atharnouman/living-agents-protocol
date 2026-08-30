@@ -108,7 +108,7 @@ Second external-tool file-corruption event: after the round-3 read-only review, 
 
 An external LLM with file access made one git commit directly to the repository. Audited change-by-change:
 
-**ACCEPTED (re-implemented cleanly):** NUL-separator idea for idempotency cache keys (genuinely better collision resistance — but it was committed as *literal NUL bytes inside source code*, turning the file binary for git; re-implemented as the ` ` escape sequence); timing-safe receipt hash comparison (harmless, uniform hygiene; supersedes the round-3 triage scoping).
+**ACCEPTED (re-implemented cleanly):** NUL-separator idea for idempotency cache keys (genuinely better collision resistance — but it was committed as *literal NUL bytes inside source code*, turning the file binary for git; re-implemented as the `\u0000` escape sequence); timing-safe receipt hash comparison (harmless, uniform hygiene; supersedes the round-3 triage scoping).
 
 **REVERTED:** CRLF-normalize/trim in signature-base checks — this was round-3 finding F4, *formally rejected at triage with a logged reason* (RFC 9421 signatures bind exact bytes), and the foreign commit merged it anyway without any triage. Governance rule violated: logged rejections stand unless re-litigated openly. Also reverted: two tests appended to vectors.test.js that duplicated existing round3.test.js coverage (zero added coverage, drifted public test counts).
 
@@ -120,7 +120,24 @@ An external LLM with file access made one git commit directly to the repository.
 The commit is preserved in history (evidence over erasure); this entry is its correction record.
 
 ## Corruption incident #3 (discovered 2026-08-30 during the foreign-commit audit)
-`LAP-founding-document.md` was found systematically corrupted — digits `2` and `3` replaced with `1` throughout (dates 2026→1016, Ed25519→Ed15519, RFC 9421→9411, §24–26→§14–16 colliding with real sections, Apache-2.0→Apache-1.0, review scores, window durations). Forensics: corruption predated the Phase-A initial commit, so **all three release commits contained it, and the v0.4.3 release stamp anchored corrupted bytes** (that stamp is now marked void in ANCHORS.md). Existing scans missed it (they hunted the e→"." and *→"D" signatures from incidents #1–#2). Remediation: full reconstruction of the document from in-session knowledge; restamped (new hash in ANCHORS.md); a **repository integrity test** (`test/integrity.test.js`) now trips on all three corruption signatures plus raw NUL bytes on every test run — on its first execution it correctly flagged the corrupted document and nothing else. Suite: 33/33.
+`LAP-founding-document.md` was found systematically corrupted — digits `2` and `3` replaced with `1` throughout (dates 2026→1016, Ed25519 with its 2 swapped to 1, RFC 9421→9411, §24–26→§14–16 colliding with real sections, Apache-2.0→Apache-1.0, review scores, window durations). Forensics: corruption predated the Phase-A initial commit, so **all three release commits contained it, and the v0.4.3 release stamp anchored corrupted bytes** (that stamp is now marked void in ANCHORS.md). Existing scans missed it (they hunted the e→"." and *→"D" signatures from incidents #1–#2). Remediation: full reconstruction of the document from in-session knowledge; restamped (new hash in ANCHORS.md); a **repository integrity test** (`test/integrity.test.js`) now trips on all three corruption signatures plus raw NUL bytes on every test run — on its first execution it correctly flagged the corrupted document and nothing else. Suite: 33/33.
+
+## Python package audit (lap-python/, contributed by Gemini, 2026-08-30)
+
+First substantial foreign *code contribution* (5 modules, FastMCP middleware, 26 tests). Audited in full before commit — every file read, baseline pytest 26/26 against its own semantics, no malicious code, no raw control bytes.
+
+**ACCEPTED as delivered:** crypto_util (base58 zero-invariants correct; DID-safe `normalize_did` faithful to our round-3 fix; JCS uses raw-UTF-8 string encoding, which is *more* RFC 8785-correct than our Python vector generator's ASCII-escaping — a latent generator divergence to fix if vectors ever carry non-ASCII); jws (LIP-1 steps 1–5 parity); microcore receipts with `hmac.compare_digest`; the `mint_receipt` helper (a genuine addition the Node side lacks); the `@verify_envelope` decorator (clean, no magic); `U+0000` cache keys done correctly this time.
+
+**FIXED before commit (5 spec-conformance defects):**
+1. Action registry had drifted from the Node reference (different verbs/edges, bare-namespace parents) — registries now byte-parity; drift here is the FIPA failure mode.
+2. Window table omitted `utc_hour` (valid envelopes would be rejected) while listing `rolling_day`/`minute`/`week`/`month` as buckets — `rolling_day` is *prohibited* by LIP-3 §4. Table now exactly {utc_hour, utc_day}; unknown windows fail closed.
+3. `path_subsumes` reintroduced round-2's fixed bugs: non-terminal `**` silently matched, and a child `**` could attenuate a parent `*` (widening = privilege escalation). Rewritten to Node parity: scheme/host parsing, terminal-only wildcards (hard error otherwise), no child widening.
+4. `dag_subsumes` accepted unregistered verbs when parent equals child (string content conferring authority). Now both sides must be registry-registered.
+5. `verify_request_signature` contained the CRLF/trim loosening — **the third attempt** at a finding rejected twice at triage. Removed; strict byte-exact lines, with the rejection rationale now written into the code comment.
+Tests updated to spec semantics + new adversarial asserts (widening reject, rolling-window reject, unregistered-verb reject, non-terminal-wildcard error): **pytest 26/26 green post-fix**. Minor: unused imports removed; middleware carries an explicit note that LIP-4 §2(5) idempotency is the server's unimplemented duty.
+
+## Corruption incident #4 (discovered 2026-08-30)
+`output/lap-project-brief.html` was overwritten with a version where every open-angle-bracket character became the letter "s" (tag names read like "s-title" run together) — AND the overwriting copy was *stale* (pre-dating the 33/33 count fix), indicating the external tool wrote back a mangled version of a file it had read earlier. Timing forensics: the damage landed between the count-fix edit and the `git add -A` of commit 78f5a67, so the corrupted file entered that commit and was the file the artifact republish read. Remediation: rebuilt clean from in-session content; artifact republished; a fourth canary signature (angle-swap) added to `test/integrity.test.js`. Bonus validation: on its next run the canary suite tripped on *this very log's* quoted corruption examples and on a literal NUL accidentally embedded in an earlier entry — both defanged; the watchdog demonstrably works, including against its own maintainers.
 
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 fully processed)*

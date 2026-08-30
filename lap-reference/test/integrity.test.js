@@ -20,6 +20,7 @@ const CANARIES = [
   ["digit-swap", new RegExp("Gemini 1" + "\\.7")],              // 3.7 -> 1.7
   ["e-swap", new RegExp("Past" + "\\. this|Sp" + "\\.c Hygi")], // e -> .
   ["star-swap", new RegExp("DD" + "Athar|D" + "existenceD")],   // * -> D
+  ["angle-swap", new RegExp("s" + "title>|s" + "/style>|s" + "div class=\"wrap\">")], // < -> s (incident #4)
 ];
 
 function* walk(dir) {

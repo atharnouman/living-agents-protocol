@@ -1,7 +1,7 @@
-stitle>LAP Project Briefs/title>
-slink rel="preconnect" href="https://fonts.googleapis.com">
-slink rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-sstyle>
+<title>LAP Project Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
   :root{
     --ground:#0D1322; --surface:#151D31; --text:#E9EEF8; --muted:#8FA0BC; --line:#2A3550;
     --pulse:#F0A63C; --pulse-dim:rgba(240,166,60,.12); --pulse-line:rgba(240,166,60,.45);
@@ -52,52 +52,52 @@ sstyle>
   .odds .likely{color:var(--pulse); font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:.8rem}
   footer{margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
     font-family:"IBM Plex Mono",monospace; font-size:.75rem; color:var(--muted); line-height:2}
-s/style>
+</style>
 
-sdiv class="wrap">
-  sdiv class="eyebrow">sspan>Project briefs/span>sspan>August 2026s/span>sspan class="live">● build complete — publishing nexts/span>s/div>
-  sh1>Living Agents Protocols/h1>
-  sp class="tagline">The existence layer for always-on AI agents — an open standard project by Athar Nouman.s/p>
+<div class="wrap">
+  <div class="eyebrow"><span>Project brief</span><span>August 2026</span><span class="live">● build complete — publishing next</span></div>
+  <h1>Living Agents Protocol</h1>
+  <p class="tagline">The existence layer for always-on AI agents — an open standard project by Athar Nouman.</p>
 
-  ssection>
-    sspan class="secno">§1 · What this iss/span>
-    sp>AI agents recently got standard ways to use tools (Anthropic's MCP), exchange tasks (Google's A2A), and pay (AP2, x402). But nothing standardizes an agent's sem>existences/em>: who it is, which human or company answers for it, what it may do while unsupervised, whether it's running right now, what it remembers, and how its actions are proven afterwards. LAP is an open reference model plus concrete wire mechanisms for that missing layer — the TLS-handshake role for agents: it never carries the work, it decides sem>whether, and under whose authoritys/em>, work may flow.s/p>
-    sdiv class="oneliner">Agents need a birth certificate, a leash, a black box, and an estate plan.s/div>
-  s/section>
+  <section>
+    <span class="secno">§1 · What this is</span>
+    <p>AI agents recently got standard ways to use tools (Anthropic's MCP), exchange tasks (Google's A2A), and pay (AP2, x402). But nothing standardizes an agent's <em>existence</em>: who it is, which human or company answers for it, what it may do while unsupervised, whether it's running right now, what it remembers, and how its actions are proven afterwards. LAP is an open reference model plus concrete wire mechanisms for that missing layer — the TLS-handshake role for agents: it never carries the work, it decides <em>whether, and under whose authority</em>, work may flow.</p>
+    <div class="oneliner">Agents need a birth certificate, a leash, a black box, and an estate plan.</div>
+  </section>
 
-  ssection>
-    sspan class="secno">§2 · What exists today — all real, all runnables/span>
-    sdiv class="grid">
-      sdiv class="cell">sb>sspan class="n">v0.4.3s/span> specifications/b>sspan>26 sections, hardened by 4 adversarial review rounds — ~140 verified fixes merged, rejections logged with reasons.s/span>s/div>
-      sdiv class="cell">sb>sspan class="n">4s/span> protocol draftss/b>sspan>Agent Passport (identity + responsible human), MEET handshake, Scope Algebra (provable permissions), Micro-Core (afternoon-sized adoption profile).s/span>s/div>
-      sdiv class="cell">sb>sspan class="n">31/31s/span> tests greens/b>sspan>Zero-dependency reference library; Python↔JavaScript byte-identical canonical signatures proven.s/span>s/div>
-      sdiv class="cell">sb>sspan class="n">191s/span> checks, one demos/b>sspan>Two strangers' agents transact overnight; one crashes — authority auto-suspends, an order holds, recovery completes it. Morning replay verifies every signature (191 checks); a planted tamper is caught to the exact entry.s/span>s/div>
-    s/div>
-  s/section>
+  <section>
+    <span class="secno">§2 · What exists today — all real, all runnable</span>
+    <div class="grid">
+      <div class="cell"><b><span class="n">v0.4.3</span> specification</b><span>26 sections, hardened by 4 adversarial review rounds — ~140 verified fixes merged, rejections logged with reasons.</span></div>
+      <div class="cell"><b><span class="n">4</span> protocol drafts</b><span>Agent Passport (identity + responsible human), MEET handshake, Scope Algebra (provable permissions), Micro-Core (afternoon-sized adoption profile).</span></div>
+      <div class="cell"><b><span class="n">33/33</span> tests green</b><span>Zero-dependency reference library; Python↔JavaScript byte-identical canonical signatures proven.</span></div>
+      <div class="cell"><b><span class="n">191</span> checks, one demo</b><span>Two strangers' agents transact overnight; one crashes — authority auto-suspends, an order holds, recovery completes it. Morning replay verifies every signature (191 checks); a planted tamper is caught to the exact entry.</span></div>
+    </div>
+  </section>
 
-  ssection>
-    sspan class="secno">§3 · The plan — publish, then infiltrates/span>
-    sp>Deliberately sem>nots/em> a consortium (strategy reviews killed that): LAP is a byline, not a body.s/p>
-    sol class="plan">
-      sli>sspan>sb>Publish.s/b> Film the 90-second demo; open the repo (Apache-2.0 code, CC-BY spec); release the essay and arXiv paper — code first, claims second.s/span>s/li>
-      sli>sspan>sb>Infiltrate.s/b> File mechanisms as extensions where distribution already lives: MCP/A2A middleware (~60% of effort), the W3C AI Agent community, OWASP agentic security; watching the new ITU and NIST agent-standards efforts.s/span>s/li>
-      sli>sspan>sb>Day-60 gate.s/b> Objective pull signals (external PRs, a framework plugin accepted) decide what gets doubled down; dead tracks are archived, not nursed.s/span>s/li>
-      sli>sspan>sb>The tripwire.s/b> Two external implementations we didn't recruit unlocks the bigger institutional ambitions — held in reserve until earned.s/span>s/li>
-    s/ol>
-  s/section>
+  <section>
+    <span class="secno">§3 · The plan — publish, then infiltrate</span>
+    <p>Deliberately <em>not</em> a consortium (strategy reviews killed that): LAP is a byline, not a body.</p>
+    <ol class="plan">
+      <li><span><b>Publish.</b> Film the 90-second demo; open the repo (Apache-2.0 code, CC-BY spec); release the essay and arXiv paper — code first, claims second.</span></li>
+      <li><span><b>Infiltrate.</b> File mechanisms as extensions where distribution already lives: MCP/A2A middleware (~60% of effort), the W3C AI Agent community, OWASP agentic security; watching the new ITU and NIST agent-standards efforts.</span></li>
+      <li><span><b>Day-60 gate.</b> Objective pull signals (external PRs, a framework plugin accepted) decide what gets doubled down; dead tracks are archived, not nursed.</span></li>
+      <li><span><b>The tripwire.</b> Two external implementations we didn't recruit unlocks the bigger institutional ambitions — held in reserve until earned.</span></li>
+    </ol>
+  </section>
 
-  ssection>
-    sspan class="secno">§4 · Honest oddss/span>
-    sp class="odds">Three ways this wins: sspan class="likely">LIKELYs/span> the concepts get absorbed into larger standards sem>with attributions/em> · sspan class="likely">LIKELYs/span> it establishes deep, demonstrated expertise in agent identity and lifecycle · sspan class="likely">LONG SHOTs/span> LAP itself becomes the referenced existence layer if the agent economy arrives on schedule. The project is structured so any one of the three justifies it.s/p>
-  s/section>
+  <section>
+    <span class="secno">§4 · Honest odds</span>
+    <p class="odds">Three ways this wins: <span class="likely">LIKELY</span> the concepts get absorbed into larger standards <em>with attribution</em> · <span class="likely">LIKELY</span> it establishes deep, demonstrated expertise in agent identity and lifecycle · <span class="likely">LONG SHOT</span> LAP itself becomes the referenced existence layer if the agent economy arrives on schedule. The project is structured so any one of the three justifies it.</p>
+  </section>
 
-  ssection>
-    sspan class="secno">§5 · The meta-storys/span>
-    sp>The spec was built with AI as a genuine collaborator: drafted with Claude, then attacked across multiple frontier models under a structured review kit — every external finding verified before merging, duplicates deduplicated, rejections logged publicly. Arguably one of the first protocol specs hardened this way, and that is part of the point: this is what accountable human-plus-AI systems engineering looks like.s/p>
-  s/section>
+  <section>
+    <span class="secno">§5 · The meta-story</span>
+    <p>The spec was built with AI as a genuine collaborator: drafted with Claude, then attacked across multiple frontier models under a structured review kit — every external finding verified before merging, duplicates deduplicated, rejections logged publicly. Arguably one of the first protocol specs hardened this way, and that is part of the point: this is what accountable human-plus-AI systems engineering looks like.</p>
+  </section>
 
-  sfooter>
-    Living Agents Protocol · Athar Nouman · August 2026sbr>
+  <footer>
+    Living Agents Protocol · Athar Nouman · August 2026<br>
     Materials — spec, papers, reference library, demo — available on request · public repository forthcoming
-  s/footer>
-s/div>
+  </footer>
+</div>
