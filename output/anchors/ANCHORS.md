@@ -12,7 +12,7 @@
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
 | `ec1312916569715dd020ac1f749870f5860a0d7e230f477e314dbad78692f124` | LAP-essay.md |
-| `d449a0e223fd96f4ba838ca8890c62020573975d8194b17325e36786d8fd3230` | ../README.md (restamped 2026-08-30, 33/33 counts) |
+| `a1016652f8c2600ccf0798eabc796981a99f12535b1276d8805483d5bb00c08a` | ../README.md (restamped 2026-08-30: 33/33 counts + lap-python row) |
 
 ## Status and how to use
 

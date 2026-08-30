@@ -40,6 +40,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | Path | Contents |
 |---|---|
 | `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log |
+| `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); 26 pytest tests against the same vectors |
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `output/` | The founding document, LIP drafts, position paper, essay, project brief, roadmap |
 | `output/anchors/` | OpenTimestamps proofs — every release is hash-committed to Bitcoin |
