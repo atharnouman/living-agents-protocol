@@ -88,7 +88,7 @@ check(verifyObj(session.closing.core, session.closing.bobSig, session.parties.bo
 const held = recorders.Alice.find((e) => e.act === "tx:held");
 const susp = recorders.Alice.find((e) => e.act === "decay:suspend");
 const rec = recorders.Alice.find((e) => e.act === "decay:recovered");
-console.log(`While you slept, your agent (${session.parties.alice.city}) dealt with a stranger's agent (${session.parties.bob.city}):\n`);
+console.log(`While you slept, your agent (${session.parties.alice.role}) dealt with a stranger's agent (${session.parties.bob.role}):\n`);
 for (const r of session.receipts) console.log(`  • Order ${r.order}: $${r.amount} — paid, dual-signed receipt verified`);
 if (susp) console.log(`  • ${new Date(susp.ts * 1000).toISOString().slice(11, 19)}Z counterparty went dark → authority suspended (no spend possible)`);
 if (held) console.log(`  • Order ${held.payload.order} was HELD during the outage — nothing moved without a live counterparty`);

@@ -192,8 +192,8 @@ Six small documents make the whole model concrete. Sketches (illustrative; norma
   "scopes": ["email:draft", "calendar:write", "purchase:approve<=USD50/day"],
   "budgets": { "usd_daily": 50, "tokens_daily": 2000000, "wall_hours_daily": 20 },
   "counterparties": ["class-A", "class-B"],
-  "quiet_hours": "22:00-06:00 UTC+5",
-  "escalation": ["signal:+92…", "email:athar@…"],
+  "quiet_hours": "22:00-06:00Z",
+  "escalation": ["mailto:oncall@example.com"],
   "valid": { "from": "2026-08-28", "until": "2026-09-28", "requires_pulse_within": "PT2H" },
   "attenuation": { "parent": null, "max_delegation_depth": 2 },
   "sig": "…"

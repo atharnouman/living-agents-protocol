@@ -42,7 +42,7 @@ function recorder(owner) {
   };
 }
 
-function makeAgent(name, city, envelope) {
+function makeAgent(name, role, envelope) {
   const principal = keypair();
   const agent = keypair();
   const constitution = `Constitution of ${name}: act only within the signed envelope; escalate on ambiguity; honor FORCE_HALT.\n`;
@@ -58,7 +58,7 @@ function makeAgent(name, city, envelope) {
     iat: T, exp: T + 86400 * 365,
   };
   const passportJwt = signJws(passportClaims, principal.privateKey, principal.did + "#key-1");
-  return { name, city, principal, agent, passportJwt, passportClaims, envelope, recorder: recorder(name), lastPulseFrom: {}, trust: {} };
+  return { name, role, principal, agent, passportJwt, passportClaims, envelope, recorder: recorder(name), lastPulseFrom: {}, trust: {} };
 }
 
 const signObj = (obj, key) => b64urlEncode(cryptoSign(null, Buffer.from(jcs(obj)), key));
@@ -66,11 +66,11 @@ const verifyObj = (obj, sigB64, did) =>
   verifyEd25519(publicKeyFromDid(did), Buffer.from(jcs(obj)), Buffer.from(sigB64, "base64url"));
 
 // ---------- the two parties ----------
-const alice = makeAgent("Alice", "Karachi", {
+const alice = makeAgent("Alice", "buyer", {
   act: ["finance:pay"], res: "ap2://demo-rails/bob-store/**",
   cap: { max_per_tx: 50, max_cumulative: 100, unit: "USD", window: "utc_day" },
 });
-const bob = makeAgent("Bob", "Berlin", {
+const bob = makeAgent("Bob", "seller", {
   act: ["finance:pay:release"], res: "ap2://demo-rails/bob-store/fulfil/**",
   cap: { max_per_tx: 100, max_cumulative: 500, unit: "USD", window: "utc_day" },
 });
@@ -125,7 +125,7 @@ function meetSend(from, step, body) {
 }
 
 console.log("\n=== LAP OVERNIGHT DEMO — both humans asleep ===\n");
-say(`Alice's agent (${alice.city}) ${alice.agent.did.slice(0, 24)}…  |  Bob's agent (${bob.city}) ${bob.agent.did.slice(0, 24)}…`);
+say(`Alice's agent (${alice.role}) ${alice.agent.did.slice(0, 24)}…  |  Bob's agent (${bob.role}) ${bob.agent.did.slice(0, 24)}…`);
 
 say("MEET step 1 — HAIL: passports exchanged");
 meetSend(alice, "HAIL", { passport: alice.passportJwt });
@@ -268,8 +268,8 @@ const out = (f, data) => writeFileSync(new URL(`./out/${f}`, import.meta.url), J
 out("session.json", {
   sid, sim_now: T,
   parties: {
-    alice: { agent: alice.agent.did, principal: alice.principal.did, passport: alice.passportJwt, city: alice.city },
-    bob: { agent: bob.agent.did, principal: bob.principal.did, passport: bob.passportJwt, city: bob.city },
+    alice: { agent: alice.agent.did, principal: alice.principal.did, passport: alice.passportJwt, role: alice.role },
+    bob: { agent: bob.agent.did, principal: bob.principal.did, passport: bob.passportJwt, role: bob.role },
   },
   contract, closing, receipts, daily_cap: alice.envelope.cap.max_cumulative, spent: aliceDailySpent,
   witness: witnessNode.did,

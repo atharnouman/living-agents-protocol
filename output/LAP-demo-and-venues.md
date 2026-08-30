@@ -12,12 +12,12 @@
 
 | Time | Scene | On screen | Mechanism shown |
 |---|---|---|---|
-| 0–8s | Setup | Split screen: "Karachi, 02:10" / "Berlin, 23:10". Two dashboards, two humans' status: *asleep*. Agent A (buyer, procurement) and Agent B (seller, fulfillment) each shown with a passport card: name, principal, AL-3 badge, age ("registered 214 days"). | Passports, witnessed age, autonomy level |
+| 0–8s | Setup | Split screen: buyer side "02:10Z" / seller side "23:10 prev day" — two time zones, both humans' status *asleep*. Agent A (buyer / procurement) and Agent B (seller / fulfilment) each shown with a passport card: name, principal, AL-3 badge, age ("registered 214 days"). | Passports, witnessed age, autonomy level |
 | 8–20s | MEET: HAIL + PROVE | Terminal-style overlay: passports exchanged; signature checks tick green; registration proofs verified ("2 log inclusions ✓"); revocation clean; both resolve **VERIFIED**. | Handshake, trust states, transparency-log proofs |
 | 20–35s | CHARTER | Each agent reveals its envelope *slice*, rendered as two cards side by side: A: "may spend ≤ $50/day · class-B counterparties · quiet hours 22:00–06:00 · escalation: (redacted)". B: "may sell ≤ 20 units/day · cannot modify prices > ±5%". Voiceover line: *"Strangers learn each other's limits before a cent moves."* | Envelope disclosure |
 | 35–50s | Transaction | A requests 3 units @ $12. B quotes $36. A's spend authorizer check flashes: "authorizer: OK — $36 ≤ remaining $50". BIND contract signed by both; payment settles (x402 testnet or mocked rail, labeled honestly). Both flight recorders visibly append entries (hash chain animation, two ledgers). | Spend authorizer, BIND, dual-entry recording |
 | 50–62s | The stress beat | B's pulse misses two beats (simulated crash). A's dashboard flips B to **DEGRADED**; a queued second order *holds automatically*: "counterparty authority suspended — resuming on pulse". B recovers; pulse resumes; order completes. | Autonomy decay, prospective suspension, recovery without human ceremony |
-| 62–80s | Morning replay | Sunrise cards. Each human opens their replay CLI: scrolls the signed chain — MEET, CHARTER, BIND, payment, suspension event, completion — each entry hash-verified ✓. Karachi human sees: "Spent $36 of $50. 1 counterparty. 0 escalations." | Flight recorder replay, budget accounting |
+| 62–80s | Morning replay | Sunrise cards. Each human opens their replay CLI: scrolls the signed chain — MEET, CHARTER, BIND, payment, suspension event, completion — each entry hash-verified ✓. The buyer's principal sees: "Spent $36 of $50. 1 counterparty. 0 escalations." | Flight recorder replay, budget accounting |
 | 80–90s | Close | Black card, three lines: *"Two strangers' agents. Zero human approvals overnight. One provable record."* Then: *"LAP — the existence layer for persistent agents. Spec, code, paper: (link)."* | The pitch |
 
 ### Build checklist (minimum honest implementation)
@@ -35,7 +35,7 @@
 ## Part 2 — Venue filing plan (where each mechanism goes)
 
 ### 2.1 W3C AI Agent Protocol Community Group — *lifecycle, Pulse, presence*
-- **Why this room**: free, remote-first, individual-friendly — fully participable from UTC+5; explicitly chartered around web-native agent concerns; early enough that a well-specified lifecycle/presence contribution can become a work item.
+- **Why this room**: free, remote-first, individual-friendly — fully participable remotely from any timezone; explicitly chartered around web-native agent concerns; early enough that a well-specified lifecycle/presence contribution can become a work item.
 - **Action**: join as an individual contributor; introduce with a short post: "Lifecycle and presence for persistent agents" — the L4 material (states, pulse-as-custody-continuity, sleep-aware sessions, retirement/no-zombie-authority) recast as a CG contribution, linking the paper.
 - **Success metric**: the lifecycle vocabulary appears in a CG draft with attribution; an editor/co-editor line.
 
