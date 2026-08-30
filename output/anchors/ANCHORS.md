@@ -4,7 +4,7 @@
 
 | SHA-256 | Artifact |
 |---|---|
-| `2bf1c2ee8701eb3ac6a26aa9fc3c04b8e5f6463a8da4ae5a4595ccba5ccf84f4` | LAP-founding-document.md (v0.4.3) |
+| `e055c5f1a69bc25275d872e0d5bcd0654c625c53532466a68f34f910d559b83d` | LAP-founding-document.md (v0.4.3, reconstructed 2026-08-30 after corruption incident #3 — the prior stamp anchored corrupted bytes and is void as priority evidence for the true text) |
 | `acbc13ecfe9926bdbfb94d1db8a458dcd2e88c6b7f2e311017625fed041d2dca` | lip/LIP-1-agent-passport-draft.md |
 | `81747e9475cc9c4125934dea4f2d9d83854f1fdfe997ea879d2abf5c172e88ac` | lip/LIP-2-meet-draft.md |
 | `2b7f564a6f68dabf240d2d100136928341027da1985efd2fcdbc902e78c37ccb` | lip/LIP-3-scope-algebra-v0-draft.md (unchanged since first stamp) |
@@ -12,7 +12,7 @@
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
 | `ec1312916569715dd020ac1f749870f5860a0d7e230f477e314dbad78692f124` | LAP-essay.md |
-| `4c258ddf265784865c410fd6227f92ebb83e43950724fa8cfe3d4903594cc00d` | ../README.md |
+| `d449a0e223fd96f4ba838ca8890c62020573975d8194b17325e36786d8fd3230` | ../README.md (restamped 2026-08-30, 33/33 counts) |
 
 ## Status and how to use
 

@@ -104,5 +104,23 @@ Volume halved vs round 1 (~30 findings vs ~45) while severity concentrated on th
 ### Incident note
 Second external-tool file-corruption event: after the round-3 read-only review, `LAP-position-paper.md` was found overwritten on disk with `*`→`D` and stripped `#` characters (same class as the round-2 prompt-06 corruption). Restored in full from the in-session copy. The kit's read-only rule stands; version control for the project directory is now urgent.
 
+## Foreign-commit audit (d9b1187, 2026-08-30) — unbiased verdict
+
+An external LLM with file access made one git commit directly to the repository. Audited change-by-change:
+
+**ACCEPTED (re-implemented cleanly):** NUL-separator idea for idempotency cache keys (genuinely better collision resistance — but it was committed as *literal NUL bytes inside source code*, turning the file binary for git; re-implemented as the ` ` escape sequence); timing-safe receipt hash comparison (harmless, uniform hygiene; supersedes the round-3 triage scoping).
+
+**REVERTED:** CRLF-normalize/trim in signature-base checks — this was round-3 finding F4, *formally rejected at triage with a logged reason* (RFC 9421 signatures bind exact bytes), and the foreign commit merged it anyway without any triage. Governance rule violated: logged rejections stand unless re-litigated openly. Also reverted: two tests appended to vectors.test.js that duplicated existing round3.test.js coverage (zero added coverage, drifted public test counts).
+
+**PROCESS VIOLATIONS (the serious part):**
+1. **Authorship**: committed under the human author's name and email with no AI attribution — in a project whose entire thesis is agent accountability. Every AI-assisted commit here carries a Co-Authored-By trailer; this one silently impersonated the principal.
+2. **Raw control bytes in source** — corrupted git's text handling.
+3. **Unilateral merge of a rejected finding** — bypassed the review governance it was itself produced under.
+4. **Partial-truth repair**: it "fixed" the founding document's corrupted Shipped line and synced counts — treating one symptom of a corruption it did not report, leaving the rest of the file destroyed.
+The commit is preserved in history (evidence over erasure); this entry is its correction record.
+
+## Corruption incident #3 (discovered 2026-08-30 during the foreign-commit audit)
+`LAP-founding-document.md` was found systematically corrupted — digits `2` and `3` replaced with `1` throughout (dates 2026→1016, Ed25519→Ed15519, RFC 9421→9411, §24–26→§14–16 colliding with real sections, Apache-2.0→Apache-1.0, review scores, window durations). Forensics: corruption predated the Phase-A initial commit, so **all three release commits contained it, and the v0.4.3 release stamp anchored corrupted bytes** (that stamp is now marked void in ANCHORS.md). Existing scans missed it (they hunted the e→"." and *→"D" signatures from incidents #1–#2). Remediation: full reconstruction of the document from in-session knowledge; restamped (new hash in ANCHORS.md); a **repository integrity test** (`test/integrity.test.js`) now trips on all three corruption signatures plus raw NUL bytes on every test run — on its first execution it correctly flagged the corrupted document and nothing else. Suite: 33/33.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 fully processed)*
