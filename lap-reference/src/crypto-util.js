@@ -59,7 +59,12 @@ export function b58Decode(s) {
 // did:key:z6Mk... -> 32-byte raw Ed25519 public key
 export function didKeyToRawPublicKey(did) {
   if (!did.startsWith("did:key:z")) throw new Error(`unsupported DID method: ${did}`);
-  const decoded = b58Decode(did.slice("did:key:z".length));
+  const multibase = did.slice("did:key:z".length);
+  // F12: bound input BEFORE base58 decoding — an ed25519 did:key multibase is ~46-48
+  // chars; `iss`/`agentDid` are attacker-controlled and decoded pre-auth, so an
+  // unbounded string would drive O(n^2) BigInt work (CPU-exhaustion DoS).
+  if (multibase.length > 48) throw new Error("LAP_ERR_DID: multibase too long for ed25519 did:key");
+  const decoded = b58Decode(multibase);
   if (decoded[0] !== 0xed || decoded[1] !== 0x01) throw new Error("not an ed25519-pub did:key");
   const raw = decoded.subarray(2);
   if (raw.length !== 32) throw new Error(`bad key length: ${raw.length}`);

@@ -4,6 +4,7 @@ Provides the @verify_envelope decorator to authorize tool invocations and emit t
 """
 
 import functools
+import inspect
 from typing import Any, Callable, Dict, Optional
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -48,29 +49,37 @@ def verify_envelope(
                 raise ValueError("LAP_ERR_AUTH_MISSING: lap_auth context required")
 
             passport_jwt = lap_auth.get("passport_jwt")
-            agent_did = lap_auth.get("agent_did")
             signature_base = lap_auth.get("signature_base")
             signature_b64url = lap_auth.get("signature_b64url")
             request_body = lap_auth.get("request_body")
 
-            if not passport_jwt or not agent_did or not signature_base or not signature_b64url:
+            if not passport_jwt or not signature_base or not signature_b64url:
                 raise ValueError("LAP_ERR_HEADERS: incomplete LAP authorization headers")
 
-            # If request_body not explicitly provided, synthesize from arguments
-            if request_body is None:
-                request_body = jcs(kwargs)
+            # F5: bind the REAL invocation arguments (defaults applied) so positional
+            # args cannot bypass the cap. In production the raw request bytes AND the
+            # transport method/target MUST come from the trusted MCP/ASGI context, not
+            # from this application-supplied lap_auth dict — the cap is enforced on the
+            # bound amount regardless.
+            bound = inspect.signature(fn).bind(*args, **kwargs)
+            bound.apply_defaults()
+            call_args = dict(bound.arguments)
 
-            # Step 1: Verify Passport JWT
+            if request_body is None:
+                request_body = jcs(call_args)
+
+            # Step 1: Verify Passport JWT (expected_aud is mandatory downstream)
             now = lap_auth.get("now")
             passport_payload = verify_microcore_passport(passport_jwt, expected_aud=expected_aud, now=now)
             envelope = passport_payload["lap"]["envelope"]
+            sub = passport_payload["sub"]  # F2: holder-of-key from the verified passport
 
-            # Step 2: Verify RFC 9421 Request Signature
-            verify_request_signature(passport_jwt, agent_did, signature_base, signature_b64url, request_body)
+            # Step 2: Verify RFC 9421 Request Signature against the verified subject
+            verify_request_signature(passport_jwt, sub, signature_base, signature_b64url, request_body)
 
-            # Steps 3-4: Verify Action, Resource Path, and Budget Cap
-            amount = kwargs.get(amount_param) if amount_param else None
-            unit = kwargs.get(unit_param) if unit_param else None
+            # Steps 3-4: Verify Action, Resource Path, and Budget Cap (bound amount)
+            amount = call_args.get(amount_param) if amount_param else None
+            unit = call_args.get(unit_param) if unit_param else None
             check_invocation(envelope, act=action, resource=resource, amount=amount, unit=unit)
 
             # LIP-4 §2(5) note: idempotency caching for mutating requests is the

@@ -44,9 +44,13 @@ Two independent dimensions, both mandatory in attenuation checks:
 
 The proportional scaling is deliberately conservative (it forbids bursty-but-bounded children); deployments needing burst shaping express it at the spend authorizer, not in the static algebra. Windows are UTC epoch-aligned buckets (`bucket = floor(ts / size)`); rolling windows are prohibited in client-verifiable envelopes (authorizer-side only). Known limit, unchanged: bucket-boundary burst ≈ 2× at midnight straddles — mitigate with `max_per_tx`; rail-side authorizers remain the true budget enforcement locus.
 
+**Cap schema validation (v0.2, round-4 audit F8 — MUST, before any arithmetic):** `max_per_tx` and `max_cumulative` MUST be non-negative integers within the implementation's exact-integer range (JS: `Number.isSafeInteger`; canonical decimal strings/BigInt above 2^53), `max_per_tx ≤ max_cumulative`, `unit` a non-empty string, and `window ∈ {tx, utc_hour, utc_day, epoch_total}`. A negative cumulative would otherwise *increase* remaining budget on subtraction (a "credit" scope). `tx` parents admit only `tx` children (a differently-based child would rate-expand a per-transaction budget).
+
 ## 5. The subset relation (child scope c ⊑ parent scope p)
 
-c ⊑ p iff ALL of: (1) versions equal; (2) **action**: `p.act` is `*`, equal, or a **registry-DAG ancestor** of `c.act`; (3) **resource**: segment-wise subsumption per §2; (4) **caps**: the two-dimensional rule of §4 with identical `unit`; (5) **counterparties**: `E(c) ⊆ E(p)` and `p.deny ⊆ c.deny`; (6) **depth**: `c.depth ≤ p.depth − 1` (`p.depth == 0` forbids delegation); (7) **decay/witness**: `c.decay_max_sec ≤ p.decay_max_sec`, child witness quorum ≥ parent's.
+c ⊑ p iff ALL of: (1) versions equal; (2) **action**: `p.act` is `*`, equal, or a **registry-DAG ancestor** of `c.act` (verbs may be a bare string or an array — compared by value, never by reference; both ports MUST agree, round-4 audit); (3) **resource**: segment-wise subsumption per §2, with dot-segments (`.`/`..`) and encoded separators (`%2f`/`%5c`/`%2e`) **rejected** so a `/safe/**` scope cannot authorize `/admin` after a proxy resolves the path (F10); (4) **caps**: the two-dimensional rule of §4 with identical `unit`; (5) **counterparties**: `E(c) ⊆ E(p)` and `p.deny ⊆ c.deny`; (6) **depth**: `c.depth ≤ p.depth − 1` (`p.depth == 0` forbids delegation); (7) **decay/witness**: `c.decay_max_sec ≤ p.decay_max_sec`, child witness quorum ≥ parent's.
+
+**The exported single-scope predicate MUST include the cap conjunct (F9).** A named "does child ⊑ parent" function that omits caps is a trap for a direct caller (a policy engine): it returns `true` for a child whose cap is hundreds of times broader. `scopeSubsumes`/`scope_subsumes` therefore evaluate (4) themselves; envelope verification calls only the total predicate plus allocation accounting.
 
 ## 6. Envelope-level check: budget conservation (v0.2)
 
@@ -60,9 +64,14 @@ Verify-Envelope-Attenuation(P, C):
     find first p in P (canonical sorted order) with c ⊑ p (§5) AND,
       if p.cap defined: c.cap.max_cumulative ≤ remaining[p]
     if none: REJECT(c)
-    remaining[p] -= c.cap.max_cumulative   (when p.cap defined)
+    remaining[p] -= debit(p.cap, c.cap)    (when p.cap defined)
   ACCEPT
+
+  where debit(pc, cc) = cc.max_cumulative × Duration(pc.window) / Duration(cc.window)
+        for timed windows (integer floor), else cc.max_cumulative.
 ```
+
+**Debit in the parent's window units (v0.2, round-4 audit F7 — MUST).** Subtracting a child's *raw* `max_cumulative` from a differently-windowed parent under-counts: 24 hourly children of a daily parent, each `max_cumulative = P/24`, individually pass §4 yet together permit 24 buckets × 24 sub-windows = a 24× daily expansion (worse across distinct resource paths). The debit MUST convert the child allocation into the parent window's units — a `utc_hour` child of a `utc_day` parent debits `max_cumulative × 24`, so one such child exhausts the parent. Even so, static accounting is not a substitute for the spend authorizer's atomic per-bucket ledger.
 
 **Soundness/completeness note (normative documentation duty):** this greedy first-match procedure is *sound* (never accepts an invalid set) but *incomplete* — with overlapping parent scopes, evaluation order can reject a child set that a different parent assignment would satisfy. v0 accepts this conservatism and mandates the canonical sorted evaluation order above so all implementations agree on which sets pass. (Full completeness is a bipartite-matching/flow problem; out of scope for v0.)
 

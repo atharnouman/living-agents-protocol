@@ -78,7 +78,13 @@ def _parse_res(res: str) -> Dict[str, Any]:
     if not m:
         raise ValueError(f"invalid resource URI: {res}")
     scheme, host, path = m.group(1), m.group(2), m.group(3) or ""
+    # F10: no dot-segments or encoded separators — a proxy/router would resolve them
+    # AFTER authorization, letting /safe/** authorize /admin. Fail closed.
+    if re.search(r"%2f|%5c|%2e", path, re.IGNORECASE):
+        raise ValueError("LAP_ERR_RES: encoded path separators not allowed")
     segments = [s for s in path.split("/") if s]
+    if "." in segments or ".." in segments:
+        raise ValueError("LAP_ERR_RES: dot-segments not allowed")
     wildcard = None
     if segments and segments[-1] == "**":
         wildcard = "**"
@@ -122,11 +128,36 @@ def path_subsumes(parent_res: str, child_res: str) -> bool:
     )
 
 
+VALID_WINDOWS = {"tx", "utc_hour", "utc_day", "epoch_total"}
+
+
+def cap_is_valid(cap: Optional[Dict[str, Any]]) -> bool:
+    """F8: caps must be non-negative ints, max_per_tx <= max_cumulative, real unit,
+    known window. Returns False (never raises) so callers fail closed."""
+    if not cap:
+        return True
+    for f in ("max_per_tx", "max_cumulative"):
+        v = cap.get(f)
+        if not isinstance(v, int) or isinstance(v, bool) or v < 0:
+            return False
+    if cap["max_per_tx"] > cap["max_cumulative"]:
+        return False
+    unit = cap.get("unit")
+    if not isinstance(unit, str) or not unit:
+        return False
+    if cap.get("window") not in VALID_WINDOWS:
+        return False
+    return True
+
+
 def cap_subsumes(parent_cap: Optional[Dict[str, Any]], child_cap: Optional[Dict[str, Any]]) -> bool:
-    """LIP-3 §4: Two-dimensional cap rule with integer floor arithmetic."""
+    """LIP-3 §4: Two-dimensional cap rule with integer floor arithmetic. Fails closed
+    on any invalid cap (F8)."""
     if not parent_cap:
         return True
     if not child_cap:
+        return False
+    if not cap_is_valid(parent_cap) or not cap_is_valid(child_cap):
         return False
     if child_cap.get("unit") != parent_cap.get("unit"):
         return False
@@ -137,7 +168,8 @@ def cap_subsumes(parent_cap: Optional[Dict[str, Any]], child_cap: Optional[Dict[
     cw = child_cap.get("window")
 
     if pw == "tx":
-        return child_cap.get("max_cumulative", 0) <= parent_cap.get("max_cumulative", 0)
+        # tightened (audit F7): a tx parent admits only a tx child
+        return cw == "tx" and child_cap.get("max_cumulative", 0) <= parent_cap.get("max_cumulative", 0)
 
     if pw == "epoch_total":
         return cw == "epoch_total" and child_cap.get("max_cumulative", 0) <= parent_cap.get("max_cumulative", 0)
@@ -153,6 +185,16 @@ def cap_subsumes(parent_cap: Optional[Dict[str, Any]], child_cap: Optional[Dict[
     # Integer floor division: guarantees identical verdicts across language ports
     scaled_max = (parent_cap.get("max_cumulative", 0) * c_sec) // p_sec
     return child_cap.get("max_cumulative", 0) <= scaled_max
+
+
+def _window_debit(parent_cap: Dict[str, Any], child_cap: Dict[str, Any]) -> int:
+    """F7: debit the child's allocation in the parent window's units, so a smaller-window
+    child cannot multiply the parent budget across sub-buckets."""
+    p_sec = WINDOW_SECONDS.get(parent_cap.get("window") or "")
+    c_sec = WINDOW_SECONDS.get(child_cap.get("window") or "")
+    if p_sec and c_sec:
+        return (child_cap.get("max_cumulative", 0) * p_sec) // c_sec
+    return child_cap.get("max_cumulative", 0)
 
 
 def _parse_counterparties(cp: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -202,6 +244,8 @@ def scope_subsumes(
         return False
     if not counterparty_subsumes(parent.get("cp"), child.get("cp")):
         return False
+    if not cap_subsumes(parent.get("cap"), child.get("cap")):  # F9: caps are a conjunct
+        return False
     if parent.get("depth") is not None:
         if child.get("depth") is None or child.get("depth") > parent.get("depth") - 1:
             return False
@@ -217,6 +261,9 @@ def verify_envelope_attenuation(
     registry: Dict[str, List[str]] = ACTION_REGISTRY_V0,
 ) -> Dict[str, Any]:
     """LIP-3 §6: Envelope-level verification with budget conservation and canonical ordering."""
+    for s in [*parent_scopes, *child_scopes]:
+        if not cap_is_valid(s.get("cap")):  # F8: loud schema failure before arithmetic
+            raise ValueError(f"LAP_ERR_CAP_SCHEMA: invalid cap in {jcs(s)}")
     parents = sorted(parent_scopes, key=lambda s: jcs(s))
     children = sorted(child_scopes, key=lambda s: jcs(s))
     remaining = [p.get("cap", {}).get("max_cumulative", float("inf")) for p in parents]
@@ -224,15 +271,13 @@ def verify_envelope_attenuation(
     for c in children:
         matched = False
         for i, p in enumerate(parents):
-            if not scope_subsumes(p, c, registry):
-                continue
-            if p.get("cap") and not cap_subsumes(p.get("cap"), c.get("cap")):
+            if not scope_subsumes(p, c, registry):  # now includes cap_subsumes (F9)
                 continue
             if p.get("cap"):
-                c_cum = c.get("cap", {}).get("max_cumulative", float("inf"))
-                if c_cum > remaining[i]:
+                debit = _window_debit(p["cap"], c.get("cap", {}))  # F7: parent-window units
+                if debit > remaining[i]:
                     continue
-                remaining[i] -= c_cum
+                remaining[i] -= debit
             matched = True
             break
         if not matched:

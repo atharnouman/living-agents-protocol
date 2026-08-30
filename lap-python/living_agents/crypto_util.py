@@ -91,7 +91,13 @@ def did_key_to_raw_public_key(did: str) -> bytes:
     """Parse did:key:z6Mk... to 32-byte raw Ed25519 public key."""
     if not did.startswith("did:key:z"):
         raise ValueError(f"unsupported DID method: {did}")
-    decoded = b58decode(did[len("did:key:z"):])
+    multibase = did[len("did:key:z"):]
+    # F12: bound input BEFORE base58 decoding — an ed25519 did:key multibase is ~46-48
+    # chars; iss/agent_did are attacker-controlled and decoded pre-auth, so an unbounded
+    # string would drive O(n^2) big-int work (CPU-exhaustion DoS).
+    if len(multibase) > 48:
+        raise ValueError("LAP_ERR_DID: multibase too long for ed25519 did:key")
+    decoded = b58decode(multibase)
     if len(decoded) < 2 or decoded[0] != 0xED or decoded[1] != 0x01:
         raise ValueError("not an ed25519-pub did:key (expected multicodec prefix 0xed, 0x01)")
     raw = decoded[2:]

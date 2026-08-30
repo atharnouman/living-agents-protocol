@@ -1,18 +1,18 @@
 # LAP — Bitcoin Anchors (OpenTimestamps)
 
-*Current stamping: **2026-08-29, release freeze v0.4.3** — submitted to 4 independent public calendar servers (a.pool.opentimestamps.org, b.pool.opentimestamps.org, a.pool.eternitywall.com, ots.btc.catallaxy.com). Each `.ots` proof sits beside its artifact. This is spec §19's pattern in miniature: calendars Merkle-aggregate thousands of digests into one Bitcoin transaction — no per-file fees, no personal data on-chain.*
+*Current stamping: **2026-08-30, v0.4.4 (round-4 security audit)** — 4 independent OpenTimestamps calendars. Superseded hashes remain valid for their own bytes in git history.*
 
 | SHA-256 | Artifact |
 |---|---|
-| `e055c5f1a69bc25275d872e0d5bcd0654c625c53532466a68f34f910d559b83d` | LAP-founding-document.md (v0.4.3, reconstructed 2026-08-30 after corruption incident #3 — the prior stamp anchored corrupted bytes and is void as priority evidence for the true text) |
+| `2c9bfacf64fe5780b5619fdd5c1912ccb90c1042dadbebb481f4fe928e964b47` | LAP-founding-document.md (v0.4.4) |
 | `acbc13ecfe9926bdbfb94d1db8a458dcd2e88c6b7f2e311017625fed041d2dca` | lip/LIP-1-agent-passport-draft.md |
 | `81747e9475cc9c4125934dea4f2d9d83854f1fdfe997ea879d2abf5c172e88ac` | lip/LIP-2-meet-draft.md |
-| `2b7f564a6f68dabf240d2d100136928341027da1985efd2fcdbc902e78c37ccb` | lip/LIP-3-scope-algebra-v0-draft.md (unchanged since first stamp) |
-| `205060cb70efbebdea6fc75baa7db621027f96d1cb355926fff8bbe59be24fa5` | lip/LIP-4-micro-core-draft.md |
+| `98e49cf19b988673723c3a7d051cefcd3c7dc0d94b90dfd492da72d990226f1f` | lip/LIP-3-scope-algebra-v0-draft.md (v0.2, F7/F8/F9/F10 hardened) |
+| `71506b659e94593c418699cb0011ec04a77f5049a3835af3d84406a4cb34da0d` | lip/LIP-4-micro-core-draft.md (F1/F2/F3/F4/F5/F6 hardened) |
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
 | `ec1312916569715dd020ac1f749870f5860a0d7e230f477e314dbad78692f124` | LAP-essay.md |
-| `a1016652f8c2600ccf0798eabc796981a99f12535b1276d8805483d5bb00c08a` | ../README.md (restamped 2026-08-30: 33/33 counts + lap-python row) |
+| `420670bae88bc14ee0994603327c1e829ef07cff77d8834d54ba9cb838bffaa6` | ../README.md (v0.4.4, Node 44 / Python 37) |
 
 ## Status and how to use
 

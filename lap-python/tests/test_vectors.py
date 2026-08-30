@@ -96,7 +96,7 @@ def test_microcore_request_signature_binds_body_and_passport(vectors):
     mc = vectors["micro_core"]
     assert verify_request_signature(
         passport_jwt=mc["passport_jwt"],
-        agent_did=vectors["keys"]["agent"]["did"],
+        sub=vectors["keys"]["agent"]["did"],
         signature_base=mc["rfc9421_signature_base"],
         signature_b64url=mc["request_signature_b64url"],
         request_body=mc["request_body"],
@@ -106,7 +106,7 @@ def test_microcore_request_signature_binds_body_and_passport(vectors):
 def test_microcore_invocation_checks(vectors):
     """Verify Micro-Core check_invocation enforces act, res, and cap."""
     mc = vectors["micro_core"]
-    payload = verify_microcore_passport(mc["passport_jwt"], now=1787000000)
+    payload = verify_microcore_passport(mc["passport_jwt"], expected_aud="did:web:tools.example.com", now=1787000000)
     env = payload["lap"]["envelope"]
 
     # Valid invocation within cap

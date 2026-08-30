@@ -46,7 +46,15 @@ On each request the server MUST, in order:
 3. Check the invoked operation matches `envelope.act` (registered-verb equality — no prefix logic in Micro-Core) and the target path matches `envelope.res` segment-wise.
 4. If `cap` present and the operation carries an amount: check `amount ≤ max_per_tx` in the exact `unit`. *(Micro-Core enforces per-transaction caps only; cumulative budgets require a spend authorizer — servers MUST treat any `max_cumulative` field as informational.)*
 5. For mutating requests: if `(sub, Idempotency-Key)` was already executed, return the cached receipt WITHOUT re-executing.
-6. On failure, return the matching error: `LAP_ERR_{PASSPORT_SIG | AUDIENCE | EXPIRED | REQ_SIG | DIGEST | ACT | RES | CAP | REPLAY}` with HTTP 401/403.
+6. On failure, return the matching error: `LAP_ERR_{PASSPORT_SIG | AUDIENCE | EXPIRED | REQ_SIG | SIG_PARAMS | DIGEST | ACT | RES | CAP | ISSUER | PROOF_CLASS | REPLAY}` with HTTP 401/403.
+
+**Hardening rules (v0.2, round-4 audit — all MUST):**
+- **Identity is not authorization (F1).** A verified passport proves who the agent is and that its envelope is intact; it does NOT grant authority over a server-owned resource. A server acting on its own accounts MUST map the verified `iss` (and its proof class) to a locally recognized tenant/account, and MUST refuse `self-asserted` passports for money/PII unless explicitly configured to accept them. Micro-Core with `self-asserted` is a single-operator self-serve wedge, not a cross-tenant authorizer.
+- **Holder-of-key (F2).** The `LAP-Signature` verification key MUST be derived from the *verified passport's* `sub`, never from a request-supplied identifier — otherwise a captured passport plus any attacker keypair passes.
+- **Covered components (F3).** The signature base MUST include `@method`, `@target-uri`, `content-digest`, `lap-passport-hash`, and `@signature-params`; the server MUST reconstruct method/target from the trusted transport and compare. A short ad-hoc base missing components MUST be rejected.
+- **Audience is mandatory (F4).** The server identity/expected audience is required at verification; a verifier with no configured audience MUST fail closed, not accept any audience.
+- **Capped operation, indeterminate amount ⇒ reject (F5).** If `cap` is present and the amount cannot be unambiguously bound from the invocation, the request MUST be refused. Middleware MUST bind positional and keyword arguments (never read only keywords).
+- **Idempotency (F6).** The `(sub, Idempotency-Key)` claim MUST be atomic and durable across replicas in production (e.g., a DB unique constraint or Redis `SET NX`); an in-process map is single-process only and MUST NOT be presented as production-ready.
 
 ## 3. The receipt (Normative)
 

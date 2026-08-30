@@ -75,13 +75,13 @@ def test_verify_envelope_decorator_cap_rejection(vectors):
         resource="mcp://tools.example.com/billing/pay",
         amount_param="amount",
         unit_param="unit",
+        expected_aud="did:web:tools.example.com",
     )
     def pay_tool(invoice: str, amount: int, unit: str):
         return {"status": "paid"}
 
     lap_auth = {
         "passport_jwt": mc["passport_jwt"],
-        "agent_did": vectors["keys"]["agent"]["did"],
         "signature_base": mc["rfc9421_signature_base"],
         "signature_b64url": mc["request_signature_b64url"],
         "request_body": mc["request_body"],
@@ -91,3 +91,30 @@ def test_verify_envelope_decorator_cap_rejection(vectors):
     # 6000 USD exceeds 5000 USD cap
     with pytest.raises(ValueError, match="LAP_ERR_CAP"):
         pay_tool(invoice="INV-1001", amount=6000, unit="USD", lap_auth=lap_auth)
+
+
+def test_verify_envelope_positional_args_cannot_bypass_cap(vectors):
+    """F5 regression: positional args must be bound so the cap still applies."""
+    mc = vectors["micro_core"]
+
+    @verify_envelope(
+        action="finance:pay",
+        resource="mcp://tools.example.com/billing/pay",
+        amount_param="amount",
+        unit_param="unit",
+        expected_aud="did:web:tools.example.com",
+    )
+    def pay_tool(invoice: str, amount: int, unit: str):
+        return {"status": "paid"}
+
+    lap_auth = {
+        "passport_jwt": mc["passport_jwt"],
+        "signature_base": mc["rfc9421_signature_base"],
+        "signature_b64url": mc["request_signature_b64url"],
+        "request_body": mc["request_body"],
+        "now": 1787000000,
+    }
+
+    # Positional 6000 must be caught by the cap, not silently skipped
+    with pytest.raises(ValueError, match="LAP_ERR_CAP"):
+        pay_tool("INV-1001", 6000, "USD", lap_auth=lap_auth)

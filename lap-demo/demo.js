@@ -208,7 +208,7 @@ function buy(order, qty, unitPrice, ticket) {
   const reqSig = b64urlEncode(cryptoSign(null, Buffer.from(base), alice.agent.privateKey));
   // ---- Bob's server-side LIP-4 invariant ----
   const claims = verifyMicroCorePassport(mcJwt, { expectedAud: bob.agent.did, now: T });
-  verifyRequestSignature({ passportJwt: mcJwt, agentDid: claims.sub, signatureBase: base, signatureB64url: reqSig, requestBody: body });
+  verifyRequestSignature({ passportJwt: mcJwt, sub: claims.sub, signatureBase: base, signatureB64url: reqSig, requestBody: body });
   checkInvocation(claims.lap.envelope, { act: "finance:pay", resource: "ap2://demo-rails/bob-store/pay", amount, unit: "USD" });
   const responseBody = jcs({ status: "paid", order, fulfilment: `F-${order}` });
   const receiptBase = `sha256:${sha256Hex(body)}:sha256:${sha256Hex(responseBody)}`;

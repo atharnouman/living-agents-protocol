@@ -2,7 +2,7 @@
 
 **The existence layer for always-on AI agents** — identity, authority, liveness, and accountability for agents that never log off.
 
-`spec v0.4.3 (draft)` · `33/33 tests` · `zero dependencies` · `4 adversarial review rounds, ~140 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.4 (draft)` · `Node 44/44 · Python 37/37` · `two interoperating implementations` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
 
 ---
 
@@ -13,7 +13,11 @@ LAP is a reference model plus wire mechanisms for that missing control plane —
 ## Try it in two minutes
 
 ```bash
-cd lap-reference && node --test test/     # 33 tests: crypto, algebra, Micro-Core, Merkle log, integrity canaries
+cd lap-reference && node --test test/     # 44 tests: crypto, algebra, Micro-Core, Merkle log, integrity + audit canaries
+```
+
+```bash
+cd lap-python && pip install -e ".[dev]" && python -m pytest tests -q   # 37 tests against the same vectors
 ```
 
 ```bash

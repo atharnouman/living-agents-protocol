@@ -50,8 +50,8 @@ test("REJECT: budget replication across sibling child scopes (conservation)", ()
   ];
   assert.equal(verifyEnvelopeAttenuation(parent, children).ok, false);
   const conserving = [
-    S({ res: "ap2://rails/stripe/a/**", cap: { max_per_tx: 500, max_cumulative: 300, unit: "USD", window: "utc_day" } }),
-    S({ res: "ap2://rails/stripe/b/**", cap: { max_per_tx: 500, max_cumulative: 200, unit: "USD", window: "utc_day" } }),
+    S({ res: "ap2://rails/stripe/a/**", cap: { max_per_tx: 300, max_cumulative: 300, unit: "USD", window: "utc_day" } }),
+    S({ res: "ap2://rails/stripe/b/**", cap: { max_per_tx: 200, max_cumulative: 200, unit: "USD", window: "utc_day" } }),
   ];
   assert.equal(verifyEnvelopeAttenuation(parent, conserving).ok, true);
 });

@@ -17,20 +17,30 @@ export const ACTION_REGISTRY_V0 = {
 };
 
 const WINDOW_SECONDS = { utc_hour: 3600, utc_day: 86400 };
+const VALID_WINDOWS = new Set(["tx", "utc_hour", "utc_day", "epoch_total"]);
 
 export function isRegisteredVerb(act, registry = ACTION_REGISTRY_V0) {
   if (act === "*") return true;
-  if (act in registry) return true;
+  if (Object.prototype.hasOwnProperty.call(registry, act)) return true;
   return Object.values(registry).some((children) => children.includes(act));
 }
 
+// LIP-3 §2. Handles both a bare verb string and a verb array (envelope `act[]`),
+// in exact parity with the Python port. Uses value-equality throughout — an array
+// argument must never be compared by reference (round-3 audit F-extra).
 export function dagSubsumes(parentAct, childAct, registry = ACTION_REGISTRY_V0) {
-  if (!isRegisteredVerb(parentAct, registry) || !isRegisteredVerb(childAct, registry)) return false;
-  if (parentAct === "*") return true;
-  if (parentAct === childAct) return true;
-  const direct = registry[parentAct] ?? [];
-  if (direct.includes(childAct)) return true;
-  return direct.some((mid) => dagSubsumes(mid, childAct, registry));
+  const pList = Array.isArray(parentAct) ? parentAct : [parentAct];
+  const cList = Array.isArray(childAct) ? childAct : [childAct];
+  if (![...pList, ...cList].every((a) => isRegisteredVerb(a, registry))) return false;
+  if (pList.includes("*")) return true;
+  const expand = (verb) => {
+    const out = new Set([verb]);
+    for (const ch of registry[verb] ?? []) for (const e of expand(ch)) out.add(e);
+    return out;
+  };
+  const allowed = new Set();
+  for (const p of pList) for (const e of expand(p)) allowed.add(e);
+  return cList.every((c) => allowed.has(c));
 }
 
 function parseRes(res) {
@@ -38,7 +48,13 @@ function parseRes(res) {
   const m = norm.match(/^([a-z0-9+.-]+):\/\/([^/]+)(\/.*)?$/);
   if (!m) throw new Error(`invalid resource URI: ${res}`);
   const [, scheme, host, path = ""] = m;
+  // F10: no dot-segments or encoded separators — a proxy/router would resolve them
+  // AFTER authorization, letting /safe/** authorize /admin. Fail closed.
+  if (/%2f|%5c|%2e/i.test(path)) throw new Error("LAP_ERR_RES: encoded path separators not allowed");
   const segments = path.split("/").filter((s) => s.length > 0);
+  if (segments.includes(".") || segments.includes("..")) {
+    throw new Error("LAP_ERR_RES: dot-segments not allowed");
+  }
   let wildcard = null;
   if (segments.at(-1) === "**") { wildcard = "**"; segments.pop(); }
   else if (segments.at(-1) === "*") { wildcard = "*"; segments.pop(); }
@@ -54,14 +70,11 @@ export function pathSubsumes(parentRes, childRes) {
   if (p.scheme !== c.scheme || p.host !== c.host) return false;
   const prefixMatches = p.segments.every((seg, i) => c.segments[i] === seg);
   if (p.wildcard === "**") {
-    // child must live at or below parent's prefix, segment-wise
     return c.segments.length >= p.segments.length && prefixMatches;
   }
   if (p.wildcard === "*") {
-    // exactly one extra segment, and the child must not widen with its own wildcard
     return c.segments.length === p.segments.length + 1 && prefixMatches && c.wildcard === null;
   }
-  // exact resource: child must be identical and add no wildcard
   return c.wildcard === null && c.segments.length === p.segments.length && prefixMatches;
 }
 
@@ -76,42 +89,57 @@ function effectiveSet(cp = {}) {
 export function counterpartySubsumes(parentCp, childCp) {
   const p = effectiveSet(parentCp);
   const c = effectiveSet(childCp);
-  // p.deny ⊆ c.deny (a child may never un-deny)
   for (const d of p.deny) if (!c.deny.has(d)) return false;
-  if (p.base === UNIVERSE) return true; // E(c) ⊆ Universe\p.deny given deny inheritance above
-  if (c.base === UNIVERSE) return false; // universe-sized child can't fit a finite parent
+  if (p.base === UNIVERSE) return true;
+  if (c.base === UNIVERSE) return false;
   for (const member of c.base) {
-    if (c.deny.has(member)) continue; // not effectively included
+    if (c.deny.has(member)) continue;
     if (!p.base.has(member) || p.deny.has(member)) return false;
   }
   return true;
 }
 
-// LIP-3 §4: two-dimensional cap rule (replaces the withdrawn v0.1 window lattice).
+// F8: caps must be non-negative safe integers with max_per_tx <= max_cumulative,
+// a real unit, and a known window. Returns false (never throws) so direct callers
+// of capSubsumes/scopeSubsumes fail closed; verifyEnvelopeAttenuation throws early.
+export function capIsValid(cap) {
+  if (cap === undefined || cap === null) return true;
+  for (const f of ["max_per_tx", "max_cumulative"]) {
+    const v = cap[f];
+    if (!Number.isSafeInteger(v) || v < 0) return false;
+  }
+  if (cap.max_per_tx > cap.max_cumulative) return false;
+  if (typeof cap.unit !== "string" || cap.unit.length === 0) return false;
+  if (!VALID_WINDOWS.has(cap.window)) return false;
+  return true;
+}
+
+// LIP-3 §4: two-dimensional cap rule. Fails closed on any invalid cap (F8).
 export function capSubsumes(parentCap, childCap) {
-  if (!parentCap) return true; // unconstrained parent: constraining child is fine
+  if (!parentCap) return true;
   if (!childCap) return false;
+  if (!capIsValid(parentCap) || !capIsValid(childCap)) return false;
   if (childCap.unit !== parentCap.unit) return false;
   if (childCap.max_per_tx > parentCap.max_per_tx) return false;
   const pw = parentCap.window;
   const cw = childCap.window;
   if (pw === "tx") {
-    // parent carries no time-rate constraint; any child window only constrains further
-    return childCap.max_cumulative <= parentCap.max_cumulative;
+    // tightened (audit F7): a tx parent admits only a tx child — a differently-based
+    // child window would rate-expand the parent's per-transaction budget.
+    return cw === "tx" && childCap.max_cumulative <= parentCap.max_cumulative;
   }
   if (pw === "epoch_total") {
-    // conservative v0: epoch_total attenuates only to epoch_total (LIP-3 §10 open item)
     return cw === "epoch_total" && childCap.max_cumulative <= parentCap.max_cumulative;
   }
-  // timed parent: child MUST be timed; equal or integer subdivision; proportional cumulative
   if (cw === "tx" || cw === "epoch_total") return false;
   const pSec = WINDOW_SECONDS[pw];
   const cSec = WINDOW_SECONDS[cw];
   if (!pSec || !cSec || cSec > pSec || pSec % cSec !== 0) return false;
-  // integer floor arithmetic: identical verdicts across language ports (no float jitter)
   return childCap.max_cumulative <= Math.floor((parentCap.max_cumulative * cSec) / pSec);
 }
 
+// F9: caps are a conjunct of the subset relation — a direct caller (a policy engine)
+// must never get a cap-blind "true". scopeSubsumes now includes capSubsumes.
 export function scopeSubsumes(parent, child, registry = ACTION_REGISTRY_V0) {
   return (
     parent.v === "lap-scope-v0" &&
@@ -119,14 +147,28 @@ export function scopeSubsumes(parent, child, registry = ACTION_REGISTRY_V0) {
     dagSubsumes(parent.act, child.act, registry) &&
     pathSubsumes(parent.res, child.res) &&
     counterpartySubsumes(parent.cp, child.cp) &&
+    capSubsumes(parent.cap, child.cap) &&
     (parent.depth === undefined || (child.depth !== undefined && child.depth <= parent.depth - 1)) &&
     (parent.decay_max_sec === undefined || (child.decay_max_sec !== undefined && child.decay_max_sec <= parent.decay_max_sec))
   );
 }
 
+// F7: debit the child's allocation expressed in the PARENT window's units, so a
+// smaller-window child cannot multiply the parent's budget across sub-buckets.
+// A utc_hour child of a utc_day parent debits max_cumulative × 24, not × 1.
+function windowDebit(parentCap, childCap) {
+  const pSec = WINDOW_SECONDS[parentCap.window];
+  const cSec = WINDOW_SECONDS[childCap.window];
+  if (pSec && cSec) return Math.floor((childCap.max_cumulative * pSec) / cSec);
+  return childCap.max_cumulative; // same-basis (tx/epoch_total): no scaling
+}
+
 // LIP-3 §6: envelope-level verification with budget conservation.
 // Deterministic: children and parents evaluated in canonical (JCS) sorted order.
 export function verifyEnvelopeAttenuation(parentScopes, childScopes, registry = ACTION_REGISTRY_V0) {
+  for (const s of [...parentScopes, ...childScopes]) {
+    if (!capIsValid(s.cap)) throw new Error(`LAP_ERR_CAP_SCHEMA: invalid cap in ${jcs(s)}`);
+  }
   const canonical = (arr) => [...arr].sort((a, b) => (jcs(a) < jcs(b) ? -1 : 1));
   const parents = canonical(parentScopes);
   const children = canonical(childScopes);
@@ -136,10 +178,10 @@ export function verifyEnvelopeAttenuation(parentScopes, childScopes, registry = 
     for (let i = 0; i < parents.length; i++) {
       const p = parents[i];
       if (!scopeSubsumes(p, c, registry)) continue;
-      if (p.cap && !capSubsumes(p.cap, c.cap)) continue;
       if (p.cap) {
-        if ((c.cap?.max_cumulative ?? Infinity) > remaining[i]) continue;
-        remaining[i] -= c.cap.max_cumulative;
+        const debit = windowDebit(p.cap, c.cap);
+        if (debit > remaining[i]) continue;
+        remaining[i] -= debit;
       }
       matched = true;
       break;

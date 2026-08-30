@@ -139,5 +139,28 @@ Tests updated to spec semantics + new adversarial asserts (widening reject, roll
 ## Corruption incident #4 (discovered 2026-08-30)
 `output/lap-project-brief.html` was overwritten with a version where every open-angle-bracket character became the letter "s" (tag names read like "s-title" run together) — AND the overwriting copy was *stale* (pre-dating the 33/33 count fix), indicating the external tool wrote back a mangled version of a file it had read earlier. Timing forensics: the damage landed between the count-fix edit and the `git add -A` of commit 78f5a67, so the corrupted file entered that commit and was the file the artifact republish read. Remediation: rebuilt clean from in-session content; artifact republished; a fourth canary signature (angle-swap) added to `test/integrity.test.js`. Bonus validation: on its next run the canary suite tripped on *this very log's* quoted corruption examples and on a literal NUL accidentally embedded in an earlier entry — both defanged; the watchdog demonstrably works, including against its own maintainers.
 
+## Round-4 security audit (GPT-5.6 Codex, 2026-08-30) — the first third-model, purely-hostile code audit
+
+Delivered to inbox as `2026-08-30_openai_redteam.md`; footprint clean (one inbox file, no other changes, canaries green — read-only rule respected). **Every headline finding was reproduced against the actual current code before any patch** — the discipline paid off twice: my first F7/F8 reproductions returned the *safe* result because I used an array-valued `act` (the LIP-4 envelope shape) which our Node `dagSubsumes` silently mishandled; switching to the string shape (the LIP-3 scope convention) showed the real exploits AND exposed a **sixth bug the report did not name** — Node/Python disagreed on `act` shape (value-vs-reference equality). Score given: 2/10. It is the strongest audit received; it found genuine fatal bugs three prior rounds and my own eyes missed.
+
+### MERGED — all 12 findings accepted (code fixes both ports unless noted); Node 44/44, Python 37/37
+- **F2 [FATAL]** holder-of-key: request-signature key now derives from the verified passport `sub`, never a caller DID. Regression: attacker-keypair repro now throws.
+- **F7 [FATAL]** 24× budget expansion: conservation debits in parent-window units; `tx` parent tightened to `tx` child. Repro (24 hourly children of a daily parent) now `ok:false`.
+- **F5 [FATAL]** FastMCP positional-arg cap bypass: decorator binds args via `inspect.signature`, derives `sub`, fails closed on indeterminate capped amount. New positional regression test.
+- **F8 [SERIOUS]** negative/malformed caps: `cap_is_valid` schema gate (non-negative ints, `max_per_tx ≤ max_cumulative`, safe-integer, known window) before arithmetic.
+- **F9 [SERIOUS]** cap-blind exported predicate: `scopeSubsumes`/`scope_subsumes` now include `capSubsumes`.
+- **F10 [SERIOUS]** path traversal: resource parser rejects dot-segments and `%2f`/`%5c`/`%2e`.
+- **F4 [SERIOUS]** fail-open audience: `expectedAud` mandatory (verifier fails closed without it).
+- **F3 [SERIOUS]** RFC 9421 ad-hoc base: mandatory covered components enforced; optional trusted method/target comparison.
+- **F1 [FATAL→doc+policy]** identity≠authorization: added `allowedIssuers`/`minProofClass` policy hooks + normative LIP-4 rules; Micro-Core documented as single-operator self-serve, not a cross-tenant authorizer.
+- **F6 [SERIOUS→ops]** idempotency race: atomic single-process `claim()`/`complete()`; distributed backing documented as a production MUST (not code-fixable in a reference).
+- **F12 [MODERATE]** base58 parsing DoS: did:key multibase length bounded pre-decode.
+- **F11 [FATAL→spec]** clone / single-writer: copyable keys mean concurrent clones can fork MEET/receipts; added as spec §22.8 (Identity Instance Lease vs fleet semantics — the deepest open problem), and softened the §17.1/L4 "one identity"/"pulse proves continuity" claims. Not code-patchable.
+- **F-extra (Claude, found while verifying)** Node `dagSubsumes` array-`act` reference-equality bug → both ports now normalize verbs to a list and compare by value; parity locked by a regression test.
+
+**Rejected: none.** F6 and F11 are reclassified as architecture/ops boundaries (honestly documented) rather than pure code bugs; the reviewer's own framing agrees. LIP-3 §4/§5/§6 and LIP-4 §2 gained normative hardening rules; spec → v0.4.4. Two `act`-shape/schema fixes required correcting sloppy pre-existing test data (a `max_per_tx > max_cumulative` fixture) rather than weakening a new rule.
+
+The pattern worth naming: three model families have now reviewed LAP (Claude, Gemini, GPT-5.6), and the deepest bugs came from the one with no prior context and a purely adversarial brief. The verify-before-patch rule caught a self-inflicted false-negative *and* surfaced an unreported bug in the same pass — evidence the process, not any single model, is what's producing the hardening.
+
 ## Pending triage
-*(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 fully processed)*
+*(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

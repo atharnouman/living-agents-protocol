@@ -62,7 +62,7 @@ test("micro-core request signature binds body and passport", () => {
   assert.ok(
     verifyRequestSignature({
       passportJwt: mc.passport_jwt,
-      agentDid: vectors.keys.agent.did,
+      sub: vectors.keys.agent.did,
       signatureBase: mc.rfc9421_signature_base,
       signatureB64url: mc.request_signature_b64url,
       requestBody: mc.request_body,
@@ -72,7 +72,7 @@ test("micro-core request signature binds body and passport", () => {
     () =>
       verifyRequestSignature({
         passportJwt: mc.passport_jwt,
-        agentDid: vectors.keys.agent.did,
+        sub: vectors.keys.agent.did,
         signatureBase: mc.rfc9421_signature_base,
         signatureB64url: mc.request_signature_b64url,
         requestBody: mc.request_body.replace("4200", "9900"),
@@ -82,7 +82,7 @@ test("micro-core request signature binds body and passport", () => {
 });
 
 test("micro-core invocation checks act/res/cap", () => {
-  const payload = verifyMicroCorePassport(vectors.micro_core.passport_jwt, { now: NOW });
+  const payload = verifyMicroCorePassport(vectors.micro_core.passport_jwt, { expectedAud: "did:web:tools.example.com", now: NOW });
   const env = payload.lap.envelope;
   assert.ok(checkInvocation(env, { act: "finance:pay", resource: "mcp://tools.example.com/billing/pay", amount: 4200, unit: "USD" }));
   assert.throws(() => checkInvocation(env, { act: "data:read", resource: "mcp://tools.example.com/billing/pay" }), /LAP_ERR_ACT/);
