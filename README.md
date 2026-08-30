@@ -21,10 +21,16 @@ cd lap-python && pip install -e ".[dev]" && python -m pytest tests -q   # 37 tes
 ```
 
 ```bash
-cd lap-demo && node demo.js && node replay.js
+cd lap-demo && node demo.js && node replay.js          # single-process narrative (191 checks; try --tamper)
 ```
 
-The demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**. Then run `node replay.js --tamper` and watch a single modified log entry get caught to the exact record.
+```bash
+cd lap-demo/net && node conductor.mjs && node verify.mjs  # two REAL processes over localhost HTTP
+```
+
+The single-process demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**; `node replay.js --tamper` catches a single modified log entry to the exact record.
+
+The [**networked demo**](lap-demo/net/) proves the same story across **two real OS processes exchanging signed JSON over real sockets** — the crash is a genuine `SIGKILL`, the suspension is caused by real `ECONNREFUSED`, and the seller reloads its identity on restart (same `did:key`, because a session binds to the passport, not the process).
 
 Requirements: Node ≥ 20. No `npm install` — the entire implementation uses platform built-ins.
 
