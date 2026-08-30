@@ -1,0 +1,189 @@
+<title>LAP Overnight Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{ --bg:#0b0f19; --chrome:#151b2b; --line:#232c42; --text:#c9d4e8; --dim:#5f6b86;
+    --green:#5bd6a0; --amber:#f0b04c; --cyan:#63b6e6; --pink:#e08bb0; --white:#eef3fb; }
+  *{box-sizing:border-box;margin:0}
+  body{background:#05070d;color:var(--text);
+    font-family:"IBM Plex Mono","Courier New",monospace;
+    -webkit-font-smoothing:antialiased;padding:1.5rem 1rem;min-height:100%}
+  .wrap{max-width:60rem;margin:0 auto}
+  .term{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .bar{background:var(--chrome);display:flex;align-items:center;gap:.5rem;padding:.6rem .8rem;
+    border-bottom:1px solid var(--line)}
+  .dot{width:.72rem;height:.72rem;border-radius:50%}
+  .r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+  .bar .name{color:var(--dim);font-size:.8rem;margin-left:.6rem;letter-spacing:.02em}
+  .screen{padding:1rem 1.15rem;height:26rem;overflow-y:auto;font-size:.82rem;line-height:1.62}
+  .screen::-webkit-scrollbar{width:8px}.screen::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+  .ln{white-space:pre-wrap;word-break:break-word;opacity:0;animation:in .18s ease forwards}
+  @keyframes in{to{opacity:1}}
+  .cmd{color:var(--white);font-weight:500}
+  .cmd .p{color:var(--green)}
+  .banner{color:var(--cyan);font-weight:600}
+  .step{color:var(--cyan)}
+  .ok{color:var(--green)}
+  .warn{color:var(--amber)}
+  .bullet{color:var(--text)}
+  .dimline{color:var(--dim)}
+  .cursor{display:inline-block;width:.55rem;height:1rem;background:var(--green);
+    vertical-align:text-bottom;animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+  .controls{display:flex;gap:.6rem;align-items:center;margin-top:.9rem;flex-wrap:wrap}
+  button{font-family:inherit;font-size:.8rem;background:var(--chrome);color:var(--text);
+    border:1px solid var(--line);border-radius:6px;padding:.45rem .9rem;cursor:pointer}
+  button:hover{border-color:var(--dim)}
+  button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+  .cap{color:var(--dim);font-size:.74rem;line-height:1.7;margin-top:.8rem;max-width:52rem}
+  .cap b{color:var(--text);font-weight:500}
+  @media (prefers-reduced-motion:reduce){.ln{animation:none;opacity:1}.cursor{animation:none}}
+</style>
+
+<div class="wrap">
+  <div class="term">
+    <div class="bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="name">lap-demo — two strangers' agents, overnight</span>
+    </div>
+    <div class="screen" id="screen" role="img" aria-label="Terminal playback of the Living Agents Protocol overnight demo: two agents complete a MEET handshake, transact under budget while both humans sleep, survive a mid-session crash via automatic authority suspension, and the morning replay verifies 191 signatures and hash chains."></div>
+  </div>
+  <div class="controls">
+    <button id="replay">↻ Replay</button>
+    <button id="speed">Speed: 1×</button>
+    <button id="skip">Skip to end</button>
+  </div>
+  <p class="cap"><b>What you're watching:</b> a faithful playback of the real output of <code>node demo.js &amp;&amp; node replay.js</code> (LAP v0.4.4) — every signature, Merkle proof, and hash chain in it is genuine Ed25519 cryptography, verified by the reference library's 44 tests. Line timings are reconstructed for readability. For the public launch, a live screen-capture of you running it adds the human authenticity a generated playback can't.</p>
+</div>
+
+<script>
+const RAW = [
+  {c:"cmd", t:"$ node demo.js"},
+  {t:""},
+  {t:"=== LAP OVERNIGHT DEMO — both humans asleep ==="},
+  {t:""},
+  {t:"  02:10:00Z  Alice's agent (Karachi) did:key:z6Mku9u4afUA5WdB…  |  Bob's agent (Berlin) did:key:z6MkkC36paCnqNaE…"},
+  {t:"  02:10:00Z  MEET step 1 — HAIL: passports exchanged"},
+  {t:"  02:10:02Z  MEET step 2 — PROVE: mutual verification"},
+  {t:"  02:10:02Z    passports verified; Merkle inclusion proofs checked against demo-atl-1 (root d4a3a65d8558…) → both VERIFIED"},
+  {t:"  02:10:04Z  MEET step 3 — CHARTER: commitment + reservation ticket (limits before disclosure)"},
+  {t:"  02:10:04Z    Bob verified Alice's authorizer-signed reservation: $50 locked, bound to Bob, expires 03:10:04Z — enforced at settlement, not just shown"},
+  {t:"  02:10:05Z  MEET step 4 — TUNE: transport agreed (lap-microcore-sim/1)"},
+  {t:"  02:10:07Z  MEET step 5 — BIND: interaction contract signed, full charters disclosed"},
+  {t:"  02:10:08Z  MEET step 6 — PULSE: presence contract (cadence 30s, witnesses: counterparty + independent Witness-1, per the ≥2 rule) → session ACTIVE"},
+  {t:""},
+  {t:"  02:10:38Z  ORDER A-001: 3 units @ $12 = $36 — passport✓ aud✓ signature✓ cap✓ reservation✓(6b77e282, consumed) → paid, dual receipts ($36/$100 daily)"},
+  {t:"  02:11:38Z  Bob's agent crashes (simulated) — first pulse missed", pause:700},
+  {t:"  02:12:08Z  ALICE: no pulse from Bob for 60s — confirmed by 2 independent observers (Alice + Witness-1, ≥2 rule) → DEGRADED, authority suspended prospectively"},
+  {t:"  02:12:08Z  ALICE: order A-002 is due — HELD: counterparty authority suspended (no human woken: within protocol)"},
+  {t:"  02:12:53Z  Bob's agent restarts — a restart is a nap, not a death (session resumes on passport, not process)"},
+  {t:"  02:12:53Z  ALICE: pulse resumed → authority restored automatically, releasing held order"},
+  {t:"  02:12:58Z  ALICE's authorizer issues a fresh reservation for the held order (ticket1 was single-use)"},
+  {t:"  02:12:58Z  ORDER A-002: 3 units @ $12 = $36 — passport✓ aud✓ signature✓ cap✓ reservation✓(1b0615e6, consumed) → paid, dual receipts ($72/$100 daily)"},
+  {t:"  02:13:28Z  Session closed with dual-signed, era-stamped receipt: 2 orders, $72 total, 1 suspension, 0 escalations"},
+  {t:""},
+  {t:"Transcripts written to lap-demo/out/ — run `node replay.js` for the morning report.", dim:true},
+  {t:""},
+  {c:"cmd", t:"$ node replay.js", pause:600},
+  {t:""},
+  {t:"=== LAP MORNING REPLAY ==="},
+  {t:""},
+  {t:"While you slept, your agent (Karachi) dealt with a stranger's agent (Berlin):"},
+  {t:""},
+  {t:"  • Order A-001: $36 — paid, dual-signed receipt verified"},
+  {t:"  • Order A-002: $36 — paid, dual-signed receipt verified"},
+  {t:"  • 02:12:08Z counterparty went dark → authority suspended (no spend possible)"},
+  {t:"  • Order A-002 was HELD during the outage — nothing moved without a live counterparty"},
+  {t:"  • Counterparty recovered → authority restored automatically; held order completed"},
+  {t:""},
+  {t:"  Spent $72 of your $100 daily cap. Escalations to you: 0."},
+  {t:"  Both agents' births verified in transparency log demo-atl-1 (root d4a3a65d8558…), principals GDPR-blinded."},
+  {t:""},
+  {t:"  Evidence verified this morning: 191 checks — ALL PASSED ✓", pause:500},
+  {t:"  Every signature real, every hash chain intact. This is what accountable autonomy looks like.", finale:true},
+];
+
+const screen = document.getElementById("screen");
+const btnReplay = document.getElementById("replay");
+const btnSpeed = document.getElementById("speed");
+const btnSkip = document.getElementById("skip");
+let speed = 1, timers = [], cursorEl = null;
+const speeds = [1, 2, 4];
+
+function classify(line){
+  const t = line.t;
+  if(line.c === "cmd") return "cmd";
+  if(t.startsWith("===")) return "banner";
+  if(line.dim) return "dimline";
+  if(line.finale) return "ok";
+  if(/DEGRADED|HELD|crashes|pulse missed|went dark|suspended|died|nap, not a death/.test(t)) return "warn";
+  if(/VERIFIED|✓|PASSED|→ paid|verified|restored|completed|ACTIVE/.test(t)) return "ok";
+  if(/MEET step/.test(t)) return "step";
+  if(/^\s*•/.test(t)) return "bullet";
+  return "";
+}
+
+function renderCmd(el, text){
+  // typewriter for command lines
+  const prompt = document.createElement("span");
+  prompt.className = "p"; prompt.textContent = "$ ";
+  el.appendChild(prompt);
+  const rest = text.slice(2);
+  return new Promise((res)=>{
+    let i = 0;
+    const iv = setInterval(()=>{
+      el.appendChild(document.createTextNode(rest[i] || ""));
+      if(++i >= rest.length){ clearInterval(iv); res(); }
+    }, 34/speed);
+    timers.push(iv);
+  });
+}
+
+function moveCursor(el){
+  if(cursorEl) cursorEl.remove();
+  cursorEl = document.createElement("span");
+  cursorEl.className = "cursor";
+  el.appendChild(cursorEl);
+}
+
+async function play(){
+  clearAll();
+  let delay = 0;
+  for(let idx=0; idx<RAW.length; idx++){
+    const line = RAW[idx];
+    const wait = delay;
+    await new Promise((res)=>{ const to=setTimeout(res, wait); timers.push(to); });
+    const el = document.createElement("div");
+    el.className = "ln " + classify(line);
+    screen.appendChild(el);
+    if(line.c === "cmd"){ await renderCmd(el, line.t); }
+    else { el.textContent = line.t === "" ? " " : line.t; }
+    moveCursor(el);
+    screen.scrollTop = screen.scrollHeight;
+    delay = (line.t === "" ? 90 : (line.c==="cmd"? 240 : 360)) / speed + (line.pause? line.pause/speed : 0);
+  }
+}
+
+function renderAll(){
+  clearAll();
+  for(const line of RAW){
+    const el = document.createElement("div");
+    el.className = "ln " + classify(line);
+    el.style.animation = "none"; el.style.opacity = 1;
+    if(line.c === "cmd"){ el.innerHTML = '<span class="p">$ </span>'; el.appendChild(document.createTextNode(line.t.slice(2))); }
+    else el.textContent = line.t === "" ? " " : line.t;
+    screen.appendChild(el);
+  }
+  screen.scrollTop = screen.scrollHeight;
+}
+
+function clearAll(){ timers.forEach(t=>{clearTimeout(t);clearInterval(t);}); timers=[]; if(cursorEl){cursorEl=null;} screen.innerHTML=""; }
+
+btnReplay.addEventListener("click", ()=>{ if(prefersReduced()) renderAll(); else play(); });
+btnSkip.addEventListener("click", ()=>{ clearAll(); renderAll(); });
+btnSpeed.addEventListener("click", ()=>{ speed = speeds[(speeds.indexOf(speed)+1)%speeds.length]; btnSpeed.textContent = "Speed: "+speed+"×"; });
+function prefersReduced(){ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+
+if(prefersReduced()) renderAll(); else play();
+</script>
