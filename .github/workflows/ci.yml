@@ -16,7 +16,13 @@ jobs:
       - name: Reference library (incl. integrity + audit canaries)
         run: cd lap-reference && node --test test/
       - name: Single-process demo + morning replay (191 checks) + tamper detection
-        run: cd lap-demo && node demo.js && node replay.js && (node replay.js --tamper; test $? -eq 1)
+        run: |
+          cd lap-demo
+          node demo.js
+          node replay.js
+          # --tamper is EXPECTED to exit non-zero (it detects a planted edit); under
+          # `bash -eo pipefail` that must be caught with `if`, not `; test $?`.
+          if node replay.js --tamper; then echo "FAIL: tamper was not detected"; exit 1; else echo "OK: tamper correctly detected (non-zero exit expected)"; fi
       - name: lap-git self-test
         run: node lap-git/lap-git.mjs selftest
 
