@@ -11,3 +11,5 @@ lap-demo/net/out/
 .idea/
 Thumbs.db
 .DS_Store
+.lap-git/keys.json
+.lap-git/

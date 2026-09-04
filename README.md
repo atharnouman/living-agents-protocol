@@ -52,6 +52,9 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log |
 | `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); 26 pytest tests against the same vectors |
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
+| `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
+| [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
+| [`CONFORMANCE.md`](CONFORMANCE.md) | Implement Micro-Core in an afternoon — a ten-check challenge against the shared test vectors |
 | `output/` | The founding document, LIP drafts, position paper, essay, project brief, roadmap |
 | `output/anchors/` | OpenTimestamps proofs — every release is hash-committed to Bitcoin |
 | `llm-collab/` | The multi-model review kit and the full improvements log (every merged, softened, and rejected finding, with reasons) |

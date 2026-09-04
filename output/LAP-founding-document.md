@@ -248,7 +248,7 @@ Standards win by adoption, not elegance — and lone-founder standards win only 
 - **File the mechanisms where distribution already lives**: Autonomy Envelope + decay → proposed **A2A extension**; lifecycle, Pulse, presence → **W3C AI Agent Protocol Community Group**; LAP Floor, trust states, compliance crosswalk → **OWASP agentic-security** orbit; flight-recorder format toward insurer-native efforts as a partner track; principal binding, lineage, era-stamped receipts → companion commentary to **ERC-8004** and AGNTCY identity work; watching the new **ITU** agent-trust focus group and **NIST** AI Agent Standards Initiative.
 - **The one product bet**: LAP Post — store-and-forward for sleeping agents.
 - **Deferred until ≥2 external parties implement unprompted**: legal entity, trademarks, certification operations, registries, liaison letters, "Alliance" branding (§10 held in reserve).
-- **Sequencing (v0.4, code-first)**: SDK + Micro-Core + demo first; essay second; arXiv third; filings last. Effort concentration ~60% on the MCP/A2A middleware route. Numeric pull/kill gates at day 60: ≥3 external PRs or one mainstream-framework plugin accepted → double down; no venue response in 45 days → archive that track.
+- **Sequencing (v0.4, code-first)**: SDK + Micro-Core + demo first; essay second; arXiv third; filings last. Effort concentration ~60% on the MCP/A2A middleware route. Numeric pull/kill gates at day 60: ≥3 external PRs or one mainstream-framework plugin accepted → double down; no venue response in 45 days → archive that track. **Signal quality rule (v0.4.6):** an implementation produced in response to the published conformance challenge is *solicited* and counts as a weaker signal than an *unsolicited* one; the gate records which is which, so the project never games its own metric.
 
 ---
 
@@ -422,6 +422,10 @@ It is **not** in scope for v0, for three honest reasons. (1) *Scope discipline*:
 
 **What would change this.** If constrained-device operators independently adopt LAP mechanisms, or the pulse/accountability layer finds demand in industrial deployments, `lap-constrained` becomes a fence amendment by the §12 ceremony. Neutrality is preserved so that the option stays cheap; it is not exercised on speculation.
 
+### 20.2 A binding that already exists: git (v0.4.6, experimental)
+
+The first non-HTTP binding is the most mundane and the most immediately felt: **commits.** `lap-git` ("Micro-Core for commits") carries a principal-signed passport in each commit whose `aud` is the repository, an envelope `{act: ["data:write"], res: ["git://<repo>/<path>/**", …]}` evaluated by the Scope Algebra against the staged paths *before* the commit exists, and an agent signature over the tree hash, first parent, passport hash, and changed paths — verifiable from the commit alone. It does not replace commit signing (Sigstore gitsign, GPG/SSH), in-toto attestations, or SLSA provenance, all of which answer *who signed*; it answers *which agent, under whose authority, within what scope*, and refuses the commit otherwise. It exists because this repository experienced exactly that failure (see `CASE-STUDY.md`). Same registry, same algebra, same passport profile — one protocol, another binding.
+
 ---
 
 ## 21. Glossary additions (round 4)
@@ -464,6 +468,8 @@ Until one is specified and implemented, deployments MUST treat concurrent-clone 
 ---
 
 ## 23. Changelog
+
+**v0.4.6 — 2026-08-30.** Launch content and the first non-HTTP binding. Added `CASE-STUDY.md` (the unattributed commit and the silent overwrites this repository itself suffered, mapped mechanism-by-mechanism to what LAP would have prevented — including our own process failures and balanced credit to the models involved). Added `CONFORMANCE.md`: a ten-check "implement Micro-Core in an afternoon" challenge against the shared vectors, scoped honestly to LIP-4 + LIP-1 verification. Added §20.2 and `lap-git/` — "Micro-Core for commits": passport per commit (`aud` = repository), path envelope enforced before the commit exists, agent signature over tree/parent/paths verifiable from the commit alone; prior art (gitsign, GPG/SSH, in-toto, SLSA) cited and the delta stated precisely; self-test demonstrates in-scope signing, out-of-scope refusal, unattributed detection, and tamper detection. §11 gains the signal-quality rule: solicited (challenge-driven) implementations count as a weaker adoption signal than unsolicited ones. This release is itself committed through `lap-git`.
 
 **v0.4.5 — 2026-08-30.** Added §20.1 (network and encoding neutrality): LAP is layer-agnostic by construction and this is now *demonstrated* — the networked demo runs unmodified over both IPv4 and IPv6 loopbacks (`--ipv6`). Added the normative IPv6 rule that resource matching is textual, so scopes MUST use RFC 5952 canonical form (bracketed per RFC 3986 §3.2.2); regression tests in both ports (Node 45/45, Python 38/38). Recorded the constrained-device/IoT profile as recognized-but-deliberately-deferred, with the prior art named (COSE, CWT, CoAP, ACE-OAuth, OSCORE, EDHOC, 802.1AR DevID, FIDO Device Onboard, Matter) and the three honest reasons for deferral, plus the trigger that would amend the fence. No new scope claimed: optionality preserved, implementation declined.
 
