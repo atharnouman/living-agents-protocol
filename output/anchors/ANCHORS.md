@@ -11,7 +11,7 @@
 | `71506b659e94593c418699cb0011ec04a77f5049a3835af3d84406a4cb34da0d` | lip/LIP-4-micro-core-draft.md (F1/F2/F3/F4/F5/F6 hardened) |
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
-| `ec1312916569715dd020ac1f749870f5860a0d7e230f477e314dbad78692f124` | LAP-essay.md |
+| `f4ba5d94d8e183b1e212fa2d82e19dfab628558f1f33c8c11a764487dedc6501` | LAP-essay.md (post-ready, live demo link) |
 | `6195141b98ab476931be63f705d5344befb58bd4eeb8464e3a3499d588be9766` | ../README.md (v0.4.6, live demo link) |
 
 ## Status and how to use

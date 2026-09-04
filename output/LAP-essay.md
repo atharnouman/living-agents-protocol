@@ -30,4 +30,4 @@ But I'll make one prediction with full confidence. The last three years standard
 
 Better to draw the map before the territory catches fire.
 
-*The position paper, full specification, demos, and code are at https://github.com/atharnouman/living-agents-protocol. I'm reachable at atharnouman@gmail.com — especially if you're implementing agent identity, lifecycle, or audit anywhere and want these ideas as extensions rather than another standard.*
+*The position paper, full specification, code are at https://github.com/atharnouman/living-agents-protocol, and the live demos at https://atharnouman.github.io/living-agents-protocol/. I'm reachable at atharnouman@gmail.com — especially if you're implementing agent identity, lifecycle, or audit anywhere and want these ideas as extensions rather than another standard.*
