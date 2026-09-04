@@ -2,7 +2,7 @@
 
 **The existence layer for always-on AI agents** — identity, authority, liveness, and accountability for agents that never log off.
 
-`spec v0.4.4 (draft)` · `Node 44/44 · Python 37/37` · `two interoperating implementations` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.5 (draft)` · `Node 45/45 · Python 38/38` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
 
 ---
 
@@ -13,11 +13,11 @@ LAP is a reference model plus wire mechanisms for that missing control plane —
 ## Try it in two minutes
 
 ```bash
-cd lap-reference && node --test test/     # 44 tests: crypto, algebra, Micro-Core, Merkle log, integrity + audit canaries
+cd lap-reference && node --test test/     # 45 tests: crypto, algebra, Micro-Core, Merkle log, integrity + audit canaries
 ```
 
 ```bash
-cd lap-python && pip install -e ".[dev]" && python -m pytest tests -q   # 37 tests against the same vectors
+cd lap-python && pip install -e ".[dev]" && python -m pytest tests -q   # 38 tests against the same vectors
 ```
 
 ```bash
@@ -30,7 +30,7 @@ cd lap-demo/net && node conductor.mjs && node verify.mjs  # two REAL processes o
 
 The single-process demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**; `node replay.js --tamper` catches a single modified log entry to the exact record.
 
-The [**networked demo**](lap-demo/net/) proves the same story across **two real OS processes exchanging signed JSON over real sockets** — the crash is a genuine `SIGKILL`, the suspension is caused by real `ECONNREFUSED`, and the seller reloads its identity on restart (same `did:key`, because a session binds to the passport, not the process). For a filmable run: `node conductor.mjs --present`. Media assets and a recording guide (terminal styling, a visual UI, an asciinema cast) are in [output/LAP-recording-playbook.md](output/LAP-recording-playbook.md).
+The [**networked demo**](lap-demo/net/) proves the same story across **two real OS processes exchanging signed JSON over real sockets** — the crash is a genuine `SIGKILL`, the suspension is caused by real `ECONNREFUSED`, and the seller reloads its identity on restart (same `did:key`, because a session binds to the passport, not the process). For a filmable run: `node conductor.mjs --present`; it runs unmodified over IPv6 with `--ipv6` (LAP never inspects the network layer — spec §20.1). Media assets and a recording guide (terminal styling, a visual UI, an asciinema cast) are in [output/LAP-recording-playbook.md](output/LAP-recording-playbook.md).
 
 Requirements: Node ≥ 20. No `npm install` — the entire implementation uses platform built-ins.
 

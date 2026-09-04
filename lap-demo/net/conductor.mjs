@@ -9,7 +9,11 @@ import { rmSync } from "node:fs";
 
 const PORT = 4107;
 const PRESENT = process.argv.includes("--present");   // filmable ~70s pacing
-const BUYER_ENV = PRESENT ? { ...process.env, LAP_PACE: "3400" } : process.env;
+// --ipv6 runs the identical demo over the IPv6 loopback, proving LAP is layer-agnostic
+const HOST = process.argv.includes("--ipv6") ? "::1" : "127.0.0.1";
+const AUTH = HOST.includes(":") ? `[${HOST}]` : HOST;
+const CHILD_ENV = { ...process.env, LAP_HOST: HOST };
+const BUYER_ENV = PRESENT ? { ...CHILD_ENV, LAP_PACE: "3400" } : CHILD_ENV;
 const RESTART_MS = PRESENT ? 3600 : 2000;
 // fresh identity per full run; it persists only across the mid-run restart
 try { rmSync(new URL("./out/seller-identity.json", import.meta.url)); } catch { /* first run */ }
@@ -18,7 +22,7 @@ const banner = (m) => console.log(`\n${C.cond}=== ${m} ===${C.reset}\n`);
 const note = (m) => console.log(`${C.cond}[conductor]  ${m}${C.reset}`);
 
 function spawnSeller() {
-  const p = spawn(process.execPath, ["seller.mjs", String(PORT)], { cwd: new URL(".", import.meta.url) });
+  const p = spawn(process.execPath, ["seller.mjs", String(PORT)], { cwd: new URL(".", import.meta.url), env: CHILD_ENV });
   readline.createInterface({ input: p.stdout }).on("line", (l) => console.log(`${C.seller}${l}${C.reset}`));
   readline.createInterface({ input: p.stderr }).on("line", (l) => console.log(`${C.seller}[seller:err] ${l}${C.reset}`));
   return p;
@@ -26,14 +30,14 @@ function spawnSeller() {
 
 async function waitReady() {
   for (let i = 0; i < 50; i++) {
-    try { const r = await fetch(`http://127.0.0.1:${PORT}/passport`); if (r.ok) return true; } catch { /* not up yet */ }
+    try { const r = await fetch(`http://${AUTH}:${PORT}/passport`); if (r.ok) return true; } catch { /* not up yet */ }
     await new Promise((r) => setTimeout(r, 120));
   }
   throw new Error("seller did not become ready");
 }
 
 async function main() {
-  banner("LAP OVERNIGHT DEMO — two real processes, both humans asleep");
+  banner(`LAP OVERNIGHT DEMO — two real processes over ${HOST.includes(":") ? "IPv6" : "IPv4"} (${AUTH}), both humans asleep`);
   let seller = spawnSeller();
   await waitReady();
   note("seller is live; starting buyer as a separate process\n");

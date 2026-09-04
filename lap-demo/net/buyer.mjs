@@ -10,7 +10,11 @@ import {
 import { signJws, verifyPassport } from "../../lap-reference/src/jws.js";
 
 const PORT = Number(process.argv[2] || 4102);
-const BASE = `http://127.0.0.1:${PORT}`;
+// Same code for IPv4 and IPv6 — LAP is layer-agnostic; only the URI authority differs
+// (IPv6 literals bracketed per RFC 3986 §3.2.2, lowercase per RFC 5952).
+const HOST = process.env.LAP_HOST || "127.0.0.1";
+const AUTH = HOST.includes(":") ? `[${HOST}]` : HOST;
+const BASE = `http://${AUTH}:${PORT}`;
 const NOW = 1787019000;
 const say = (m) => console.log(`[buyer]  ${m}`);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -55,7 +59,7 @@ async function pay(order, qty, unitPrice, sellerAgent) {
   const inner = jcs({ order, qty, unit_price: unitPrice, amount, unit: "USD" });
   const base = [
     '"@method": POST',
-    '"@target-uri": http://127.0.0.1:' + PORT + '/pay',
+    '"@target-uri": ' + BASE + '/pay',
     `"content-digest": sha-256=:${sha256B64url(inner)}:`,
     `"lap-passport-hash": sha256:${sha256Hex(mcJwt)}`,
     `"@signature-params": ("@method" "@target-uri" "content-digest" "lap-passport-hash");created=${NOW};keyid="${agent.did}#key-1"`,

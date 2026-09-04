@@ -13,6 +13,10 @@ import {
 } from "../../lap-reference/src/microcore.js";
 
 const PORT = Number(process.argv[2] || 4102);
+// LAP never inspects the network layer — the same code binds IPv4 or IPv6 unchanged.
+// IPv6 literals are bracketed in URIs (RFC 3986 §3.2.2) and lowercase (RFC 5952).
+const HOST = process.env.LAP_HOST || "127.0.0.1";
+const AUTH = HOST.includes(":") ? `[${HOST}]` : HOST;
 const NOW = () => 1787019000; // fixed sim clock shared with the buyer, for stable vectors
 const log = (m) => console.log(m);
 
@@ -48,8 +52,8 @@ const passport = signJws({
   constitution: { sha256: sha256Hex(constitution) },
   autonomy_level: 3,
   era: { track: "api-hosted", digest: sha256Hex(`provider:demo|model:demo-lm|${sha256Hex(constitution)}`) },
-  presence_contact: `http://127.0.0.1:${PORT}/pulse`,
-  revocation: `http://127.0.0.1:${PORT}/revocation`,
+  presence_contact: `http://${AUTH}:${PORT}/pulse`,
+  revocation: `http://${AUTH}:${PORT}/revocation`,
   iat: NOW(), exp: NOW() + 86400 * 365,
 }, principal.privateKey, principal.did + "#key-1");
 
@@ -112,4 +116,4 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => log(`[seller] listening on http://127.0.0.1:${PORT}  agent ${agent.did.slice(0, 22)}…  (identity ${reused ? "RELOADED — same DID across restart" : "created"})`));
+server.listen(PORT, HOST, () => log(`[seller] listening on http://${AUTH}:${PORT}  agent ${agent.did.slice(0, 22)}…  (identity ${reused ? "RELOADED — same DID across restart" : "created"})`));

@@ -4,6 +4,19 @@ import { dagSubsumes, pathSubsumes, capSubsumes, counterpartySubsumes, scopeSubs
 
 const S = (over = {}) => ({ v: "lap-scope-v0", act: "finance:pay", res: "ap2://rails/stripe/**", ...over });
 
+// LAP never inspects the network layer, so IPv4/IPv6 is transparent to the protocol.
+// The only place the address surfaces is inside resource URIs, where IPv6 literals are
+// bracketed (RFC 3986 §3.2.2). Host lowercasing already matches RFC 5952 canonical form.
+test("IPv6 literal resources: bracketed authority, case-folded, distinct from IPv4", () => {
+  assert.equal(pathSubsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:DB8::1]:4107/billing/pay"), true);
+  assert.equal(pathSubsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:db8::2]:4107/billing/pay"), false);
+  assert.equal(pathSubsumes("mcp://[::1]:4107/billing/**", "mcp://127.0.0.1:4107/billing/pay"), false);
+  assert.equal(pathSubsumes("http://[::1]:4107/pay", "http://[::1]:4107/pay"), true);
+  // Documented interop hazard: matching is TEXTUAL, so the expanded and compressed
+  // forms of the same address do not match. Scopes MUST use RFC 5952 canonical form.
+  assert.equal(pathSubsumes("mcp://[2001:db8:0:0:0:0:0:1]/x/**", "mcp://[2001:db8::1]/x/y"), false);
+});
+
 test("REJECT: sub-verb escalation via unregistered edge (compute:exec → :unconfined)", () => {
   assert.equal(dagSubsumes("compute:exec", "compute:exec:unconfined"), false);
   assert.equal(dagSubsumes("compute:exec", "compute:exec:sandboxed"), true); // registered edge

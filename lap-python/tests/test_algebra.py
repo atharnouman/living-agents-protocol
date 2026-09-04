@@ -24,6 +24,21 @@ def test_dag_subsumes():
     assert not dag_subsumes("madeup:verb", "madeup:verb")
 
 
+def test_ipv6_literal_resources():
+    """LAP is layer-agnostic: IPv4/IPv6 only surfaces inside resource URIs.
+
+    IPv6 literals are bracketed (RFC 3986 §3.2.2); host lowercasing already matches
+    RFC 5952 canonical form. Node parity — see algebra.test.js.
+    """
+    assert path_subsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:DB8::1]:4107/billing/pay")
+    assert not path_subsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:db8::2]:4107/billing/pay")
+    assert not path_subsumes("mcp://[::1]:4107/billing/**", "mcp://127.0.0.1:4107/billing/pay")
+    assert path_subsumes("http://[::1]:4107/pay", "http://[::1]:4107/pay")
+    # Documented interop hazard: matching is TEXTUAL — expanded and compressed forms of
+    # the same address do not match. Scopes MUST use RFC 5952 canonical form.
+    assert not path_subsumes("mcp://[2001:db8:0:0:0:0:0:1]/x/**", "mcp://[2001:db8::1]/x/y")
+
+
 def test_path_subsumes():
     """Resource matching: segment-tokenized, terminal-only wildcards, no widening."""
     import pytest

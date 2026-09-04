@@ -6,6 +6,8 @@ The single-process demo (`../demo.js`) tells the story in one script. **This ver
 cd lap-demo/net && node conductor.mjs      # then: node verify.mjs
 ```
 
+Runs unmodified over **IPv6** too — `node conductor.mjs --ipv6` binds the loopback `[::1]` and completes the identical handshake, payment, crash, and recovery. LAP never inspects the network layer, so IPv4/IPv6 is transparent (spec §20.1).
+
 What it does, and why each part is credible:
 
 | Beat | What's real |
