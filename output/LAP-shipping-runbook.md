@@ -19,7 +19,7 @@ Everything public uses **your personal identity only**: GitHub (personal account
 - **Clean:** no secrets or private-key files tracked; company domain appears nowhere; working tree committed via `lap-git`; local backup zip taken (`backups/`, git-ignored).
 - **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.6 / 45 / 38 / five rounds / ~150.
 - **Ready:** CI workflow, `SECURITY.md`, `CITATION.cff`, a `docs/` folder for GitHub Pages (visual demo, terminal playback, asciinema cast), the paper refreshed to v1.1-draft (clone problem as open problem #7, two implementations, lap-git, three-model acknowledgments) and rendered to print-ready HTML, the essay refreshed with the case-study hook.
-- **Placeholders that remain, on purpose:** `[REPO_URL]` in the essay and paper; `repository-code` absent from `CITATION.cff`; no CI badge in the README yet. All three resolve in **Phase 1A step 4** the moment the real URL exists — no guessed URLs anywhere in public files.
+- **Placeholders that remain, on purpose:** `https://github.com/atharnouman/living-agents-protocol` in the essay and paper; `repository-code` absent from `CITATION.cff`; no CI badge in the README yet. All three resolve in **Phase 1A step 4** the moment the real URL exists — no guessed URLs anywhere in public files.
 
 ---
 
@@ -37,7 +37,7 @@ Numbers/version sweep · unpublished-package fix (`pip install -e .`, no PyPI cl
 1. [YOU] Create the repo under your **personal** account (or a personal org). Suggested name: `living-agents-protocol`. Public; no auto-README.
 2. [YOU] Description + topics: Appendix A.5.
 3. [ME→YOU] I re-run the secret scan; you run the two push commands (B.1).
-4. [ME] **URL sweep** once the URL exists: replace `[REPO_URL]` in essay + paper, add `repository-code` to `CITATION.cff`, add the CI badge to the README (B.2), re-render the paper HTML, restamp, commit via `lap-git`, push.
+4. [ME] **URL sweep** once the URL exists: replace `https://github.com/atharnouman/living-agents-protocol` in essay + paper, add `repository-code` to `CITATION.cff`, add the CI badge to the README (B.2), re-render the paper HTML, restamp, commit via `lap-git`, push.
 5. [YOU] **Enable GitHub Pages** → Settings → Pages → Source: *Deploy from branch* → `main` / `/docs`. Within minutes `https://<user>.github.io/<repo>/` serves the demos. That URL becomes the "90-second demo" link.
 6. [YOU] Confirm CI went green on the first push (Actions tab). If a job is red, tell me before posting anything.
 
@@ -108,7 +108,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 >
 > The paper, *"The Living Agents Protocol: A Reference Model and Research Agenda for Persistent Autonomous Agents"* (attached), proposes a reference model plus implemented wire mechanisms for a gap current agent protocols (MCP, A2A) leave open: how a persistent agent proves who it is, whose authority it carries, whether it is alive, and what it did. It ships two interoperating open-source implementations, a runnable two-process demo, and an explicit open-problems section — including the ones we cannot yet solve.
 >
-> Repository: [REPO_URL]
+> Repository: https://github.com/atharnouman/living-agents-protocol
 >
 > If you're willing, arXiv's endorsement link is below; if not, no worries at all, and thank you for your time.
 >
@@ -126,11 +126,11 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 >
 > - Two interoperating libraries (Node, Python) that produce byte-identical signatures against shared test vectors.
 > - A demo where two strangers' agents meet, verify each other, transact under a budget, one *crashes*, the other's authority suspends automatically, a pending order is safely held, and on recovery it completes — then a morning replay re-verifies every signature. It runs as two real OS processes over real sockets; the crash is a real SIGKILL.
-> - `lap-git`: the same mechanisms applied to commits — a passport + path envelope enforced before a commit exists. It exists because AI agents working in this very repo made an unattributed, out-of-scope commit. Write-up, mistakes included: [REPO_URL]/blob/main/CASE-STUDY.md
+> - `lap-git`: the same mechanisms applied to commits — a passport + path envelope enforced before a commit exists. It exists because AI agents working in this very repo made an unattributed, out-of-scope commit. Write-up, mistakes included: https://github.com/atharnouman/living-agents-protocol/blob/main/CASE-STUDY.md
 >
 > Honest limits up front: registration is self-attested in the demo, the payment rail is mocked, and key custody / principal-proofing / the clone problem are documented open problems. Real Ed25519, real sockets, Apache-2.0 code / CC-BY spec.
 >
-> Repo: [REPO_URL] · Demo: [PAGES_URL]
+> Repo: https://github.com/atharnouman/living-agents-protocol · Demo: https://atharnouman.github.io/living-agents-protocol
 
 ### A.3 — LinkedIn
 > While building an open standard for always-on AI agents, the AI agents *building it* handed me the clearest argument for why it's needed: one made a commit under my name, with no record of which agent acted or whether it stayed in scope.
@@ -139,7 +139,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 >
 > The **Living Agents Protocol** is a small, open, implemented answer: a passport that says who an agent is and who's responsible, an envelope that bounds what it may do, and a signed record of what it did. There's a runnable demo (two agents transact overnight, one crashes, authority suspends automatically, the morning replay verifies everything) and a tool that applies it to git commits.
 >
-> v0 draft, honest about its open problems. Code Apache-2.0, spec CC-BY. Repo + demo: [REPO_URL]
+> v0 draft, honest about its open problems. Code Apache-2.0, spec CC-BY. Repo + demo: https://github.com/atharnouman/living-agents-protocol
 
 ### A.4 — X / Twitter thread
 > 1/ Agents got MCP (tools), A2A (each other), AP2 (payments). Nothing standardizes an agent's *existence*: who it is, who answers for it, what it may do alone, whether it's alive, what it did. The Living Agents Protocol is a small, implemented answer. 🧵
@@ -150,7 +150,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 >
 > 4/ Best part: the AI agents building the repo gave me the argument for it — one committed under my name, out of scope, with no record of which agent acted. So I built `lap-git`: a passport + path envelope enforced before a commit exists.
 >
-> 5/ v0 draft, one author, no consortium, honest about open problems (key custody, principal-proofing, the clone problem). Apache-2.0 / CC-BY. Repo + demo 👇 [REPO_URL]
+> 5/ v0 draft, one author, no consortium, honest about open problems (key custody, principal-proofing, the clone problem). Apache-2.0 / CC-BY. Repo + demo 👇 https://github.com/atharnouman/living-agents-protocol
 
 ### A.5 — GitHub description + topics
 > **Description:** An identity, authority, and lifecycle layer for always-on ("living") AI agents — reference model + implemented wire mechanisms. The existence layer under MCP/A2A.
@@ -158,7 +158,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 > **Topics:** `ai-agents` `agent-protocol` `mcp` `a2a` `did` `ed25519` `verifiable-credentials` `agent-identity` `accountability` `protocol` `zero-dependency`
 
 ### A.6 — W3C CG opener
-> Hi all — I've been working on the lifecycle/presence side of agent protocols: how a persistent agent proves it's alive, how authority decays when it goes dark, and how a restart isn't a new identity. It's a small implemented model (two interoperating libraries, a runnable two-process demo) that deliberately slots under MCP/A2A rather than competing. I'd value this group's read on the presence/pulse mechanism specifically — [REPO_URL]. Happy to write it up as a contribution if there's interest.
+> Hi all — I've been working on the lifecycle/presence side of agent protocols: how a persistent agent proves it's alive, how authority decays when it goes dark, and how a restart isn't a new identity. It's a small implemented model (two interoperating libraries, a runnable two-process demo) that deliberately slots under MCP/A2A rather than competing. I'd value this group's read on the presence/pulse mechanism specifically — https://github.com/atharnouman/living-agents-protocol. Happy to write it up as a contribution if there's interest.
 
 ---
 
@@ -168,14 +168,14 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 ```bash
 cd E:\LivingAIAgents
 git config user.email            # MUST print your personal address
-git remote add origin https://github.com/<USER>/<REPO>.git
+git remote add origin https://github.com/atharnouman/living-agents-protocol.git
 git branch -M main
 git push -u origin main
 ```
 
 **B.2 CI badge line for the README (I add it in the URL sweep)**
 ```
-[![ci](https://github.com/<USER>/<REPO>/actions/workflows/ci.yml/badge.svg)](https://github.com/<USER>/<REPO>/actions)
+[![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions)
 ```
 
 **B.3 Re-anchor (I run)**
@@ -213,7 +213,7 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 - **The clone/single-writer problem will be raised.** Good: it's open problem #7 in the paper and §22.8 in the spec. Point to it.
 - **Solicited ≠ demand.** Challenge-driven implementations are logged as weaker signals.
 - **Private state:** `.lap-git/`, `lap-demo/net/out/`, `lap-demo/out/`, `backups/` are git-ignored. Never `git add -f` them.
-- **No guessed URLs in public files.** `[REPO_URL]` placeholders resolve only in 1A.4.
+- **No guessed URLs in public files.** `https://github.com/atharnouman/living-agents-protocol` placeholders resolve only in 1A.4.
 - **Don't found the consortium.** Held in reserve until the tripwire.
 
 ## Appendix D — What I can and can't do

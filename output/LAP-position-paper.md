@@ -1,7 +1,7 @@
 # The Living Agents Protocol: A Reference Model and Research Agenda for Persistent Autonomous Agents
 
 **Athar Nouman**
-*Draft for arXiv (cs.MA; cross-list cs.CR), v1.1-draft — August 2026. Specification, code, and materials: [REPO_URL]. License: CC-BY-4.0 (text); reference code Apache-2.0.*
+*Draft for arXiv (cs.MA; cross-list cs.CR), v1.1-draft — August 2026. Specification, code, and materials: https://github.com/atharnouman/living-agents-protocol. License: CC-BY-4.0 (text); reference code Apache-2.0.*
 
 ## Abstract
 
