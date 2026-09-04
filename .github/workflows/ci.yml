@@ -1,0 +1,32 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  node:
+    name: Node reference + demos + lap-git
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Reference library (incl. integrity + audit canaries)
+        run: cd lap-reference && node --test test/
+      - name: Single-process demo + morning replay (191 checks) + tamper detection
+        run: cd lap-demo && node demo.js && node replay.js && (node replay.js --tamper; test $? -eq 1)
+      - name: lap-git self-test
+        run: node lap-git/lap-git.mjs selftest
+
+  python:
+    name: Python port (same vectors)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ./lap-python pytest
+      - run: python -m pytest lap-python/tests -q

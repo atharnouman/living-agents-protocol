@@ -11,11 +11,7 @@ Zero runtime dependencies beyond `cryptography`.
 
 ## Installation
 
-```bash
-pip install living-agents
-```
-
-Or install in development mode:
+Not yet published to PyPI — install from the repository:
 
 ```bash
 cd lap-python
@@ -75,4 +71,4 @@ The test suite validates byte-for-byte reproducibility against the shared determ
 
 ## License
 
-Apache-2.0. Part of the [Living Agents Protocol](https://github.com/LivingAIAgents/LAP) project.
+Apache-2.0. Part of the [Living Agents Protocol](../README.md) project.

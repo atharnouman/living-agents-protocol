@@ -1,0 +1,195 @@
+<title>LAP Overnight Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#080b13; --stage:#0d1220; --panel:#131a2b; --panel2:#0f1524; --line:#222c44;
+    --text:#e4ebf8; --dim:#7e8bab; --mono:#aebbdf;
+    --green:#43d9a3; --greenbg:rgba(67,217,163,.12);
+    --amber:#f2b44b; --amberbg:rgba(242,180,75,.13);
+    --red:#f06d6d; --redbg:rgba(240,109,109,.12);
+    --accent:#5f9bff; --accentbg:rgba(95,155,255,.12);
+    --ui:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif;
+    --code:"IBM Plex Mono","Courier New",monospace;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--ui);
+    -webkit-font-smoothing:antialiased;padding:1.4rem 1rem;min-height:100%}
+  .app{max-width:60rem;margin:0 auto}
+  .head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+  .title{font-weight:800;font-size:1.5rem;letter-spacing:-.01em}
+  .title .sub{display:block;font-weight:500;font-size:.86rem;color:var(--dim);margin-top:.15rem;letter-spacing:0}
+  .clock{font-family:var(--code);font-size:.9rem;color:var(--accent);
+    background:var(--accentbg);border:1px solid var(--line);border-radius:8px;padding:.35rem .7rem}
+  .stage{background:var(--stage);border:1px solid var(--line);border-radius:16px;padding:1.2rem;
+    display:grid;grid-template-columns:1fr 5.5rem 1fr;gap:.5rem;align-items:stretch}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem 1.05rem;
+    transition:opacity .4s, filter .4s, border-color .4s}
+  .panel.offline{opacity:.42;filter:grayscale(.5);border-color:var(--red)}
+  .phead{display:flex;align-items:center;gap:.6rem}
+  .ava{width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;
+    font-weight:700;font-size:1.05rem;color:#0a0e17;flex:none}
+  .ava.a{background:linear-gradient(135deg,#7db4ff,#5f9bff)}
+  .ava.b{background:linear-gradient(135deg,#f2b44b,#e79a2e)}
+  .pname{font-weight:700;font-size:1rem}
+  .prole{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em}
+  .did{font-family:var(--code);font-size:.72rem;color:var(--mono);margin-top:.7rem;
+    background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:.4rem .55rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .badge{display:inline-flex;align-items:center;gap:.4rem;font-weight:600;font-size:.76rem;
+    border-radius:999px;padding:.28rem .7rem;margin-top:.8rem;border:1px solid transparent;transition:.35s}
+  .badge .d{width:.5rem;height:.5rem;border-radius:50%}
+  .b-ver{color:var(--green);background:var(--greenbg);border-color:rgba(67,217,163,.35)}
+  .b-ver .d{background:var(--green)}
+  .b-deg{color:var(--amber);background:var(--amberbg);border-color:rgba(242,180,75,.4)}
+  .b-deg .d{background:var(--amber);animation:pulse 1s infinite}
+  .b-off{color:var(--red);background:var(--redbg);border-color:rgba(240,109,109,.4)}
+  .b-off .d{background:var(--red)}
+  @keyframes pulse{50%{opacity:.3}}
+  .meter{margin-top:.85rem}
+  .meter .lab{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);margin-bottom:.3rem}
+  .meter .bar{height:.5rem;background:var(--panel2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+  .meter .fill{height:100%;width:0;background:linear-gradient(90deg,#43d9a3,#5f9bff);transition:width .7s ease}
+  .link{position:relative;display:grid;place-items:center}
+  .wire{width:100%;height:2px;background:var(--line);position:relative;border-radius:2px}
+  .wire.broken{background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 12px)}
+  .wire.live{background:linear-gradient(90deg,var(--line),var(--accent),var(--line))}
+  .flow{position:absolute;top:-.62rem;font-family:var(--code);font-size:.68rem;font-weight:600;
+    padding:.12rem .4rem;border-radius:6px;white-space:nowrap;opacity:0;transform:translateX(0)}
+  .orders{display:flex;gap:.6rem;margin:1rem 0 .2rem;flex-wrap:wrap}
+  .chip{font-family:var(--code);font-size:.76rem;border:1px solid var(--line);border-radius:8px;
+    padding:.35rem .7rem;color:var(--dim);display:flex;align-items:center;gap:.45rem;transition:.35s}
+  .chip.paid{color:var(--green);border-color:rgba(67,217,163,.35);background:var(--greenbg)}
+  .chip.held{color:var(--amber);border-color:rgba(242,180,75,.4);background:var(--amberbg)}
+  .log{background:var(--stage);border:1px solid var(--line);border-radius:14px;padding:.8rem 1rem;margin-top:1rem;
+    height:12.5rem;overflow:hidden;display:flex;flex-direction:column;gap:.35rem;justify-content:flex-end}
+  .row{display:flex;gap:.6rem;align-items:flex-start;font-size:.85rem;line-height:1.4;opacity:0;
+    animation:in .3s ease forwards}
+  @keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .row .t{font-family:var(--code);font-size:.72rem;color:var(--dim);flex:none;padding-top:.05rem;width:3.4rem}
+  .row .m .k{font-weight:600}
+  .row.ok .m .k{color:var(--green)} .row.warn .m .k{color:var(--amber)} .row.info .m .k{color:var(--accent)}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:1rem;flex-wrap:wrap}
+  .verified{display:inline-flex;align-items:center;gap:.5rem;font-weight:700;font-size:.9rem;color:var(--green);
+    background:var(--greenbg);border:1px solid rgba(67,217,163,.35);border-radius:10px;padding:.5rem .9rem;opacity:0;transition:opacity .5s}
+  .verified.show{opacity:1}
+  .note{font-size:.72rem;color:var(--dim);max-width:34rem;line-height:1.6}
+  .controls{display:flex;gap:.6rem;margin-top:.9rem}
+  button{font-family:var(--ui);font-weight:500;font-size:.82rem;background:var(--panel);color:var(--text);
+    border:1px solid var(--line);border-radius:8px;padding:.5rem 1rem;cursor:pointer}
+  button:hover{border-color:var(--accent)}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (max-width:640px){.stage{grid-template-columns:1fr}.link{height:2.5rem}}
+</style>
+
+<div class="app">
+  <div class="head">
+    <div class="title">Living Agents Protocol
+      <span class="sub">overnight run — two strangers' agents transact while both humans sleep</span>
+    </div>
+    <div class="clock" id="clock">02:10:00Z</div>
+  </div>
+
+  <div class="stage">
+    <div class="panel" id="pA">
+      <div class="phead"><div class="ava a">A</div><div><div class="pname">Alice's agent</div><div class="prole">buyer</div></div></div>
+      <div class="did">did:key:z6Mkpzd6yRwai5KHAT…</div>
+      <div class="badge b-ver" id="badgeA"><span class="d"></span><span id="badgeAt">VERIFIED</span></div>
+      <div class="meter"><div class="lab"><span>daily budget</span><span id="spent">$0 / $100</span></div>
+        <div class="bar"><div class="fill" id="fill"></div></div></div>
+    </div>
+
+    <div class="link"><div class="wire" id="wire"></div><div class="flow" id="flow"></div></div>
+
+    <div class="panel" id="pB">
+      <div class="phead"><div class="ava b">B</div><div><div class="pname">Bob's agent</div><div class="prole">seller</div></div></div>
+      <div class="did">did:key:z6Mkob25wy2TLv29Us…</div>
+      <div class="badge b-ver" id="badgeB"><span class="d"></span><span id="badgeBt">VERIFIED</span></div>
+      <div class="meter"><div class="lab"><span>server</span><span id="srv">listening · :4107</span></div>
+        <div class="bar"><div class="fill" id="srvfill" style="width:100%;background:linear-gradient(90deg,#f2b44b,#e79a2e)"></div></div></div>
+    </div>
+  </div>
+
+  <div class="orders">
+    <div class="chip" id="oA1"><span>◻</span> ORDER A-001 · $36</div>
+    <div class="chip" id="oA2"><span>◻</span> ORDER A-002 · $36</div>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <div class="foot">
+    <div class="verified" id="verified">✓ Morning replay — every receipt signature verified</div>
+    <div class="note"><b>Real cryptography</b> (Ed25519), real localhost sockets, a real process crash and recovery. Registration self-attested and the payment rail mocked for the demo; everything else is genuine. A visual rendering of <code>lap-demo/net</code>.</div>
+  </div>
+  <div class="controls"><button id="replay">↻ Replay</button><button id="speed">Speed: 1×</button></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const wire = $("wire"), flow = $("flow"), log = $("log");
+let speed = 1, running = false, timers = [];
+const sleep = (ms) => new Promise((r) => { const t = setTimeout(r, ms / speed); timers.push(t); });
+function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+
+function setClock(t){ $("clock").textContent = t; }
+function badge(el, txtEl, cls, txt){ el.className = "badge " + cls; $(txtEl).textContent = txt; }
+function addRow(kind, time, key, rest){
+  const row = document.createElement("div"); row.className = "row " + kind;
+  row.innerHTML = `<span class="t">${time}</span><span class="m"><span class="k">${key}</span> ${rest}</span>`;
+  log.appendChild(row);
+  while (log.children.length > 8) log.removeChild(log.firstChild);
+}
+async function pulse(dir, label, color){
+  flow.textContent = label;
+  flow.style.color = color; flow.style.background = "var(--panel)"; flow.style.border = "1px solid var(--line)";
+  flow.style.transition = "none";
+  flow.style.left = dir === "AB" ? "2%" : "auto"; flow.style.right = dir === "AB" ? "auto" : "2%";
+  flow.style.transform = "translateX(0)"; flow.style.opacity = "1";
+  wire.className = "wire live";
+  await sleep(30);
+  flow.style.transition = `transform ${520 / speed}ms ease, opacity .3s`;
+  flow.style.transform = dir === "AB" ? "translateX(220%)" : "translateX(-220%)";
+  await sleep(560);
+  flow.style.opacity = "0"; wire.className = "wire";
+  await sleep(120);
+}
+
+const SCENES = [
+  async () => { setClock("02:10:00Z"); addRow("info","02:10:00","MEET · HAIL/PROVE","— fetch + verify passports"); await pulse("AB","passport →","var(--accent)"); await pulse("BA","← passport","var(--accent)"); addRow("ok","02:10:02","VERIFIED","— both Ed25519 signatures check out"); },
+  async () => { setClock("02:10:04Z"); addRow("info","02:10:04","CHARTER","— reservation $50 locked, disclosed before transacting"); await sleep(700); },
+  async () => { setClock("02:10:07Z"); addRow("info","02:10:07","BIND","— interaction contract dual-signed → session ACTIVE"); await pulse("AB","contract →","var(--accent)"); await pulse("BA","← countersig","var(--accent)"); },
+  async () => { setClock("02:10:38Z"); await pulse("AB","pay $36 →","var(--green)"); $("fill").style.width = "36%"; $("spent").textContent = "$36 / $100"; $("oA1").className = "chip paid"; $("oA1").innerHTML = "<span>✓</span> ORDER A-001 · $36 paid"; addRow("ok","02:10:38","ORDER A-001","$36 over HTTP — receipt signature ✓"); await sleep(500); },
+  async () => { setClock("02:11:38Z"); $("pB").classList.add("offline"); badge($("badgeB"),"badgeBt","b-off","OFFLINE"); $("srv").textContent = "crashed"; wire.className = "wire broken"; addRow("warn","02:11:38","SELLER CRASH","— process killed (SIGKILL); connection refused"); await sleep(900); },
+  async () => { setClock("02:12:08Z"); badge($("badgeA"),"badgeAt","b-deg","DEGRADED"); addRow("warn","02:12:08","SUSPENDED","— no pulse ×2 → authority suspended prospectively"); await sleep(700); $("oA2").className = "chip held"; $("oA2").innerHTML = "<span>⏸</span> ORDER A-002 · HELD"; addRow("warn","02:12:08","ORDER A-002 HELD","— no live counterparty, nothing moves (no human woken)"); await sleep(900); },
+  async () => { setClock("02:12:53Z"); $("pB").classList.remove("offline"); badge($("badgeB"),"badgeBt","b-ver","VERIFIED"); $("srv").textContent = "listening · :4107"; wire.className = "wire"; addRow("ok","02:12:53","SELLER RESTART","— same did:key reloaded (a restart is a nap, not a death)"); await sleep(700); },
+  async () => { setClock("02:12:58Z"); badge($("badgeA"),"badgeAt","b-ver","VERIFIED"); addRow("ok","02:12:58","RESTORED","— pulse resumed → authority restored automatically"); await pulse("AB","pay $36 →","var(--green)"); $("fill").style.width = "72%"; $("spent").textContent = "$72 / $100"; $("oA2").className = "chip paid"; $("oA2").innerHTML = "<span>✓</span> ORDER A-002 · $36 paid"; addRow("ok","02:12:58","ORDER A-002","$36 over HTTP — receipt signature ✓"); await sleep(600); },
+  async () => { setClock("02:13:28Z"); addRow("ok","02:13:28","SESSION CLOSED","— 2 orders, $72, 1 suspension, 0 escalations"); $("verified").classList.add("show"); },
+];
+
+function reset(){
+  clearTimers(); log.innerHTML = ""; running = false;
+  $("pB").classList.remove("offline"); wire.className = "wire";
+  badge($("badgeA"),"badgeAt","b-ver","VERIFIED"); badge($("badgeB"),"badgeBt","b-ver","VERIFIED");
+  $("fill").style.width = "0"; $("spent").textContent = "$0 / $100"; $("srv").textContent = "listening · :4107";
+  $("oA1").className = "chip"; $("oA1").innerHTML = "<span>◻</span> ORDER A-001 · $36";
+  $("oA2").className = "chip"; $("oA2").innerHTML = "<span>◻</span> ORDER A-002 · $36";
+  $("verified").classList.remove("show"); setClock("02:10:00Z");
+}
+function finalState(){
+  reset(); $("fill").style.width = "72%"; $("spent").textContent = "$72 / $100";
+  $("oA1").className = "chip paid"; $("oA1").innerHTML = "<span>✓</span> ORDER A-001 · $36 paid";
+  $("oA2").className = "chip paid"; $("oA2").innerHTML = "<span>✓</span> ORDER A-002 · $36 paid";
+  addRow("ok","02:13:28","SESSION CLOSED","— 2 orders, $72, 1 suspension, 0 escalations. Receipts verified ✓");
+  $("verified").classList.add("show"); setClock("02:13:28Z");
+}
+async function run(){
+  if (running) return; reset(); running = true;
+  for (const scene of SCENES){ if (!running) return; await scene(); await sleep(650); }
+  running = false;
+}
+function reduced(){ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+
+$("replay").addEventListener("click", () => reduced() ? finalState() : run());
+$("speed").addEventListener("click", () => { speed = speed === 1 ? 1.6 : speed === 1.6 ? 2.4 : 1; $("speed").textContent = "Speed: " + speed + "×"; });
+if (reduced()) finalState(); else run();
+</script>

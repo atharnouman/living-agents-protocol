@@ -4,7 +4,7 @@
 
 | SHA-256 | Artifact |
 |---|---|
-| `11097b1250ed640ce1f9f5e098432b60b9c2243d6841e51b38ce34337a3439f0` | LAP-founding-document.md (v0.4.6) |
+| `e5f6a9d8cf0427340c6c3d1885531f5cf6acfaf9e9c9a3b6b61c17bf769bfb0b` | LAP-founding-document.md (v0.4.6, publication-readiness sweep) |
 | `acbc13ecfe9926bdbfb94d1db8a458dcd2e88c6b7f2e311017625fed041d2dca` | lip/LIP-1-agent-passport-draft.md |
 | `81747e9475cc9c4125934dea4f2d9d83854f1fdfe997ea879d2abf5c172e88ac` | lip/LIP-2-meet-draft.md |
 | `98e49cf19b988673723c3a7d051cefcd3c7dc0d94b90dfd492da72d990226f1f` | lip/LIP-3-scope-algebra-v0-draft.md (v0.2, F7/F8/F9/F10 hardened) |
@@ -12,7 +12,7 @@
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
 | `ec1312916569715dd020ac1f749870f5860a0d7e230f477e314dbad78692f124` | LAP-essay.md |
-| `ddc1848342be26b12bac223fe4ac6b526f35fb13ff23b4f971ef412e0fd310cf` | ../README.md (v0.4.6: case study, conformance challenge, lap-git) |
+| `9d1445b3efc49b5a387c867475d40a17fa2462207fab2c44589e85efa03c691d` | ../README.md (v0.4.6, publication-readiness sweep) |
 
 ## Status and how to use
 

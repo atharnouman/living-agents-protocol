@@ -2,7 +2,7 @@
 
 **The existence layer for always-on AI agents** — identity, authority, liveness, and accountability for agents that never log off.
 
-`spec v0.4.5 (draft)` · `Node 45/45 · Python 38/38` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.6 (draft)` · `Node 45/45 · Python 38/38` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
 
 ---
 
@@ -50,7 +50,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | Path | Contents |
 |---|---|
 | `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log |
-| `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); 26 pytest tests against the same vectors |
+| `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); 38 pytest tests against the same vectors |
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
@@ -61,7 +61,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 
 ## How this was built — and why that's part of the point
 
-The spec was drafted with Claude (Anthropic) as co-designer, then attacked across **four structured adversarial review rounds** including external reviews by Gemini (Google) under a fixed kit: every finding verified before merging (several reviewer-proposed fixes were themselves caught introducing bugs), duplicates deduplicated, and every rejection logged with its reason in [`llm-collab/IMPROVEMENTS-LOG.md`](llm-collab/IMPROVEMENTS-LOG.md). We believe this is among the first protocol specifications hardened by cross-model adversarial review with a public audit trail — which is fitting, because *accountable human-plus-AI engineering* is what the protocol itself is for.
+The spec was drafted with Claude (Anthropic) as co-designer, then attacked across **five structured adversarial review rounds** — including external reviews by Gemini (Google) under a fixed kit and a purely hostile security audit by GPT-5.6 (OpenAI): every finding verified before merging (several reviewer-proposed fixes were themselves caught introducing bugs), duplicates deduplicated, and every rejection logged with its reason in [`llm-collab/IMPROVEMENTS-LOG.md`](llm-collab/IMPROVEMENTS-LOG.md). We believe this is among the first protocol specifications hardened by cross-model adversarial review with a public audit trail — which is fitting, because *accountable human-plus-AI engineering* is what the protocol itself is for.
 
 **Honest status**: this is a v0 draft by one author. There is no consortium, no certification program, and no claim that the stranger-agent economy is imminent — the [position paper](output/LAP-position-paper.md) states the open problems (key custody, principal proofing, scope-vocabulary governance) as plainly as the contributions. Several mechanisms pay their way in single-operator deployments today; the rest is a bet on where always-on agents are heading, with the history of FIPA, UDDI, and P3P studied rather than repeated.
 

@@ -2,7 +2,7 @@
 
 **Identity, authority, and lifecycle for always-on ("living") AI agents — an open reference model and research agenda.**
 
-*Founding document — draft v0.4.3, 2026-08-29 (full revision history in §23; renamed from AEON to the Living Agents Protocol on 2026-08-28 by author decision; reconstructed 2026-08-29 after external-tool file corruption — see IMPROVEMENTS-LOG incident notes). Author: Athar Nouman (with Claude; external review contributions from Gemini). License intent: CC-BY-4.0 (spec text), Apache-2.0 (code).*
+*Founding document — draft v0.4.6, 2026-08-30 (full revision history in §23; renamed from AEON to the Living Agents Protocol on 2026-08-28 by author decision; reconstructed 2026-08-29 after external-tool file corruption — see IMPROVEMENTS-LOG incident notes). Author: Athar Nouman (with Claude; external review contributions from Gemini). License intent: CC-BY-4.0 (spec text), Apache-2.0 (code).*
 
 ---
 
@@ -581,4 +581,4 @@ Unprofitable miners switch off because a rational operator intervenes; an autono
 
 ---
 
-*Shipped 2026-08-29: **LIP-1** (Agent Passport & Genesis), **LIP-2** (MEET — transcript-hash state machine, reservation tickets, fair-exchange closure, STH gossip), **LIP-3 v0.2** (Scope Algebra, corrected per §25.1), **LIP-4** (Micro-Core, hardened per §25.2) — all in output/lip/ with deterministic Ed25519 test vectors — and the **zero-dependency reference library** (lap-reference/, Node ≥20, 33/33 tests green incl. repository-integrity canaries, Python↔JS canonical-form interop proven). Next: the overnight demo film, then essay + paper publication per §24.6 code-first sequencing.*
+*Shipped 2026-08-29: **LIP-1** (Agent Passport & Genesis), **LIP-2** (MEET — transcript-hash state machine, reservation tickets, fair-exchange closure, STH gossip), **LIP-3 v0.2** (Scope Algebra, corrected per §25.1), **LIP-4** (Micro-Core, hardened per §25.2) — all in output/lip/ with deterministic Ed25519 test vectors — and the **zero-dependency reference library** (lap-reference/, Node ≥20, 45/45 tests; lap-python/, 38/38 — both green incl. repository-integrity and audit canaries, Python↔JS canonical-form interop proven against shared vectors). Next: the overnight demo film, then essay + paper publication per §24.6 code-first sequencing.*

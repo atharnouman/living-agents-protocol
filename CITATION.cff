@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use or build on this work, please cite it as below."
+title: "The Living Agents Protocol (LAP): identity, authority, and lifecycle for always-on AI agents"
+type: software
+authors:
+  - family-names: Nouman
+    given-names: Athar
+    email: atharnouman@gmail.com
+version: 0.4.6
+date-released: 2026-08-30
+license:
+  - Apache-2.0
+  - CC-BY-4.0
+keywords:
+  - ai-agents
+  - agent-identity
+  - accountability
+  - autonomy
+  - protocol
+abstract: >-
+  A reference model and implemented wire mechanisms for the "existence layer" beneath
+  agent protocols such as MCP and A2A: who an agent is, which human answers for it, what it
+  may do while unsupervised, whether it is alive, and how its actions are proven afterwards.
+  Two interoperating implementations (Node, Python), deterministic test vectors, and a
+  two-process demonstration accompany the specification.
