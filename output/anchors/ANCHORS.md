@@ -12,7 +12,7 @@
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
 | `ec1312916569715dd020ac1f749870f5860a0d7e230f477e314dbad78692f124` | LAP-essay.md |
-| `6b98eaca35d602fcd3a772a4aed6a3ddf262f974b2779a0759246d2a7ad55c93` | ../README.md (v0.4.6, URL sweep: badges + repo links) |
+| `6195141b98ab476931be63f705d5344befb58bd4eeb8464e3a3499d588be9766` | ../README.md (v0.4.6, live demo link) |
 
 ## Status and how to use
 
