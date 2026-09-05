@@ -8,6 +8,10 @@
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
 
+[![LAP overnight demo — two strangers' agents transact while both humans sleep; one crashes, its authority suspends automatically, a held order completes on recovery, and the morning replay verifies every signature](docs/demo.gif)](https://atharnouman.github.io/living-agents-protocol/demo.html)
+
+*Click the animation for the live, interactive version.*
+
 ---
 
 AI agents recently got standard ways to use tools ([MCP](https://modelcontextprotocol.io)), exchange tasks ([A2A](https://a2a-protocol.org)), and pay (AP2, x402). Nothing standardizes an agent's **existence**: who it is, which human answers for it, what it may do while unsupervised, whether it is running right now, what it remembers, and how its actions are proven afterwards. We built the roads before the license plates.
