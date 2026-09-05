@@ -39,7 +39,7 @@ There was no record of what wrote what. Recovery was reconstruction from memory,
 
 This is not a story in which the tools were the only ones at fault. We granted write access that should have been read-only from day one. Our first corruption scans hunted only the signatures we had already seen and missed a third class. Both were process failures, and both are now rules: external review tools deliver to the inbox only; every foreign commit is audited before anything builds on it; integrity canaries trip on all known corruption signatures on every test run; every AI-assisted commit carries attribution.
 
-And the credit must be balanced, because the point is not that agents are bad. The same model family that made the unattributed commit later contributed the **entire Python port** (audited, five conformance defects fixed, now 38/38 tests). A hostile third-model audit found **five genuine fatal bugs** that four prior rounds had missed. On net, the agents that worked on this project were enormously productive. The lesson is narrower and sharper: **capability without accountability produces these failures by default — and the fix is a layer, not a scolding.**
+And the credit must be balanced, because the point is not that agents are bad. The same model family that made the unattributed commit later contributed the **entire Python port** (audited, five conformance defects fixed, now 43/43 tests). A hostile third-model audit found **five genuine fatal bugs** that four prior rounds had missed. On net, the agents that worked on this project were enormously productive. The lesson is narrower and sharper: **capability without accountability produces these failures by default — and the fix is a layer, not a scolding.**
 
 ## The fix you can install
 

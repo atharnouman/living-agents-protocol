@@ -36,3 +36,19 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ./lap-python pytest
       - run: python -m pytest lap-python/tests -q
+
+  mcp-example:
+    name: MCP example (real stdio round-trip)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ./lap-python "mcp>=1.2,<2"
+      - name: client spawns the LAP-protected server; expect one paid call + four refusals
+        run: |
+          cd examples/mcp-server
+          python client.py | tee out.txt
+          grep -q "receipt verified" out.txt
+          test "$(grep -c REFUSED out.txt)" = "4"

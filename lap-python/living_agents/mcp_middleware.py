@@ -26,6 +26,8 @@ def verify_envelope(
     server_private_key: Optional[Ed25519PrivateKey] = None,
     server_did: Optional[str] = None,
     expected_aud: Optional[str] = None,
+    allowed_issuers: Optional[list] = None,
+    min_proof_class: Optional[str] = None,
 ) -> Callable:
     """
     Decorator for MCP tool functions enforcing LAP LIP-4 Micro-Core authorization.
@@ -64,13 +66,21 @@ def verify_envelope(
             bound = inspect.signature(fn).bind(*args, **kwargs)
             bound.apply_defaults()
             call_args = dict(bound.arguments)
+            call_args.pop("lap_auth", None)  # never part of the signed body (it carries the signature)
 
+            # Preferred: no caller-supplied body at all — the signed bytes are derived from the
+            # server's OWN bound arguments (canonical JSON), so the signature is bound to what
+            # actually executes. A caller-supplied request_body is accepted for transports that
+            # deliver raw bytes (HTTP), where the transport layer must supply them.
             if request_body is None:
                 request_body = jcs(call_args)
 
             # Step 1: Verify Passport JWT (expected_aud is mandatory downstream)
             now = lap_auth.get("now")
-            passport_payload = verify_microcore_passport(passport_jwt, expected_aud=expected_aud, now=now)
+            passport_payload = verify_microcore_passport(
+                passport_jwt, expected_aud=expected_aud, now=now,
+                allowed_issuers=allowed_issuers, min_proof_class=min_proof_class,
+            )
             envelope = passport_payload["lap"]["envelope"]
             sub = passport_payload["sub"]  # F2: holder-of-key from the verified passport
 

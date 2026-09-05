@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "living-agents"
-version = "0.4.3"
+version = "0.4.7"
 description = "Living Agents Protocol (LAP) Python reference implementation and FastMCP middleware: LIP-1 Passport, LIP-3 Scope Algebra, LIP-4 Micro-Core."
 readme = "README.md"
 requires-python = ">=3.10"

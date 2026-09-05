@@ -4,7 +4,7 @@
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.7 (draft)` · `Node 49/49 · Python 38/38` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.7 (draft)` · `Node 49/49 · Python 43/43` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
 
@@ -43,6 +43,10 @@ cd lap-demo/net && node conductor.mjs && node verify.mjs  # two REAL processes o
 cd lap-demo && node register-genesis.mjs   # register a genesis in the PUBLIC Sigstore Rekor log, verify inclusion with LAP's own code
 ```
 
+```bash
+cd examples/mcp-server && python client.py   # a real MCP server protected by LAP: one paid call + four refusals, receipt verified
+```
+
 The single-process demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**; `node replay.js --tamper` catches a single modified log entry to the exact record.
 
 The [**networked demo**](lap-demo/net/) proves the same story across **two real OS processes exchanging signed JSON over real sockets** — the crash is a genuine `SIGKILL`, the suspension is caused by real `ECONNREFUSED`, and the seller reloads its identity on restart (same `did:key`, because a session binds to the passport, not the process). For a filmable run: `node conductor.mjs --present`; it runs unmodified over IPv6 with `--ipv6` (LAP never inspects the network layer — spec §20.1). Media assets and a recording guide (terminal styling, a visual UI, an asciinema cast) are in [output/LAP-recording-playbook.md](output/LAP-recording-playbook.md).
@@ -70,6 +74,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); 38 pytest tests against the same vectors |
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
+| [`examples/mcp-server/`](examples/mcp-server/) | **Tutorial:** add LAP to your MCP server in 15 minutes — a real FastMCP server + LAP-aware client (stdio round-trip, verified in CI) |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
 | [`CONFORMANCE.md`](CONFORMANCE.md) | Implement Micro-Core in an afternoon — a ten-check challenge against the shared test vectors |
 | `output/` | The founding document, LIP drafts, position paper, essay, project brief, roadmap |

@@ -22,6 +22,8 @@ pip install -e ".[dev]"
 
 ## FastMCP Tool Server Integration (3 Lines)
 
+> **Complete runnable example (server + client, verified in CI):** [`../examples/mcp-server/`](../examples/mcp-server/) — the 15-minute tutorial.
+
 Wrap any MCP tool function with `@verify_envelope` to enforce authorization bounds and emit tripartite receipts:
 
 ```python

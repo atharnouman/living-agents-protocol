@@ -118,3 +118,124 @@ def test_verify_envelope_positional_args_cannot_bypass_cap(vectors):
     # Positional 6000 must be caught by the cap, not silently skipped
     with pytest.raises(ValueError, match="LAP_ERR_CAP"):
         pay_tool("INV-1001", 6000, "USD", lap_auth=lap_auth)
+
+
+# ---------------------------------------------------------------------------
+# MCP-shaped tools (see examples/mcp-server): the tool declares `lap_auth` so it
+# appears in the MCP tool schema; the decorator must derive the signed body from
+# the server's OWN bound arguments (defaults applied) with `lap_auth` removed.
+# ---------------------------------------------------------------------------
+from typing import Optional
+
+from living_agents import b64url_encode, jcs, sha256_b64url, sha256_hex, sign_jws
+
+SERVER_ID = "did:web:tools.example.com"
+RESOURCE = "mcp://tools.example.com/billing/pay"
+NOW = 1787000000
+
+
+def _keypair():
+    k = Ed25519PrivateKey.generate()
+    return k, did_key_from_raw_public_key(k.public_key().public_bytes_raw())
+
+
+def _mint(principal_key, principal_did, agent_did, proof_class="self-asserted"):
+    return sign_jws(
+        {
+            "iss": principal_did, "sub": agent_did, "aud": SERVER_ID, "iat": NOW, "exp": NOW + 600,
+            "lap": {
+                "v": 0, "proof_class": proof_class, "constitution_hash": sha256_hex("c\n"),
+                "envelope": {"act": ["finance:pay"], "res": "mcp://tools.example.com/billing/**",
+                             "cap": {"max_per_tx": 5000, "unit": "USD", "window": "tx"}},
+            },
+        },
+        principal_key, principal_did + "#key-1", "lap-microcore+jwt",
+    )
+
+
+def _auth(passport, signing_key, agent_did, signed_args):
+    """Exactly what examples/mcp-server/client.py sends: an RFC 9421-style base over the
+    canonical JSON of the tool arguments, signed by the agent key."""
+    body = jcs(signed_args)
+    base = "\n".join([
+        '"@method": tools/call',
+        f'"@target-uri": {RESOURCE}',
+        f'"content-digest": sha-256=:{sha256_b64url(body)}:',
+        f'"lap-passport-hash": sha256:{sha256_hex(passport)}',
+        f'"@signature-params": ("@method" "@target-uri" "content-digest" "lap-passport-hash");created={NOW};keyid="{agent_did}#key-1"',
+    ])
+    return {"passport_jwt": passport, "signature_base": base,
+            "signature_b64url": b64url_encode(signing_key.sign(base.encode("ascii"))), "now": NOW}
+
+
+def _mcp_tool(**policy):
+    @verify_envelope(action="finance:pay", resource=RESOURCE, amount_param="amount", unit_param="unit",
+                     expected_aud=SERVER_ID, **policy)
+    def pay_invoice(invoice: str, amount: int, unit: str = "USD", lap_auth: Optional[dict] = None):
+        return {"status": "paid", "invoice": invoice, "amount": amount, "unit": unit}
+    return pay_invoice
+
+
+def test_mcp_signed_body_is_bound_args_without_lap_auth():
+    """Regression: `lap_auth` must never leak into the derived signed body (it did before the
+    MCP example landed — the client-signed digest could not match), and defaults must be bound."""
+    pkey, pdid = _keypair()
+    akey, adid = _keypair()
+    passport = _mint(pkey, pdid, adid)
+    tool = _mcp_tool()
+
+    args = {"invoice": "INV-1", "amount": 4200, "unit": "USD"}
+    out = tool(**args, lap_auth=_auth(passport, akey, adid, args))
+    assert out["status"] == "paid" and out["amount"] == 4200
+
+    # `unit` omitted by the caller: the server binds the default, and the client signed it.
+    signed = {"invoice": "INV-2", "amount": 1, "unit": "USD"}
+    assert tool(invoice="INV-2", amount=1, lap_auth=_auth(passport, akey, adid, signed))["status"] == "paid"
+
+
+def test_mcp_signature_does_not_transfer_to_different_args():
+    pkey, pdid = _keypair()
+    akey, adid = _keypair()
+    passport = _mint(pkey, pdid, adid)
+    auth = _auth(passport, akey, adid, {"invoice": "INV-3", "amount": 100, "unit": "USD"})
+    with pytest.raises(ValueError, match="LAP_ERR_DIGEST"):
+        _mcp_tool()(invoice="INV-3", amount=4200, unit="USD", lap_auth=auth)
+
+
+def test_mcp_stolen_passport_is_useless_without_the_agent_key():
+    """Holder-of-key (F2): the base names the passport's agent, but a different key signed it."""
+    pkey, pdid = _keypair()
+    _, adid = _keypair()
+    thief_key, _ = _keypair()
+    passport = _mint(pkey, pdid, adid)
+    args = {"invoice": "INV-4", "amount": 10, "unit": "USD"}
+    with pytest.raises(ValueError, match="LAP_ERR_REQ_SIG"):
+        _mcp_tool()(**args, lap_auth=_auth(passport, thief_key, adid, args))
+
+
+def test_mcp_server_policy_can_refuse_a_valid_passport():
+    """F1 passthrough (identity is not authorization): allowed_issuers / min_proof_class."""
+    pkey, pdid = _keypair()
+    akey, adid = _keypair()
+    _, other_principal = _keypair()
+    passport = _mint(pkey, pdid, adid)
+    args = {"invoice": "INV-5", "amount": 10, "unit": "USD"}
+
+    assert _mcp_tool(allowed_issuers=[pdid])(**args, lap_auth=_auth(passport, akey, adid, args))["status"] == "paid"
+    with pytest.raises(ValueError, match="LAP_ERR_ISSUER"):
+        _mcp_tool(allowed_issuers=[other_principal])(**args, lap_auth=_auth(passport, akey, adid, args))
+    with pytest.raises(ValueError, match="LAP_ERR_PROOF_CLASS"):
+        _mcp_tool(min_proof_class="org-validated")(**args, lap_auth=_auth(passport, akey, adid, args))
+
+
+def test_mcp_missing_lap_auth_is_refused_before_the_tool_runs():
+    ran = []
+
+    @verify_envelope(action="finance:pay", resource=RESOURCE, expected_aud=SERVER_ID)
+    def tool(invoice: str, lap_auth: Optional[dict] = None):
+        ran.append(invoice)
+        return {"status": "paid"}
+
+    with pytest.raises(ValueError, match="LAP_ERR_AUTH_MISSING"):
+        tool(invoice="INV-6")
+    assert ran == []
