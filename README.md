@@ -4,7 +4,7 @@
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.6 (draft)` · `Node 45/45 · Python 38/38` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.7 (draft)` · `Node 49/49 · Python 38/38` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
 
@@ -24,7 +24,7 @@ LAP is a reference model plus wire mechanisms for that missing control plane —
 *Zero install: the Codespace arrives with Node, Python, and the test suite already run — then try the two-process demo.*
 
 ```bash
-cd lap-reference && node --test test/     # 45 tests: crypto, algebra, Micro-Core, Merkle log, integrity + audit canaries
+cd lap-reference && node --test test/     # 49 tests: crypto, algebra, Micro-Core, Merkle log, Rekor, integrity + audit canaries
 ```
 
 ```bash
@@ -39,9 +39,15 @@ cd lap-demo && node demo.js && node replay.js          # single-process narrativ
 cd lap-demo/net && node conductor.mjs && node verify.mjs  # two REAL processes over localhost HTTP
 ```
 
+```bash
+cd lap-demo && node register-genesis.mjs   # register a genesis in the PUBLIC Sigstore Rekor log, verify inclusion with LAP's own code
+```
+
 The single-process demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**; `node replay.js --tamper` catches a single modified log entry to the exact record.
 
 The [**networked demo**](lap-demo/net/) proves the same story across **two real OS processes exchanging signed JSON over real sockets** — the crash is a genuine `SIGKILL`, the suspension is caused by real `ECONNREFUSED`, and the seller reloads its identity on restart (same `did:key`, because a session binds to the passport, not the process). For a filmable run: `node conductor.mjs --present`; it runs unmodified over IPv6 with `--ipv6` (LAP never inspects the network layer — spec §20.1). Media assets and a recording guide (terminal styling, a visual UI, an asciinema cast) are in [output/LAP-recording-playbook.md](output/LAP-recording-playbook.md).
+
+Registration in the demos is self-attested by default; `register-genesis.mjs` registers a real Genesis Record in [Sigstore's public Rekor transparency log](https://rekor.sigstore.dev) and verifies the RFC 6962 inclusion proof and Rekor's signed timestamp with LAP's own Merkle code — birth witnessed, not self-asserted.
 
 Requirements: Node ≥ 20. No `npm install` — the entire implementation uses platform built-ins.
 
@@ -60,7 +66,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 
 | Path | Contents |
 |---|---|
-| `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log |
+| `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log, Sigstore Rekor binding |
 | `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); 38 pytest tests against the same vectors |
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |

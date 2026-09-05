@@ -15,7 +15,7 @@ Everything public uses **your personal identity only**: GitHub (personal account
 
 ## Status snapshot (verified)
 
-- **Green:** Node 45/45 · Python 38/38 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
+- **Green:** Node 49/49 · Python 38/38 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
 - **Clean:** no secrets or private-key files tracked; company domain appears nowhere; working tree committed via `lap-git`; local backup zip taken (`backups/`, git-ignored).
 - **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.6 / 45 / 38 / five rounds / ~150.
 - **Ready:** CI workflow, `SECURITY.md`, `CITATION.cff`, a `docs/` folder for GitHub Pages (visual demo, terminal playback, asciinema cast), the paper refreshed to v1.1-draft (clone problem as open problem #7, two implementations, lap-git, three-model acknowledgments) and rendered to print-ready HTML, the essay refreshed with the case-study hook.
