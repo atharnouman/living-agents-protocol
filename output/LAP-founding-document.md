@@ -2,7 +2,7 @@
 
 **Identity, authority, and lifecycle for always-on ("living") AI agents — an open reference model and research agenda.**
 
-*Founding document — draft v0.4.7, 2026-09-05 (full revision history in §23; renamed from AEON to the Living Agents Protocol on 2026-08-28 by author decision; reconstructed 2026-08-29 after external-tool file corruption — see IMPROVEMENTS-LOG incident notes). Author: Athar Nouman (with Claude; external review contributions from Gemini). License intent: CC-BY-4.0 (spec text), Apache-2.0 (code).*
+*Founding document — draft v0.4.8, 2026-09-06 (full revision history in §23; renamed from AEON to the Living Agents Protocol on 2026-08-28 by author decision; reconstructed 2026-08-29 after external-tool file corruption — see IMPROVEMENTS-LOG incident notes). Author: Athar Nouman (with Claude; external review contributions from Gemini). License intent: CC-BY-4.0 (spec text), Apache-2.0 (code).*
 
 ---
 
@@ -413,6 +413,7 @@ The TLS analogy is exact: TLS never carried a web page — it decides *whether a
 The single place an address surfaces is inside a **resource URI**, and there the rules are inherited, not invented:
 - IPv6 literals MUST be bracketed in URI authorities (RFC 3986 §3.2.2), e.g. `mcp://[2001:db8::1]:4107/billing/pay`. LAP's existing authority-lowercasing already matches the canonical text form of RFC 5952.
 - **Normative interop rule (new):** resource matching in the Scope Algebra is **textual**, so the expanded and compressed spellings of one address (`[2001:db8:0:0:0:0:0:1]` vs `[2001:db8::1]`) do **not** match. Scopes and requests MUST therefore use RFC 5952 canonical form (lowercase, maximally compressed). Implementations SHOULD reject non-canonical IPv6 literals at parse time rather than silently failing to match. (Both reference ports carry regression tests for exactly these cases.)
+- **Normative encoding rule (v0.4.8):** every base64url field — JWS segments, `LAP-Signature`, receipt signatures — MUST be canonical (RFC 4648 §5 unpadded, §3.5 zero trailing bits), and decoders MUST reject non-canonical text (`LAP_ERR_ENCODING`). Found by a flaky self-test: a lenient decoder gives one signature many textual forms (the last character of an Ed25519 signature carries two data bits, so `A` and `B` decode identically), which lets text-keyed state — passport hashes, dedup keys, denylists, log entries — be evaded by re-encoding while the signature still verifies. Both reference implementations now decode strictly; the conformance challenge tests it.
 
 **Encoding layer: already open.** Canonical serialization is RFC 8785 JCS *or* deterministic CBOR (RFC 8949 §4.2). The CBOR door was left open deliberately, because it is the encoding constrained devices actually use.
 
@@ -468,6 +469,8 @@ Until one is specified and implemented, deployments MUST treat concurrent-clone 
 ---
 
 ## 23. Changelog
+
+**v0.4.8 — 2026-09-06.** Canonical encoding made normative after a self-found malleability bug: both reference decoders accepted non-canonical base64url (padding, foreign characters, non-zero trailing bits), so one signature or passport had many textual forms, and text-keyed state (passport hashes, dedup keys, denylists, log entries) could be evaded by re-encoding while the signature still verified. Surfaced by a flaky `lap-git` self-test whose tamper step flipped the final signature character, which carries only two data bits. Both ports now decode strictly (`LAP_ERR_ENCODING`); LIP-1, LIP-4, and §20.1 carry the MUST; CONFORMANCE check 8 covers the case; regression tests in both ports (Node 51/51, Python 45/45); the self-test flips a full-data character and asserts that the bytes changed.
 
 **v0.4.7 — 2026-09-05.** Registration made real: a Sigstore Rekor binding registers Genesis Records in the public transparency log (`rekord`/x509 entries carrying the principal's Ed25519 signature; Rekor verifies before admission) and verifies the returned inclusion proof with LAP's own RFC 6962 code — the compact Trillian root-reconstruction cross-checked against the reference Merkle log on every (index, size) pair up to 48 — plus Rekor's signed entry timestamp under its published key. Substance is re-verified against the expected genesis, never taken from the log (Rekor's canonical body keeps only the content hash). Offline tests run against a captured real entry; a live round-trip test is gated by `LAP_REKOR_LIVE=1`. Also: a Codespaces devcontainer (zero-install); an animated README hero built from real frames of the live demo; and `examples/mcp-server/` — LIP-4 Micro-Core protecting a tool on a real MCP server (official SDK, stdio round-trip verified in CI: one paid call with a verified receipt, four refusals before the tool runs). The Python middleware now derives the signed body from the server's own bound arguments with `lap_auth` excluded and passes `allowed_issuers`/`min_proof_class` through; five regression tests cover it (Python 43/43).
 
@@ -583,4 +586,4 @@ Unprofitable miners switch off because a rational operator intervenes; an autono
 
 ---
 
-*Shipped 2026-08-29: **LIP-1** (Agent Passport & Genesis), **LIP-2** (MEET — transcript-hash state machine, reservation tickets, fair-exchange closure, STH gossip), **LIP-3 v0.2** (Scope Algebra, corrected per §25.1), **LIP-4** (Micro-Core, hardened per §25.2) — all in output/lip/ with deterministic Ed25519 test vectors — and the **zero-dependency reference library** (lap-reference/, Node ≥20, 49/49 tests; lap-python/, 43/43 — both green incl. repository-integrity and audit canaries, Python↔JS canonical-form interop proven against shared vectors). Next: the overnight demo film, then essay + paper publication per §24.6 code-first sequencing.*
+*Shipped 2026-08-29: **LIP-1** (Agent Passport & Genesis), **LIP-2** (MEET — transcript-hash state machine, reservation tickets, fair-exchange closure, STH gossip), **LIP-3 v0.2** (Scope Algebra, corrected per §25.1), **LIP-4** (Micro-Core, hardened per §25.2) — all in output/lip/ with deterministic Ed25519 test vectors — and the **zero-dependency reference library** (lap-reference/, Node ≥20, 51/51 tests; lap-python/, 45/45 — both green incl. repository-integrity and audit canaries, Python↔JS canonical-form interop proven against shared vectors). Next: the overnight demo film, then essay + paper publication per §24.6 code-first sequencing.*

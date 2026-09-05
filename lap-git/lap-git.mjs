@@ -192,7 +192,12 @@ function selftest() {
   console.log("\n5) tamper: flip one character of the signature in the signed commit — should FAIL verification");
   writeFileSync(join(dir, "src", "c.txt"), "more\n"); git("add src/c.txt"); commit(["-m", "feat: add src/c.txt"]);
   const body = git("log -1 --format=%B");
-  const tampered = body.replace(/^(LAP-Signature: .*?)([A-Za-z0-9])(\r?\n|$)/m, (m, a, ch, nl) => a + (ch === "A" ? "B" : "A") + nl);
+  // Flip the FIRST signature character: it carries six data bits, so the decoded bytes always
+  // change. (Flipping the last character made this test flaky: the final base64url character
+  // carries only two data bits, and 'A'->'B' touched padding bits alone.)
+  const tampered = body.replace(/^(LAP-Signature: )([A-Za-z0-9_-])/m, (m, a, ch) => a + (ch === "A" ? "B" : "A"));
+  const sigText = (b) => /^LAP-Signature: (\S+)/m.exec(b)[1];
+  if (tampered === body || b64urlDecode(sigText(tampered)).equals(b64urlDecode(sigText(body)))) throw new Error("selftest: tamper did not change the signature bytes");
   const f = join(tmpdir(), "lap-git-tamper.txt"); writeFileSync(f, tampered); git(`commit -q --amend -F "${f}"`); rmSync(f, { force: true });
   console.log("\n6) verify the history\n");
   verify(["HEAD"]);

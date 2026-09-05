@@ -162,5 +162,15 @@ Delivered to inbox as `2026-08-30_openai_redteam.md`; footprint clean (one inbox
 
 The pattern worth naming: three model families have now reviewed LAP (Claude, Gemini, GPT-5.6), and the deepest bugs came from the one with no prior context and a purely adversarial brief. The verify-before-patch rule caught a self-inflicted false-negative *and* surfaced an unreported bug in the same pass — evidence the process, not any single model, is what's producing the hardening.
 
+## Self-found: base64url malleability, surfaced by a flaky lap-git self-test (2026-09-06)
+
+**Symptom.** CI went red on `lap-git selftest` for commit fc29c2f; locally the self-test failed 7 of 16 runs. The tamper step flipped the *last* character of the commit signature (`A` to `B`) and the "tampered" commit still verified.
+
+**Root cause (a real bug, both ports).** Both `b64urlDecode` implementations were lenient (`Buffer.from(s, "base64url")`; `base64.urlsafe_b64decode`). The final character of an 86-character Ed25519 signature carries only two data bits; `A` to `B` changes padding bits alone, so the text differs but the bytes, and the verification result, do not. Padding (`==`) and foreign characters were accepted too. Consequence: one valid signature (or one valid JWS) has many textual forms, so anything keyed by the *text* (`lap-passport-hash`, idempotency and dedup keys, hash-based denylists, transparency-log entries) can be evaded by re-encoding while the token still verifies. Reproduced against the shared vectors in both ports before patching (verify-before-patch).
+
+**Fix.** Strict-canonical decoding in both ports (URL-safe alphabet only, no padding, length mod 4 never 1, re-encode-and-compare; error `LAP_ERR_ENCODING`); LIP-1 and LIP-4 gain the normative MUST; CONFORMANCE check 8 gains the malleated-signature case; regression tests in both ports (Node 51/51, Python 45/45); the self-test now flips the *first* signature character (six data bits) and asserts that the decoded bytes actually changed. Spec v0.4.8.
+
+**Lesson.** A flaky test is a finding, not noise. The flake rate (about one run in four: the final character is `A` one time in four) was the signature of the bug.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

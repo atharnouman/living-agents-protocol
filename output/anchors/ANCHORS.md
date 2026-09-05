@@ -1,18 +1,18 @@
 # LAP — Bitcoin Anchors (OpenTimestamps)
 
-*Current stamping: **2026-09-06, v0.4.7** — 4 independent OpenTimestamps calendars. Superseded hashes remain valid for their own bytes in git history.*
+*Current stamping: **2026-09-06, v0.4.8** — 4 independent OpenTimestamps calendars. Superseded hashes remain valid for their own bytes in git history.*
 
 | SHA-256 | Artifact |
 |---|---|
-| `5fd77f2fb829243631a044898d4062c5473755a1043f707c05c8ea43b16d7b37` | LAP-founding-document.md (v0.4.7, Rekor registration + MCP example) |
-| `acbc13ecfe9926bdbfb94d1db8a458dcd2e88c6b7f2e311017625fed041d2dca` | lip/LIP-1-agent-passport-draft.md |
+| `1387417786b392fd616a980cdf35da4160bd069c3abd5b4e0a04c580ab221cb6` | LAP-founding-document.md (v0.4.8, canonical encoding rule) |
+| `90986f3e0f93d6276df44dda80f697568c828fa4d9cd20bb6b423b6254dbb140` | lip/LIP-1-agent-passport-draft.md (v0.4.8, canonical base64url MUST) |
 | `81747e9475cc9c4125934dea4f2d9d83854f1fdfe997ea879d2abf5c172e88ac` | lip/LIP-2-meet-draft.md |
 | `98e49cf19b988673723c3a7d051cefcd3c7dc0d94b90dfd492da72d990226f1f` | lip/LIP-3-scope-algebra-v0-draft.md (v0.2, F7/F8/F9/F10 hardened) |
-| `71506b659e94593c418699cb0011ec04a77f5049a3835af3d84406a4cb34da0d` | lip/LIP-4-micro-core-draft.md (F1/F2/F3/F4/F5/F6 hardened) |
+| `77d78441a3a4d7aec15a443659b03edd0925b71e987ff121c09f8b664779e210` | lip/LIP-4-micro-core-draft.md (F1-F6 hardened; v0.4.8 canonical encoding) |
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
 | `f4ba5d94d8e183b1e212fa2d82e19dfab628558f1f33c8c11a764487dedc6501` | LAP-essay.md (post-ready, live demo link) |
-| `b47c1c144eb70b15b78c46d5b66daa6b8f776bd97d26ae660cda0d6cd6416062` | ../README.md (v0.4.7, MCP tutorial) |
+| `2b62539c415ae44b0d6a168ff6db59f648980403a75f7e0f7faf658262eabdc8` | ../README.md (v0.4.8, canonical encoding) |
 
 ## Status and how to use
 

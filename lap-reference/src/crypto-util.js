@@ -4,8 +4,19 @@ const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 // DER SPKI header for a raw Ed25519 public key (RFC 8410)
 const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 
+const B64URL_ALPHABET = /^[A-Za-z0-9_-]*$/;
+
+// STRICT base64url (RFC 4648 §5, unpadded; §3.5 canonical trailing bits). Lenient decoding lets
+// one signature have many textual forms — 'A'→'B' as the final character of an Ed25519 signature
+// changes padding bits only and still verifies — so anything keyed by the TEXT (passport hashes,
+// dedup, denylists, transparency-log entries) could be evaded by re-encoding. Reject instead.
 export function b64urlDecode(s) {
-  return Buffer.from(s, "base64url");
+  if (typeof s !== "string" || !B64URL_ALPHABET.test(s) || s.length % 4 === 1) {
+    throw new Error("LAP_ERR_ENCODING: invalid base64url");
+  }
+  const buf = Buffer.from(s, "base64url");
+  if (buf.toString("base64url") !== s) throw new Error("LAP_ERR_ENCODING: non-canonical base64url");
+  return buf;
 }
 
 export function b64urlEncode(buf) {

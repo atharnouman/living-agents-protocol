@@ -56,7 +56,7 @@ Field rules:
 
 ## 3. Signing (Normative)
 
-- The passport is signed by the **principal's** key: JWS compact serialization, `alg: EdDSA` (Ed25519 MUST-implement; others MAY), header `typ: "lap-passport+jwt"`, `kid` = principal DID + fragment.
+- The passport is signed by the **principal's** key: JWS compact serialization, `alg: EdDSA` (Ed25519 MUST-implement; others MAY), header `typ: "lap-passport+jwt"`, `kid` = principal DID + fragment. All base64url segments MUST be canonical (RFC 4648 §5 unpadded; §3.5 zero trailing bits) and verifiers MUST reject non-canonical text (`LAP_ERR_ENCODING`): a passport has exactly one textual form, so hashes of that text (`lap-passport-hash`, denylists, log entries) are stable identifiers.
 - The JWS payload MUST be the JCS (RFC 8785) canonical form of the claims. Before canonicalization, all DIDs and URIs MUST be normalized: Unicode NFC; schemes and hostnames ASCII-lowercased; percent-encoding normalized (RFC 3986 §6.2.2).
 - Key rotation MUST emit a `KeyRotationEvent` dual-signed by old and new keys, logged before the new key's first use.
 

@@ -14,13 +14,24 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 B58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 
-def b64url_decode(s: str) -> bytes:
-    """Decode unpadded base64url string."""
-    rem = len(s) % 4
-    if rem > 0:
-        s += "=" * (4 - rem)
-    return base64.urlsafe_b64decode(s.encode("ascii"))
+_B64URL_ALPHABET = re.compile(r"^[A-Za-z0-9_-]*$")
 
+
+def b64url_decode(s: str) -> bytes:
+    """Decode unpadded base64url STRICTLY (RFC 4648 §5; §3.5 canonical trailing bits).
+
+    Lenient decoding lets one signature have many textual forms — 'A'->'B' as the final
+    character of an Ed25519 signature changes padding bits only and still verifies — so
+    anything keyed by the TEXT (passport hashes, dedup, denylists, transparency-log entries)
+    could be evaded by re-encoding. Reject padding, foreign characters, and non-zero
+    trailing bits instead; the check is "re-encode and compare".
+    """
+    if not isinstance(s, str) or not _B64URL_ALPHABET.match(s) or len(s) % 4 == 1:
+        raise ValueError("LAP_ERR_ENCODING: invalid base64url")
+    raw = base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+    if b64url_encode(raw) != s:
+        raise ValueError("LAP_ERR_ENCODING: non-canonical base64url")
+    return raw
 
 def b64url_encode(buf: bytes) -> str:
     """Encode bytes to unpadded base64url string."""
