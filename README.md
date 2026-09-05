@@ -20,6 +20,9 @@ LAP is a reference model plus wire mechanisms for that missing control plane —
 
 ## Try it in two minutes
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/atharnouman/living-agents-protocol?quickstart=1)
+*Zero install: the Codespace arrives with Node, Python, and the test suite already run — then try the two-process demo.*
+
 ```bash
 cd lap-reference && node --test test/     # 45 tests: crypto, algebra, Micro-Core, Merkle log, integrity + audit canaries
 ```

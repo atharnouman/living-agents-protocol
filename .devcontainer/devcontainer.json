@@ -1,0 +1,13 @@
+{
+  "name": "Living Agents Protocol",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" },
+    "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
+  },
+  "postCreateCommand": "pip install -e ./lap-python pytest >/dev/null && (cd lap-reference && node --test test/ | tail -n 8) && echo && echo 'LAP is ready. Try the two-process demo:  cd lap-demo/net && node conductor.mjs --present && node verify.mjs'",
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] },
+    "vscode": { "extensions": ["ms-python.python"] }
+  }
+}
