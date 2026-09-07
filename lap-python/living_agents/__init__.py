@@ -5,10 +5,13 @@ Living Agents Protocol (LAP) — Python Reference Library & FastMCP Middleware.
 from .algebra import (
     ACTION_REGISTRY_V0,
     WINDOW_SECONDS,
+    cap_is_valid,
     cap_subsumes,
     counterparty_subsumes,
+    cp_is_valid,
     dag_subsumes,
     path_subsumes,
+    scope_is_valid,
     scope_subsumes,
     verify_envelope_attenuation,
 )
@@ -45,7 +48,7 @@ from .microcore import (
     verify_request_signature,
 )
 
-__version__ = "0.4.8"
+__version__ = "0.4.9"
 
 __all__ = [
     "b58encode",

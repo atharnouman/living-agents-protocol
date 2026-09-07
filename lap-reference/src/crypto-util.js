@@ -114,7 +114,7 @@ export function verifyEd25519(publicKey, data, signature) {
 // reviewer's proposed fix of running DIDs through normalizeUri would do exactly that.)
 export function normalizeDid(did) {
   const s = did.normalize("NFC");
-  const m = s.match(/^did:([A-Za-z0-9]+):(.+)$/);
+  const m = s.match(/^did:([A-Za-z0-9]+):(.+)$/i);   // prefix case-insensitive, id case preserved (parity with the Python port)
   if (!m) return s;
   return "did:" + m[1].toLowerCase() + ":" + m[2];
 }

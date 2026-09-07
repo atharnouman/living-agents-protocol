@@ -1,18 +1,18 @@
 # LAP — Bitcoin Anchors (OpenTimestamps)
 
-*Current stamping: **2026-09-06, v0.4.8** — 4 independent OpenTimestamps calendars. Superseded hashes remain valid for their own bytes in git history.*
+*Current stamping: **2026-09-08, v0.4.9** — 4 independent OpenTimestamps calendars. Superseded hashes remain valid for their own bytes in git history.*
 
 | SHA-256 | Artifact |
 |---|---|
-| `1387417786b392fd616a980cdf35da4160bd069c3abd5b4e0a04c580ab221cb6` | LAP-founding-document.md (v0.4.8, canonical encoding rule) |
+| `dde439517c0d0b61007f3ed4bc4230b1f5f2086bc70d0b7f4b124138037cb7e6` | LAP-founding-document.md (v0.4.9, fuzzing round) |
 | `90986f3e0f93d6276df44dda80f697568c828fa4d9cd20bb6b423b6254dbb140` | lip/LIP-1-agent-passport-draft.md (v0.4.8, canonical base64url MUST) |
 | `81747e9475cc9c4125934dea4f2d9d83854f1fdfe997ea879d2abf5c172e88ac` | lip/LIP-2-meet-draft.md |
-| `98e49cf19b988673723c3a7d051cefcd3c7dc0d94b90dfd492da72d990226f1f` | lip/LIP-3-scope-algebra-v0-draft.md (v0.2, F7/F8/F9/F10 hardened) |
+| `0ba1d48d3062b67c4537d85ece0121e02652c7abd8a71644f6db92c1f9bb97e1` | lip/LIP-3-scope-algebra-v0-draft.md (v0.3, fuzzed) |
 | `77d78441a3a4d7aec15a443659b03edd0925b71e987ff121c09f8b664779e210` | lip/LIP-4-micro-core-draft.md (F1-F6 hardened; v0.4.8 canonical encoding) |
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `dc90f5425825829de5d2d3a746b045a3f94771ce5e7a2393a1d75d32ad07c0b2` | LAP-position-paper.md (v1.0-draft) |
 | `f4ba5d94d8e183b1e212fa2d82e19dfab628558f1f33c8c11a764487dedc6501` | LAP-essay.md (post-ready, live demo link) |
-| `2b62539c415ae44b0d6a168ff6db59f648980403a75f7e0f7faf658262eabdc8` | ../README.md (v0.4.8, canonical encoding) |
+| `bdf47455735673636bf1c8e9f2ede8d2b58a9fabb2a3ebd0d0afdd26bc8c591c` | ../README.md (v0.4.9, fuzzing round + threat model) |
 
 ## Status and how to use
 

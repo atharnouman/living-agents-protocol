@@ -128,3 +128,69 @@ def test_envelope_attenuation_budget_conservation():
 
     result = verify_envelope_attenuation(parent_scopes, child_scopes)
     assert not result["ok"]
+
+
+# ---- v0.3 fuzz-round findings (2026-09-08; see llm-collab/IMPROVEMENTS-LOG.md) ----
+import pytest  # noqa: E402
+from living_agents import (  # noqa: E402
+    cap_subsumes, counterparty_subsumes, path_subsumes, scope_is_valid, scope_subsumes, verify_envelope_attenuation,
+)
+
+
+def test_v03_reflexive_star_closed_syntax_and_typed_schema_errors():
+    assert path_subsumes("mcp://h/a/*", "mcp://h/a/*") is True  # the same set (was False)
+    assert path_subsumes("mcp://h/a/*", "mcp://h/a/**") is False  # still never widen
+    assert path_subsumes("mcp://h/a/*", "mcp://h/a/b/*") is False
+    assert path_subsumes("mcp://h/a/*", "mcp://h/b/*") is False
+    for bad in ["mcp://h/a?x=1", "mcp://h/a#f", "mcp://h//a", "mcp://h/a//b", "mcp://h?x/a", "not a uri", "", 42, None]:
+        with pytest.raises(ValueError, match="LAP_ERR_RES"):
+            path_subsumes("mcp://h/**", bad)
+    assert path_subsumes("mcp://h/a/", "mcp://h/a") is True  # one trailing slash is tolerated
+
+    def S(**over):
+        s = {"v": "lap-scope-v0", "act": "finance:pay", "res": "ap2://rails/stripe/**"}
+        s.update(over)
+        return {k: v for k, v in s.items() if v is not ...}
+
+    ok = S(res="mcp://h/**")
+    malformed = [None, "junk", 42, [], S(res=...), S(res=None), S(act=7), S(act=[7]), S(act=...), S(cp={"allow": "did:key:z6MkA"}),
+                 S(cp={"deny": [1]}), S(depth=-1), S(depth=17), S(depth="2"), S(decay_max_sec=None), S(v=7), S(v=...)]
+    for bad in malformed:
+        assert scope_is_valid(bad) is False, bad
+        assert scope_subsumes(ok, bad) is False
+        assert scope_subsumes(bad, ok) is False
+        with pytest.raises(ValueError, match="LAP_ERR_SCOPE_SCHEMA"):
+            verify_envelope_attenuation([ok], [bad])
+        with pytest.raises(ValueError, match="LAP_ERR_SCOPE_SCHEMA"):
+            verify_envelope_attenuation([bad], [ok])
+    with pytest.raises(ValueError, match="LAP_ERR_SCOPE_SCHEMA"):
+        verify_envelope_attenuation(ok, [ok])
+    assert scope_is_valid(ok) is True
+    assert counterparty_subsumes({"allow": "x"}, {}) is False
+    assert scope_subsumes(S(act=...), S(act=...)) is False  # a missing act is not "grants nothing is a subset of grants nothing"
+    assert counterparty_subsumes({"allow": ["did:web:vendora.com"]}, {"allow": ["DID:WEB:vendora.com"]}) is True
+    assert counterparty_subsumes({"allow": ["did:key:z6MkA"]}, {"allow": ["did:key:Z6MKA"]}) is False  # did:key ids are case-sensitive
+    # effective sets: a member the child itself denies does not count against it (this port lacked the skip — found by the fuzzer)
+    AB = {"allow": ["did:key:z6MkA", "did:key:z6MkB"], "deny": ["did:key:z6MkA"]}
+    assert counterparty_subsumes(AB, {"allow": ["did:key:z6MkA", "did:key:z6MkB"], "deny": ["did:key:z6MkA"]}) is True
+    assert counterparty_subsumes(AB, {"allow": ["did:key:z6MkA"], "deny": []}) is False
+    # parity: JSON envelopes are consumed by JS verifiers too, so both ports reject above 2^53-1
+    assert cap_subsumes({"max_per_tx": 1, "max_cumulative": 2**53 - 1, "unit": "USD", "window": "tx"},
+                        {"max_per_tx": 1, "max_cumulative": 1, "unit": "USD", "window": "tx"}) is True
+    assert cap_subsumes({"max_per_tx": 1, "max_cumulative": 2**53, "unit": "USD", "window": "tx"},
+                        {"max_per_tx": 1, "max_cumulative": 1, "unit": "USD", "window": "tx"}) is False
+    assert cap_subsumes({}, {"max_per_tx": 1, "max_cumulative": 1, "unit": "USD", "window": "tx"}) is False  # {} is a malformed cap, not "no cap"
+
+
+def test_v03_exact_integer_window_arithmetic_matches_node():
+    def S(**o):
+        return {"v": "lap-scope-v0", "act": "finance:pay", **o}
+
+    P = {"unit": "USD", "window": "utc_day", "max_per_tx": 1, "max_cumulative": 8707531655995247}
+    assert cap_subsumes(P, {"unit": "USD", "window": "utc_hour", "max_per_tx": 1, "max_cumulative": 362813818999801}) is True
+    assert cap_subsumes(P, {"unit": "USD", "window": "utc_hour", "max_per_tx": 1, "max_cumulative": 362813818999802}) is False
+    parent = S(res="mcp://h/**", cap={"unit": "USD", "window": "utc_day", "max_per_tx": 1, "max_cumulative": 8221535177121408})
+    child = S(res="mcp://h/x", cap={"unit": "USD", "window": "utc_hour", "max_per_tx": 1, "max_cumulative": 342563965713392})
+    assert verify_envelope_attenuation([parent], [child])["ok"] is True
+    extra = S(res="mcp://h/y", cap={"unit": "USD", "window": "utc_hour", "max_per_tx": 1, "max_cumulative": 1})
+    assert verify_envelope_attenuation([parent], [child, extra])["ok"] is False

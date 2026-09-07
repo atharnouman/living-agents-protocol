@@ -172,5 +172,19 @@ The pattern worth naming: three model families have now reviewed LAP (Claude, Ge
 
 **Lesson.** A flaky test is a finding, not noise. The flake rate (about one run in four: the final character is `A` one time in four) was the signature of the bug.
 
+## Self-found: property-based fuzzing round on the Scope Algebra (2026-09-08)
+
+A deterministic generator, written identically in both ports, drove the same random scopes through Node and Python; a committed decision digest (`output/lip/test-vectors/algebra-fuzz-digest.json`) now locks cross-port parity. Four defects on the first run, each reproduced before its fix:
+
+- **A1 [SERIOUS→both ports]** reflexivity: `mcp://h/a/*` did not subsume `mcp://h/a/*` — an identical `*` delegation one hop down was refused (fail-closed, but wrong). Fixed; LIP-3 §2 now states that equal `*` patterns denote the same set and that `*` never subsumes `**`.
+- **A2 [MODERATE→both ports]** malformed scopes (missing or non-string `res`, non-list `cp.allow`, a null child, …) surfaced TypeError/AttributeError from inside the comparison instead of a typed refusal; the Python port compared a missing `act` as "grants nothing ⊆ grants nothing". Fixed: schema before semantics (`scopeIsValid` / `scope_is_valid`, `LAP_ERR_SCOPE_SCHEMA`), closed resource syntax (`LAP_ERR_RES` for query, fragment, or empty segment), typed messages everywhere.
+- **A3 [MODERATE→Node]** double-precision window arithmetic: `Math.floor(v × 3600 / 86400)` diverged from exact integers above ~10^11 — a one-unit over-admission in ~0.5% of cap scalings and a one-unit under-debit in ~6.7% of window debits sampled at large values — so the ports disagreed. Fixed with BigInt; LIP-3 §4 now mandates exact-integer arithmetic and the 2^53−1 interop bound (the Python port now rejects above it too).
+- **A4 [MODERATE→Python]** effective sets: the Python port did not skip a member the child itself denies, refusing a scope that denied one of its own allow entries (Node was correct). Fixed; regression assertions in both ports.
+- Parity alignment: DID-prefix normalization is case-insensitive in both ports; URIs in counterparty lists normalize like URIs in Python, as they already did in Node.
+
+Eight fuzz properties pass in both ports (Node 61/61, Python 55/55); over the seeded corpus the digest records 93 accepted, 1424 refused, and 283 typed-error decisions, byte-identical across ports. `THREAT-MODEL.md` added. Spec v0.4.9, LIP-3 v0.3.
+
+**Rejected: none.** Lesson: three prior audit rounds and ~150 fixes had not touched reflexivity or malformed-shape handling, because reviewers (human and model) reason about *interesting* inputs; a generator does not know what is interesting.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

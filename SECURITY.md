@@ -2,6 +2,8 @@
 
 LAP is a security-relevant protocol: the reference implementations verify signatures, enforce authority envelopes, and bind requests to identities. Findings are welcome and taken seriously.
 
+Start with [THREAT-MODEL.md](THREAT-MODEL.md): what is defended, where each defence is enforced and tested, and what is explicitly out of scope.
+
 ## Reporting a vulnerability
 
 Email **atharnouman@gmail.com** with the subject `LAP security`. Please include a reproduction (the deterministic test vectors in `output/lip/test-vectors/` make minimal repros easy) and, where you can, which mechanism or LIP is affected.

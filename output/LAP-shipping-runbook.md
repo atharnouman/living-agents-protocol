@@ -15,9 +15,9 @@ Everything public uses **your personal identity only**: GitHub (personal account
 
 ## Status snapshot (verified)
 
-- **Green:** Node 51/51 · Python 45/45 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
+- **Green:** Node 61/61 · Python 55/55 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
 - **Clean:** no secrets or private-key files tracked; company domain appears nowhere; working tree committed via `lap-git`; local backup zip taken (`backups/`, git-ignored).
-- **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.8 / 51 / 45 / five rounds / ~150.
+- **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.9 / 51 / 45 / five rounds / ~150.
 - **Ready:** CI workflow, `SECURITY.md`, `CITATION.cff`, a `docs/` folder for GitHub Pages (visual demo, terminal playback, asciinema cast), the paper refreshed to v1.1-draft (clone problem as open problem #7, two implementations, lap-git, three-model acknowledgments) and rendered to print-ready HTML, the essay refreshed with the case-study hook.
 - **Placeholders that remain, on purpose:** `https://github.com/atharnouman/living-agents-protocol` in the essay and paper; `repository-code` absent from `CITATION.cff`; no CI badge in the README yet. All three resolve in **Phase 1A step 4** the moment the real URL exists — no guessed URLs anywhere in public files.
 
@@ -58,7 +58,7 @@ Follow `LAP-recording-playbook.md`. Minimum: one ~70s terminal MP4 of `node cond
 
 1. [ME] **Freeze + re-anchor** after the URL sweep (B.3) so priority locks to exactly the published bytes.
 2. [ME→YOU] **Essay** — I finalize `LAP-essay.md` with the real links; you publish it (personal blog / Substack / Medium — never the company blog).
-3. [ME→YOU] **Release tag** — I create the annotated tag `v0.4.8`; you push it (B.4) and create the GitHub Release with the MP4 + cast attached. Stable links for every post.
+3. [ME→YOU] **Release tag** — I create the annotated tag `v0.4.9`; you push it (B.4) and create the GitHub Release with the MP4 + cast attached. Stable links for every post.
 4. [YOU] **Show HN** — A.2. Post Tue–Thu, ~8–10am US Eastern, when you can babysit comments for ~4 hours. Answer with facts; never argue; a cool reception is not failure.
 5. [YOU] **LinkedIn + X** — A.3, A.4. First mention everywhere: *Living Agents Protocol (LAP)*.
 
@@ -186,7 +186,7 @@ python output/anchors/lap_stamp.py output/LAP-founding-document.md README.md
 
 **B.4 Release tag (I create; you push)**
 ```bash
-git push origin v0.4.8
+git push origin v0.4.9
 # then GitHub → Releases → Draft from tag v0.4.6 → attach the MP4 and docs/lap-overnight.cast
 ```
 
@@ -197,8 +197,8 @@ ots upgrade output/LAP-founding-document.md.ots && ots verify output/LAP-foundin
 
 **B.6 Anyone can verify the repo in 5 minutes (drop into a reply when a skeptic asks)**
 ```bash
-cd lap-reference && node --test test/                                      # 45/45
-cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 45/45
+cd lap-reference && node --test test/                                      # 61/61
+cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 55/55
 cd ../lap-demo/net && node conductor.mjs && node verify.mjs                # 2 processes, receipts verified
 cd ../.. && node lap-git/lap-git.mjs selftest                              # scope refused, tamper caught
 ```

@@ -4,7 +4,7 @@
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.8 (draft)` · `Node 51/51 · Python 45/45` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.9 (draft)` · `Node 61/61 · Python 55/55` · `two interoperating implementations` · `IPv4 + IPv6` · `5 adversarial review rounds, ~150 verified fixes` · `Bitcoin-timestamped`
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
 
@@ -28,7 +28,7 @@ cd lap-reference && node --test test/     # 49 tests: crypto, algebra, Micro-Cor
 ```
 
 ```bash
-cd lap-python && pip install -e ".[dev]" && python -m pytest tests -q   # 38 tests against the same vectors
+cd lap-python && pip install -e ".[dev]" && python -m pytest tests -q   # the same vectors, plus the property-based fuzzer
 ```
 
 ```bash
@@ -71,12 +71,13 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | Path | Contents |
 |---|---|
 | `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log, Sigstore Rekor binding |
-| `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); 38 pytest tests against the same vectors |
+| `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); the same vectors, plus the property-based fuzzer, in pytest |
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
 | [`examples/mcp-server/`](examples/mcp-server/) | **Tutorial:** add LAP to your MCP server in 15 minutes — a real FastMCP server + LAP-aware client (stdio round-trip, verified in CI) |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
 | [`CONFORMANCE.md`](CONFORMANCE.md) | Implement Micro-Core in an afternoon — a ten-check challenge against the shared test vectors |
+| [`THREAT-MODEL.md`](THREAT-MODEL.md) | What LAP defends against and what it does not: assets, actors, sixteen threats each tied to its enforcing code and regression test, residual risks stated plainly |
 | `output/` | The founding document, LIP drafts, position paper, essay, project brief, roadmap |
 | `output/anchors/` | OpenTimestamps proofs — every release is hash-committed to Bitcoin |
 | `llm-collab/` | The multi-model review kit and the full improvements log (every merged, softened, and rejected finding, with reasons) |

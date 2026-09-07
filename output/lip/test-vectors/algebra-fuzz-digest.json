@@ -1,0 +1,13 @@
+{
+  "generator": "xorshift32/v1",
+  "seed": 20260906,
+  "pairs": 1500,
+  "envelopes": 300,
+  "decisions": {
+    "T": 93,
+    "F": 1424,
+    "E": 283,
+    "X": 0
+  },
+  "digest": "f4a55581d74d7384b30e0a77792e332d06e9408cc6eca8491f3e55ab3c64c1a6"
+}

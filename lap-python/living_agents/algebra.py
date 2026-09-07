@@ -2,6 +2,7 @@
 LIP-3 v0.2 Scope Algebra: Capability attenuation lattice, integer budget arithmetic, and resource matching.
 """
 
+import json
 import re
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -73,11 +74,20 @@ def _parse_res(res: str) -> Dict[str, Any]:
     Parity with the Node reference: wildcards anywhere except the terminal
     position are a hard error, never a silent match.
     """
+    if not isinstance(res, str) or not res:
+        raise ValueError("LAP_ERR_RES: resource must be a non-empty string")
     norm = normalize_uri(res)
+    # Closed syntax (v0.3): the algebra defines scheme, authority and path — nothing else.
+    # A query, a fragment or an empty interior segment is an unknown construct; never
+    # default-allow an unknown construct (LIP-3 §2).
+    if re.search(r"[?#]", norm):
+        raise ValueError("LAP_ERR_RES: query and fragment are not allowed in resource patterns")
     m = re.match(r"^([a-z0-9+.-]+)://([^/]+)(/.*)?$", norm)
     if not m:
-        raise ValueError(f"invalid resource URI: {res}")
+        raise ValueError(f"LAP_ERR_RES: invalid resource URI: {res}")
     scheme, host, path = m.group(1), m.group(2), m.group(3) or ""
+    if "//" in path:
+        raise ValueError("LAP_ERR_RES: empty path segment")
     # F10: no dot-segments or encoded separators — a proxy/router would resolve them
     # AFTER authorization, letting /safe/** authorize /admin. Fail closed.
     if re.search(r"%2f|%5c|%2e", path, re.IGNORECASE):
@@ -93,7 +103,7 @@ def _parse_res(res: str) -> Dict[str, Any]:
         wildcard = "*"
         segments.pop()
     if "*" in segments or "**" in segments:
-        raise ValueError("wildcards are terminal-only")
+        raise ValueError("LAP_ERR_RES: wildcards are terminal-only")
     return {"scheme": scheme, "host": host, "segments": segments, "wildcard": wildcard}
 
 
@@ -116,11 +126,11 @@ def path_subsumes(parent_res: str, child_res: str) -> bool:
     if p["wildcard"] == "**":
         return len(c["segments"]) >= len(p["segments"]) and prefix_ok
     if p["wildcard"] == "*":
-        return (
-            len(c["segments"]) == len(p["segments"]) + 1
-            and prefix_ok
-            and c["wildcard"] is None
-        )
+        if c["wildcard"] == "**":  # never widen
+            return False
+        if c["wildcard"] == "*":  # the same set (v0.3: reflexive)
+            return len(c["segments"]) == len(p["segments"]) and prefix_ok
+        return len(c["segments"]) == len(p["segments"]) + 1 and prefix_ok
     return (
         c["wildcard"] is None
         and len(c["segments"]) == len(p["segments"])
@@ -129,16 +139,20 @@ def path_subsumes(parent_res: str, child_res: str) -> bool:
 
 
 VALID_WINDOWS = {"tx", "utc_hour", "utc_day", "epoch_total"}
+_MAX_SAFE = 2**53 - 1  # envelopes are JSON consumed by JS verifiers too: both ports reject above this (parity)
+_MAX_DEPTH = 16
 
 
 def cap_is_valid(cap: Optional[Dict[str, Any]]) -> bool:
     """F8: caps must be non-negative ints, max_per_tx <= max_cumulative, real unit,
     known window. Returns False (never raises) so callers fail closed."""
-    if not cap:
+    if cap is None:
         return True
+    if not isinstance(cap, dict):
+        return False
     for f in ("max_per_tx", "max_cumulative"):
         v = cap.get(f)
-        if not isinstance(v, int) or isinstance(v, bool) or v < 0:
+        if not isinstance(v, int) or isinstance(v, bool) or v < 0 or v > _MAX_SAFE:
             return False
     if cap["max_per_tx"] > cap["max_cumulative"]:
         return False
@@ -153,9 +167,9 @@ def cap_is_valid(cap: Optional[Dict[str, Any]]) -> bool:
 def cap_subsumes(parent_cap: Optional[Dict[str, Any]], child_cap: Optional[Dict[str, Any]]) -> bool:
     """LIP-3 §4: Two-dimensional cap rule with integer floor arithmetic. Fails closed
     on any invalid cap (F8)."""
-    if not parent_cap:
+    if parent_cap is None:
         return True
-    if not child_cap:
+    if child_cap is None:
         return False
     if not cap_is_valid(parent_cap) or not cap_is_valid(child_cap):
         return False
@@ -197,18 +211,46 @@ def _window_debit(parent_cap: Dict[str, Any], child_cap: Dict[str, Any]) -> int:
     return child_cap.get("max_cumulative", 0)
 
 
+def _show(x: Any) -> str:
+    """Diagnostics only: never let the error path itself raise (jcs rejects floats)."""
+    try:
+        return jcs(x)
+    except Exception:  # noqa: BLE001
+        return json.dumps(x, sort_keys=True, default=str)
+
+
+def _is_str_list(x: Any) -> bool:
+    return isinstance(x, list) and all(isinstance(s, str) for s in x)
+
+
+def cp_is_valid(cp: Any) -> bool:
+    if cp is None:
+        return True
+    if not isinstance(cp, dict):
+        return False
+    return (cp.get("allow") is None or _is_str_list(cp["allow"])) and (cp.get("deny") is None or _is_str_list(cp["deny"]))
+
+
+def _norm_id(s: str) -> str:
+    # Parity with the Node reference: DIDs keep their id case (did:key is case-sensitive);
+    # anything else is a URI and gets scheme/host lowercased.
+    return normalize_did(s) if s[:4].lower() == "did:" else normalize_uri(s)
+
+
 def _parse_counterparties(cp: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if not cp:
         return {"base": "UNIVERSE", "deny": set()}
-    allow = cp.get("allow", [])
-    deny = {normalize_did(d) for d in cp.get("deny", [])}
+    allow = cp.get("allow") or []
+    deny = {_norm_id(d) for d in (cp.get("deny") or [])}
     if not allow:
         return {"base": "UNIVERSE", "deny": deny}
-    return {"base": {normalize_did(a) for a in allow}, "deny": deny}
+    return {"base": {_norm_id(a) for a in allow}, "deny": deny}
 
 
 def counterparty_subsumes(parent_cp: Optional[Dict[str, Any]], child_cp: Optional[Dict[str, Any]]) -> bool:
     """LIP-3 §5: Counterparty allow/deny set containment."""
+    if not cp_is_valid(parent_cp) or not cp_is_valid(child_cp):
+        return False
     p = _parse_counterparties(parent_cp)
     c = _parse_counterparties(child_cp)
 
@@ -222,11 +264,42 @@ def counterparty_subsumes(parent_cp: Optional[Dict[str, Any]], child_cp: Optiona
     if c["base"] == "UNIVERSE":
         return False
 
-    # Child allow base must be subset of parent allow base
+    # Child EFFECTIVE set must be a subset of the parent effective set: a member the child
+    # itself denies does not count (parity with the Node reference — the differential fuzzer
+    # caught this port refusing a scope that denied one of its own allow entries).
     for member in c["base"]:
+        if member in c["deny"]:
+            continue
         if member not in p["base"] or member in p["deny"]:
             return False
 
+    return True
+
+
+def scope_is_valid(scope: Any) -> bool:
+    """LIP-3 §5 (v0.3): shape validation precedes every comparison. Returns False (never
+    raises) so a direct caller fails closed; verify_envelope_attenuation raises
+    LAP_ERR_SCOPE_SCHEMA. Found by the fuzzer: malformed scopes used to surface
+    AttributeErrors/TypeErrors from deep inside the comparison, and a missing ``act``
+    compared as "grants nothing is a subset of grants nothing"."""
+    if not isinstance(scope, dict):
+        return False
+    if not isinstance(scope.get("v"), str):
+        return False
+    act = scope.get("act")
+    if not (isinstance(act, str) or _is_str_list(act)):
+        return False
+    if not isinstance(scope.get("res"), str):
+        return False
+    if not cp_is_valid(scope.get("cp")) or not cap_is_valid(scope.get("cap")):
+        return False
+    for f in ("depth", "decay_max_sec"):
+        if f in scope:
+            v = scope[f]
+            if not isinstance(v, int) or isinstance(v, bool) or v < 0 or v > _MAX_SAFE:
+                return False
+    if "depth" in scope and scope["depth"] > _MAX_DEPTH:
+        return False
     return True
 
 
@@ -236,6 +309,8 @@ def scope_subsumes(
     registry: Dict[str, List[str]] = ACTION_REGISTRY_V0,
 ) -> bool:
     """LIP-3 §6: Full scope subsumption check."""
+    if not scope_is_valid(parent) or not scope_is_valid(child):
+        return False
     if parent.get("v") != "lap-scope-v0" or child.get("v") != "lap-scope-v0":
         return False
     if not dag_subsumes(parent.get("act", []), child.get("act", []), registry):
@@ -261,9 +336,13 @@ def verify_envelope_attenuation(
     registry: Dict[str, List[str]] = ACTION_REGISTRY_V0,
 ) -> Dict[str, Any]:
     """LIP-3 §6: Envelope-level verification with budget conservation and canonical ordering."""
+    if not isinstance(parent_scopes, list) or not isinstance(child_scopes, list):
+        raise ValueError("LAP_ERR_SCOPE_SCHEMA: scope sets must be lists")
     for s in [*parent_scopes, *child_scopes]:
-        if not cap_is_valid(s.get("cap")):  # F8: loud schema failure before arithmetic
-            raise ValueError(f"LAP_ERR_CAP_SCHEMA: invalid cap in {jcs(s)}")
+        if not cap_is_valid(s.get("cap") if isinstance(s, dict) else None):  # F8: loud schema failure before arithmetic
+            raise ValueError(f"LAP_ERR_CAP_SCHEMA: invalid cap in {_show(s)}")
+        if not scope_is_valid(s):
+            raise ValueError(f"LAP_ERR_SCOPE_SCHEMA: malformed scope {_show(s)}")
     parents = sorted(parent_scopes, key=lambda s: jcs(s))
     children = sorted(child_scopes, key=lambda s: jcs(s))
     remaining = [p.get("cap", {}).get("max_cumulative", float("inf")) for p in parents]
