@@ -22,7 +22,11 @@
 
 The v0.1 → v0.2 revision came from exactly this method (three adversarial reviews). The bar for a contribution that merges: it must either (a) find a defect we can verify, (b) contribute a concrete design for an open problem (§6 of the pack), (c) surface real prior art we must align with or cite, or (d) materially improve spec precision (schemas, state machines, error paths). Compliments merge nowhere.
 
-## Round 3 (current) — read this first
+## Round 4 (current) — the repository is public
+
+The context pack is no longer needed: point a model at https://github.com/atharnouman/living-agents-protocol and give it `prompts/13-contribute-from-public-repo.md`. That prompt carries the ground rules (read-only delivery into `inbox/`, verify before claiming, no rediscovery credit, no control characters), a thirty-minute reading order, five tasks to choose from (clean-room implementation in a new language, hostile review of the threat model and LIP-3 v0.3, parser fuzzing, newcomer friction, spec archaeology), and the report shape. Deliverables land in `inbox/YYYY-MM-DD_<model>_<topic>.md`; the maintainer reproduces every claim before merging and logs the outcome in `IMPROVEMENTS-LOG.md` with attribution. Everything produced this way is a **solicited** signal (spec §11).
+
+## Round 3 (superseded) — read this first
 
 Since round 2 the target changed: **real code exists** (lap-reference/, lap-demo/), the full LIP texts exist (LIP-2 never externally reviewed), spec §26 (lifecycle/succession) is new, and publication drafts are about to ship. Round-3 prompts are **file-access based** (no context-pack paste needed): **10-code-review** (highest value — crypto, spec-vs-code conformance, demo honesty, missing tests), **11-lip-full-review** (LIP-2 deepest; §26), **12-publish-readiness** (HN skeptic + arXiv reviewer + claims auditor). Old prompts 01–09 are cold — the pack they reference predates v0.4; rerun only with a refreshed pack. Expectation: code findings should dominate; thin spec findings = convergence confirmed.
 
