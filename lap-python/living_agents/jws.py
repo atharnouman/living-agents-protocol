@@ -37,12 +37,17 @@ def sign_jws(
 
 def decode_jws(token: str) -> Dict[str, Any]:
     """Decode a compact JWS into header, payload, signature, and signing input."""
+    if not isinstance(token, str):  # F8: non-string in -> typed error, not AttributeError
+        raise ValueError("LAP_ERR_SIG: token must be a string")
     parts = token.split(".")
     if len(parts) != 3:
         raise ValueError("LAP_ERR_SIG: not a compact JWS (expected 3 parts)")
     h_b64, p_b64, s_b64 = parts
-    header = json.loads(b64url_decode(h_b64).decode("utf-8"))
-    payload = json.loads(b64url_decode(p_b64).decode("utf-8"))
+    try:  # F7: malformed JSON payload -> typed LAP_ERR_SIG, not a raw JSONDecodeError
+        header = json.loads(b64url_decode(h_b64).decode("utf-8"))
+        payload = json.loads(b64url_decode(p_b64).decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        raise ValueError(f"LAP_ERR_SIG: malformed JWS JSON ({e})") from e
     signature = b64url_decode(s_b64)
     signing_input = f"{h_b64}.{p_b64}".encode("ascii")
     return {

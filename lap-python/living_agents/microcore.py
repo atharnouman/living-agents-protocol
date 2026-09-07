@@ -157,12 +157,16 @@ class IdempotencyCache:
     def _key(agent_did: str, idempotency_key: str) -> str:
         return f"{agent_did}\u0000{idempotency_key}"
 
-    def claim(self, agent_did: str, idempotency_key: str) -> Optional[Any]:
+    def claim(self, agent_did: str, idempotency_key: str) -> Dict[str, Any]:
+        """F1 (v0.4.10): three-state atomic reservation — see the Node port for the rationale.
+        Callers proceed ONLY on {"status": "reserved"}; "in_flight" is a duplicate to reject;
+        "completed" returns the cached receipt."""
         key = self._key(agent_did, idempotency_key)
-        if key in self._seen:
-            return self._seen[key]
-        self._seen[key] = None
-        return None
+        if key not in self._seen:
+            self._seen[key] = None
+            return {"status": "reserved"}
+        receipt = self._seen[key]
+        return {"status": "in_flight"} if receipt is None else {"status": "completed", "receipt": receipt}
 
     def complete(self, agent_did: str, idempotency_key: str, receipt: Any) -> None:
         self._seen[self._key(agent_did, idempotency_key)] = receipt

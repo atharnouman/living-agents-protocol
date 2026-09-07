@@ -422,3 +422,59 @@ def test_fuzz_8_cross_port_parity_digest():
     expected = json.loads(DIGEST_PATH.read_text(encoding="utf-8"))
     assert counts == expected["decisions"], f"decision counts differ from Node: {counts} vs {expected['decisions']}"
     assert digest == expected["digest"], "decision digest differs from the committed one: the ports diverged"
+
+
+def test_fuzz_6b_multi_parent_conservation_is_sound():
+    # F5 (Gemini hostile review): property 6 only ever used a single parent. Here 2-3 overlapping
+    # parents share a child; greedy.ok must imply a feasible full assignment exists (soundness).
+    g = Gen(xorshift32(SEED ^ 23), True)
+
+    def feasible(parents, children):
+        budget = [(int(p["cap"]["max_cumulative"]) if p.get("cap") else None) for p in parents]
+
+        def go(i):
+            if i == len(children):
+                return True
+            c = children[i]
+            for jx, p in enumerate(parents):
+                if not scope_subsumes(p, c):
+                    continue
+                if budget[jx] is None:
+                    if go(i + 1):
+                        return True
+                    continue
+                d = oracle_debit(p["cap"], c["cap"])
+                if d > budget[jx]:
+                    continue
+                budget[jx] -= d
+                if go(i + 1):
+                    return True
+                budget[jx] += d
+            return False
+
+        return go(0)
+
+    accepted = 0
+    for _ in range(500):
+        np_ = 2 + g.rint(2)
+        parents = []
+        for _ in range(np_):
+            s = g.scope()
+            s["res"] = "mcp://h/pay/**"
+            if not s.get("cap"):
+                s["cap"] = {"max_per_tx": 100, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"}
+            s["depth"] = 5
+            s.pop("cp", None)
+            s.pop("decay_max_sec", None)
+            parents.append(s)
+        nc = 1 + g.rint(4)
+        children = [g.attenuate(parents[g.rint(np_)]) for _ in range(nc)]
+        if any(not cap_is_valid(c.get("cap")) for c in children):
+            continue
+        try:
+            got = verify_envelope_attenuation(parents, children)["ok"]
+        except ValueError:
+            continue
+        assert (not got) or feasible(parents, children), f"unsound multi-parent accept: {j({'parents': parents, 'children': children})}"
+        accepted += got
+    assert accepted > 30, f"multi-parent accept rate too low ({accepted}/500) to test soundness"

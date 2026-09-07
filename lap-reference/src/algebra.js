@@ -20,6 +20,11 @@ const WINDOW_SECONDS = { utc_hour: 3600, utc_day: 86400 };
 const VALID_WINDOWS = new Set(["tx", "utc_hour", "utc_day", "epoch_total"]);
 const MAX_DEPTH = 16;
 
+// LIP-3 §2 (v0.4): closed resource-scheme set. did/urn are identifiers (used in `cp`), not
+// resources; `git` is reserved for the experimental lap-git commit binding. Every other scheme
+// (http, file, gopher, ...) is refused — the algebra never default-allows an unknown scheme.
+const RES_SCHEMES = new Set(["mcp", "a2a", "ap2", "https", "git"]);
+
 const isPlainObject = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
 const isStringList = (x) => Array.isArray(x) && x.every((s) => typeof s === "string");
 const show = (x) => { try { return jcs(x); } catch { return JSON.stringify(x) ?? String(x); } };
@@ -59,10 +64,15 @@ function parseRes(res) {
   const m = norm.match(/^([a-z0-9+.-]+):\/\/([^/]+)(\/.*)?$/);
   if (!m) throw new Error(`LAP_ERR_RES: invalid resource URI: ${res}`);
   const [, scheme, host, path = ""] = m;
+  if (!RES_SCHEMES.has(scheme)) throw new Error(`LAP_ERR_RES: scheme not in the closed set: ${scheme}`); // F3
   if (path.includes("//")) throw new Error("LAP_ERR_RES: empty path segment");
-  // F10: no dot-segments or encoded separators — a proxy/router would resolve them
-  // AFTER authorization, letting /safe/** authorize /admin. Fail closed.
-  if (/%2f|%5c|%2e/i.test(path)) throw new Error("LAP_ERR_RES: encoded path separators not allowed");
+  // F2/F10 (v0.4.10): a resource pattern is decoded, canonical text. Percent-encoding and
+  // backslashes are exactly the forms a downstream proxy resolves AFTER authorization
+  // (`/safe/..\\admin`, `/safe/%252e%252e/admin`), so a pattern MUST contain neither, nor any
+  // control character; with the dot-segment check below this closes the traversal class.
+  if (/[\\%]/.test(path)) throw new Error("LAP_ERR_RES: backslashes and percent-encoding are not allowed in resource patterns");
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(path)) throw new Error("LAP_ERR_RES: control characters are not allowed in resource patterns");
   const segments = path.split("/").filter((s) => s.length > 0);
   if (segments.includes(".") || segments.includes("..")) {
     throw new Error("LAP_ERR_RES: dot-segments not allowed");

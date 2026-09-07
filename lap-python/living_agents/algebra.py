@@ -86,12 +86,16 @@ def _parse_res(res: str) -> Dict[str, Any]:
     if not m:
         raise ValueError(f"LAP_ERR_RES: invalid resource URI: {res}")
     scheme, host, path = m.group(1), m.group(2), m.group(3) or ""
+    if scheme not in _RES_SCHEMES:  # F3
+        raise ValueError(f"LAP_ERR_RES: scheme not in the closed set: {scheme}")
     if "//" in path:
         raise ValueError("LAP_ERR_RES: empty path segment")
-    # F10: no dot-segments or encoded separators — a proxy/router would resolve them
-    # AFTER authorization, letting /safe/** authorize /admin. Fail closed.
-    if re.search(r"%2f|%5c|%2e", path, re.IGNORECASE):
-        raise ValueError("LAP_ERR_RES: encoded path separators not allowed")
+    # F2/F10 (v0.4.10): a resource pattern is decoded, canonical text — no percent-encoding,
+    # backslashes, or control characters (the forms a downstream proxy resolves after auth).
+    if re.search(r"[\\%]", path):
+        raise ValueError("LAP_ERR_RES: backslashes and percent-encoding are not allowed in resource patterns")
+    if re.search(r"[\x00-\x1f\x7f]", path):
+        raise ValueError("LAP_ERR_RES: control characters are not allowed in resource patterns")
     segments = [s for s in path.split("/") if s]
     if "." in segments or ".." in segments:
         raise ValueError("LAP_ERR_RES: dot-segments not allowed")
@@ -141,6 +145,9 @@ def path_subsumes(parent_res: str, child_res: str) -> bool:
 VALID_WINDOWS = {"tx", "utc_hour", "utc_day", "epoch_total"}
 _MAX_SAFE = 2**53 - 1  # envelopes are JSON consumed by JS verifiers too: both ports reject above this (parity)
 _MAX_DEPTH = 16
+# LIP-3 §2 (v0.4): closed resource-scheme set (did/urn are `cp` identifiers, not resources;
+# `git` is reserved for the experimental lap-git binding). Every other scheme is refused.
+_RES_SCHEMES = {"mcp", "a2a", "ap2", "https", "git"}
 
 
 def cap_is_valid(cap: Optional[Dict[str, Any]]) -> bool:

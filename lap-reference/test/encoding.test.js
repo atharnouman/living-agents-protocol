@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { b64urlDecode, b64urlEncode, sha256Hex } from "../src/crypto-util.js";
 import { verifyRequestSignature, verifyMicroCorePassport } from "../src/microcore.js";
+import { decodeJws } from "../src/jws.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const v = JSON.parse(readFileSync(join(here, "..", "..", "output", "lip", "test-vectors", "vectors.json"), "utf8"));
@@ -46,4 +47,13 @@ test("malleated signature text is rejected end to end (request signature and pas
   assert.throws(() => verifyMicroCorePassport(jwt2, { expectedAud: "did:web:tools.example.com", now: NOW }), /LAP_ERR_ENCODING/);
   // and the canonical originals still verify
   assert.equal(verifyMicroCorePassport(mc.passport_jwt, { expectedAud: "did:web:tools.example.com", now: NOW }).sub, v.keys.agent.did);
+});
+
+// ---- v0.4 external hostile-review round (Gemini, 2026-09-08): malformed tokens are typed ----
+test("F7/F8: malformed tokens yield typed LAP_ERR_SIG, never a raw language error", () => {
+  assert.throws(() => decodeJws(null), /LAP_ERR_SIG: token must be a string/);        // F8
+  assert.throws(() => decodeJws(42), /LAP_ERR_SIG: token must be a string/);
+  assert.throws(() => decodeJws("eyJhbGciOiJFZERTQSJ9.bm90X2pzb24.sig"), /LAP_ERR_SIG: malformed JWS/); // F7
+  // the passport verifier extracts iss BEFORE JWS verification; it used to leak a raw SyntaxError
+  assert.throws(() => verifyMicroCorePassport("eyJhbGciOiJFZERTQSJ9.bm90X2pzb24.sig", { expectedAud: "did:web:x" }), /LAP_ERR_SIG/);
 });

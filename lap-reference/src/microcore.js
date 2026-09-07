@@ -1,7 +1,7 @@
 // LIP-4 — Micro-Core server-side verification invariant (§2), transport-agnostic core.
 import { timingSafeEqual } from "node:crypto";
 import { publicKeyFromDid, verifyEd25519, b64urlDecode, sha256Hex, sha256B64url, normalizeUri, normalizeDid } from "./crypto-util.js";
-import { verifyJws, checkTimeWindow } from "./jws.js";
+import { decodeJws, verifyJws, checkTimeWindow } from "./jws.js";
 import { pathSubsumes } from "./algebra.js";
 
 const PROOF_CLASS_ORDER = ["self-asserted", "domain-validated", "org-validated", "gov-validated"];
@@ -13,7 +13,7 @@ const PROOF_CLASS_ORDER = ["self-asserted", "domain-validated", "org-validated",
 // authority over a server-owned resource — the server MUST apply its own trust policy.
 export function verifyMicroCorePassport(passportJwt, { expectedAud, allowedIssuers, minProofClass, now } = {}) {
   if (!expectedAud) throw new Error("LAP_ERR_AUDIENCE: expectedAud (this server's identity) is required");
-  const iss = JSON.parse(b64urlDecode(passportJwt.split(".")[1]).toString()).iss;
+  const iss = decodeJws(passportJwt).payload.iss; // F7: typed LAP_ERR_SIG on a malformed token, never a raw SyntaxError
   if (!iss) throw new Error("LAP_ERR_PASSPORT: iss missing");
   const { payload } = verifyJws(passportJwt, iss); // proves the presenter controls iss's key
   if (!payload.aud) throw new Error("LAP_ERR_AUDIENCE: aud missing");
@@ -85,11 +85,15 @@ export function makeIdempotencyCache() {
   const seen = new Map();
   const k = (agentDid, idempotencyKey) => `${agentDid}\u0000${idempotencyKey}`;
   return {
+    // F1 (v0.4.10): three-state atomic reservation. A binary null return could not tell a
+    // FRESH reservation from an IN-FLIGHT one, so two concurrent mutating requests both saw
+    // "free" and both executed. Callers proceed ONLY on {status:"reserved"}; {status:"in_flight"}
+    // is a duplicate to reject (e.g. HTTP 409); {status:"completed"} returns the cached receipt.
     claim(agentDid, idempotencyKey) {
       const key = k(agentDid, idempotencyKey);
-      if (seen.has(key)) return seen.get(key); // completed receipt, or null if pending
-      seen.set(key, null); // reserve atomically (synchronous — no await between has/set)
-      return null;
+      if (!seen.has(key)) { seen.set(key, null); return { status: "reserved" }; }
+      const receipt = seen.get(key);
+      return receipt === null ? { status: "in_flight" } : { status: "completed", receipt };
     },
     complete(agentDid, idempotencyKey, receipt) {
       seen.set(k(agentDid, idempotencyKey), receipt);

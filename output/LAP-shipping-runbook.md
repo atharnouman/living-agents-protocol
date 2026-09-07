@@ -15,9 +15,9 @@ Everything public uses **your personal identity only**: GitHub (personal account
 
 ## Status snapshot (verified)
 
-- **Green:** Node 61/61 · Python 55/55 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
+- **Green:** Node 64/64 · Python 59/59 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
 - **Clean:** no secrets or private-key files tracked; company domain appears nowhere; working tree committed via `lap-git`; local backup zip taken (`backups/`, git-ignored).
-- **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.9 / 51 / 45 / five rounds / ~150.
+- **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.10 / 51 / 45 / five rounds / ~150.
 - **Ready:** CI workflow, `SECURITY.md`, `CITATION.cff`, a `docs/` folder for GitHub Pages (visual demo, terminal playback, asciinema cast), the paper refreshed to v1.1-draft (clone problem as open problem #7, two implementations, lap-git, three-model acknowledgments) and rendered to print-ready HTML, the essay refreshed with the case-study hook.
 - **Placeholders that remain, on purpose:** `https://github.com/atharnouman/living-agents-protocol` in the essay and paper; `repository-code` absent from `CITATION.cff`; no CI badge in the README yet. All three resolve in **Phase 1A step 4** the moment the real URL exists — no guessed URLs anywhere in public files.
 
@@ -58,7 +58,7 @@ Follow `LAP-recording-playbook.md`. Minimum: one ~70s terminal MP4 of `node cond
 
 1. [ME] **Freeze + re-anchor** after the URL sweep (B.3) so priority locks to exactly the published bytes.
 2. [ME→YOU] **Essay** — I finalize `LAP-essay.md` with the real links; you publish it (personal blog / Substack / Medium — never the company blog).
-3. [ME→YOU] **Release tag** — I create the annotated tag `v0.4.9`; you push it (B.4) and create the GitHub Release from A.7 (attach the MP4 later, when the film exists). Stable links for every post.
+3. [ME→YOU] **Release tag** — I create the annotated tag `v0.4.10`; you push it (B.4) and create the GitHub Release from A.7 (attach the MP4 later, when the film exists). Stable links for every post.
 4. [YOU] **Show HN** — A.2. Post Tue–Thu, ~8–10am US Eastern, when you can babysit comments for ~4 hours. Answer with facts; never argue; a cool reception is not failure.
 5. [YOU] **LinkedIn + X** — A.3, A.4. First mention everywhere: *Living Agents Protocol (LAP)*.
 
@@ -100,7 +100,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 ## Appendix A — Launch copy (paste-ready)
 
 ### A.0 — Launch-day order (2026-09-08 refresh; everything below is [YOU] unless marked)
-1. **GitHub Release** for `v0.4.9` — repo → Releases → *Draft a new release* → choose existing tag `v0.4.9` → title + body from A.7 → *Publish release*.
+1. **GitHub Release** for `v0.4.10` — repo → Releases → *Draft a new release* → choose existing tag `v0.4.10` → title + body from A.7 → *Publish release*.
 2. **Social preview** — Settings → General → *Social preview* → upload `docs/social-preview.png` (1280×640). Without it, links on X/LinkedIn/HN render blank.
 3. **Essay** — publish `output/LAP-essay.md` on your personal blog / Substack / Medium (never the company blog). Send me the URL: [ME] adds it to the README "Read" line and restamps.
 4. **Show HN** — A.2. Tue–Thu, 8–10 am US Eastern, when you can babysit comments for ~4 hours. Facts, no arguing; a cool reception is not failure.
@@ -174,19 +174,19 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 ### A.6 — W3C CG opener
 > Hi all — I've been working on the lifecycle/presence side of agent protocols: how a persistent agent proves it's alive, how authority decays when it goes dark, and how a restart isn't a new identity. It's a small implemented model (two interoperating libraries, a runnable two-process demo) that deliberately slots under MCP/A2A rather than competing. I'd value this group's read on the presence/pulse mechanism specifically — https://github.com/atharnouman/living-agents-protocol. Happy to write it up as a contribution if there's interest.
 
-### A.7 — GitHub Release notes for v0.4.9 (paste as the release body)
-> **Title:** v0.4.9 — fuzzed Scope Algebra, threat model, real registration, MCP tutorial
+### A.7 — GitHub Release notes for v0.4.10 (paste as the release body)
+> **Title:** v0.4.10 — fuzzed Scope Algebra, threat model, real registration, MCP tutorial
 >
 > Everything since the first public tag (v0.4.6), newest first:
 >
-> - **Property-based fuzzing of the Scope Algebra (v0.4.9, LIP-3 v0.3).** A generator written identically in both ports drives the same random scopes through Node and Python; a committed decision digest fails the build if they ever disagree. The first run found four defects — an identical `*` delegation refused, language-level errors on malformed scopes, a one-unit floating-point divergence between the ports, and a missing effective-set rule in Python — all fixed with regression tests.
+> - **Property-based fuzzing of the Scope Algebra (v0.4.10, LIP-3 v0.3).** A generator written identically in both ports drives the same random scopes through Node and Python; a committed decision digest fails the build if they ever disagree. The first run found four defects — an identical `*` delegation refused, language-level errors on malformed scopes, a one-unit floating-point divergence between the ports, and a missing effective-set rule in Python — all fixed with regression tests.
 > - **THREAT-MODEL.md.** Assets, actors, sixteen defended threats each tied to the code that enforces the defence and the test that proves it, and the residual risks stated plainly.
 > - **Canonical encoding made normative (v0.4.8).** Both decoders now reject non-canonical base64url; a lenient decoder gave one signature many textual forms, which text-keyed state could not distinguish.
 > - **Add LAP to your MCP server in 15 minutes.** `examples/mcp-server/`: a FastMCP server whose payment tool refuses anything outside the caller's signed envelope and returns a signed receipt; the stdio round-trip runs in CI.
 > - **Registration made real (v0.4.7).** One command registers a Genesis Record in Sigstore's public Rekor log and verifies the inclusion proof and signed timestamp with the library's own RFC 6962 code.
 > - **Zero-install Codespaces**, an animated README hero built from the live demo, IPv4 + IPv6 networked demo.
 >
-> Tests: Node 61/61, Python 55/55, demo replay 191 checks with tamper detection, lap-git self-test. Every commit since v0.4.6 is signed by a `lap-git` agent passport (`node lap-git/lap-git.mjs verify`); documents are Bitcoin-timestamped (`output/anchors/ANCHORS.md`). Full history: founding document §23 and `llm-collab/IMPROVEMENTS-LOG.md`.
+> Tests: Node 64/64, Python 59/59, demo replay 191 checks with tamper detection, lap-git self-test. Every commit since v0.4.6 is signed by a `lap-git` agent passport (`node lap-git/lap-git.mjs verify`); documents are Bitcoin-timestamped (`output/anchors/ANCHORS.md`). Full history: founding document §23 and `llm-collab/IMPROVEMENTS-LOG.md`.
 >
 > Spec CC-BY-4.0 · code Apache-2.0 · demo: https://atharnouman.github.io/living-agents-protocol/
 
@@ -216,7 +216,7 @@ python output/anchors/lap_stamp.py output/LAP-founding-document.md README.md
 
 **B.4 Release tag (I create; you push)**
 ```bash
-git push origin v0.4.9
+git push origin v0.4.10
 # then GitHub → Releases → Draft from tag v0.4.6 → attach the MP4 and docs/lap-overnight.cast
 ```
 
@@ -227,8 +227,8 @@ ots upgrade output/LAP-founding-document.md.ots && ots verify output/LAP-foundin
 
 **B.6 Anyone can verify the repo in 5 minutes (drop into a reply when a skeptic asks)**
 ```bash
-cd lap-reference && node --test test/                                      # 61/61
-cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 55/55
+cd lap-reference && node --test test/                                      # 64/64
+cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 59/59
 cd ../lap-demo/net && node conductor.mjs && node verify.mjs                # 2 processes, receipts verified
 cd ../.. && node lap-git/lap-git.mjs selftest                              # scope refused, tamper caught
 ```

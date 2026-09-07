@@ -64,3 +64,15 @@ def test_malleated_signature_text_is_rejected_end_to_end(vectors):
         verify_microcore_passport(jwt2, expected_aud=AUD, now=NOW)
     # and the canonical original still verifies
     assert verify_microcore_passport(mc["passport_jwt"], expected_aud=AUD, now=NOW)["sub"] == agent_did
+
+
+def test_malformed_tokens_are_typed_errors():
+    # F7/F8 (Gemini hostile review): non-string and invalid-JSON tokens -> typed LAP_ERR_SIG.
+    from living_agents.jws import decode_jws
+    for bad in [None, 42]:
+        with pytest.raises(ValueError, match="LAP_ERR_SIG: token must be a string"):  # F8
+            decode_jws(bad)
+    with pytest.raises(ValueError, match="LAP_ERR_SIG: malformed JWS"):               # F7
+        decode_jws("eyJhbGciOiJFZERTQSJ9.bm90X2pzb24.sig")
+    with pytest.raises(ValueError, match="LAP_ERR_SIG"):
+        verify_microcore_passport("eyJhbGciOiJFZERTQSJ9.bm90X2pzb24.sig", expected_aud="did:web:x")

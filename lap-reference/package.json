@@ -1,6 +1,6 @@
 {
   "name": "@living-agents/reference",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "Living Agents Protocol (LAP) reference implementation: passport (LIP-1), scope algebra (LIP-3), Micro-Core (LIP-4). Zero dependencies.",
   "type": "module",
   "license": "Apache-2.0",

@@ -48,7 +48,7 @@ test("F9: exported scopeSubsumes includes the cap conjunct", () => {
 
 test("F10: dot-segments and encoded separators in resources are rejected", () => {
   assert.throws(() => pathSubsumes("https://api.example/safe/**", "https://api.example/safe/../admin/delete"), /dot-segments/);
-  assert.throws(() => pathSubsumes("https://api.example/safe/**", "https://api.example/safe/%2e%2e/admin"), /encoded path/);
+  assert.throws(() => pathSubsumes("https://api.example/safe/**", "https://api.example/safe/%2e%2e/admin"), /percent-encoding/);
 });
 
 test("F-extra: dagSubsumes handles array-valued act with value equality (Node/Python parity)", () => {
@@ -90,13 +90,15 @@ test("F1: issuer allow-list and proof-class floor are enforced when configured",
   assert.throws(() => verifyMicroCorePassport(vectors.micro_core.passport_jwt, { ...opts, minProofClass: "org-validated" }), /LAP_ERR_PROOF_CLASS/);
 });
 
-test("F6: idempotency claim() reserves atomically within a process", () => {
+test("F6: idempotency claim() distinguishes reserved / in-flight / completed (v0.4.10)", () => {
   const cache = makeIdempotencyCache();
-  assert.equal(cache.claim("did:key:a", "one"), null); // first claim reserves
-  assert.equal(cache.claim("did:key:a", "one"), null); // still pending, not re-executable-as-fresh
+  // A fresh reservation and an in-flight duplicate MUST differ, or two concurrent mutating
+  // requests both see "free" and both execute (Gemini hostile-review F1).
+  assert.deepEqual(cache.claim("did:key:a", "one"), { status: "reserved" });   // won the slot
+  assert.deepEqual(cache.claim("did:key:a", "one"), { status: "in_flight" });  // duplicate -> reject
   cache.complete("did:key:a", "one", { receipt: "R" });
-  assert.deepEqual(cache.claim("did:key:a", "one"), { receipt: "R" }); // now returns cached receipt
-  assert.equal(cache.claim("did:key:b", "one"), null); // different agent, independent slot
+  assert.deepEqual(cache.claim("did:key:a", "one"), { status: "completed", receipt: { receipt: "R" } });
+  assert.deepEqual(cache.claim("did:key:b", "one"), { status: "reserved" }); // different agent, independent slot
 });
 
 test("F12: over-long did:key multibase is rejected before base58 decoding", () => {

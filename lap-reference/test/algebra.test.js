@@ -11,7 +11,7 @@ test("IPv6 literal resources: bracketed authority, case-folded, distinct from IP
   assert.equal(pathSubsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:DB8::1]:4107/billing/pay"), true);
   assert.equal(pathSubsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:db8::2]:4107/billing/pay"), false);
   assert.equal(pathSubsumes("mcp://[::1]:4107/billing/**", "mcp://127.0.0.1:4107/billing/pay"), false);
-  assert.equal(pathSubsumes("http://[::1]:4107/pay", "http://[::1]:4107/pay"), true);
+  assert.equal(pathSubsumes("https://[::1]:4107/pay", "https://[::1]:4107/pay"), true);
   // Documented interop hazard: matching is TEXTUAL, so the expanded and compressed
   // forms of the same address do not match. Scopes MUST use RFC 5952 canonical form.
   assert.equal(pathSubsumes("mcp://[2001:db8:0:0:0:0:0:1]/x/**", "mcp://[2001:db8::1]/x/y"), false);
@@ -128,4 +128,24 @@ test("v0.3: exact integer arithmetic for window scaling and debits (no double ro
   assert.equal(verifyEnvelopeAttenuation([parent], [child]).ok, true);   // debit 342563965713392 x 24 = 8221535177121408, exactly the budget
   const twoChildren = [child, S({ res: "mcp://h/y", cap: { unit: "USD", window: "utc_hour", max_per_tx: 1, max_cumulative: 1 } })];
   assert.equal(verifyEnvelopeAttenuation([parent], twoChildren).ok, false); // one unit over
+});
+
+// ---- v0.4 external hostile-review round (Gemini, 2026-09-08; see llm-collab/IMPROVEMENTS-LOG.md) ----
+test("v0.4: closed scheme set + decoded-canonical resource patterns (F2/F3)", () => {
+  for (const ok of ["mcp://h/x", "a2a://h/x", "ap2://h/x", "https://h/x", "git://repo/lap-git/x"]) {
+    assert.doesNotThrow(() => pathSubsumes(ok, ok), `should parse: ${ok}`);
+  }
+  for (const bad of ["gopher://e/x", "file://h/x", "http://h/x", "ftp://h/x"]) {
+    assert.throws(() => pathSubsumes("mcp://h/**", bad), /scheme not in the closed set/, bad); // F3
+  }
+  for (const id of ["did:key:z6MkA/x", "urn:isbn:1/x"]) {                    // did/urn are cp identifiers, not resources
+    assert.throws(() => pathSubsumes("mcp://h/**", id), /LAP_ERR_RES/, id);
+  }
+  const BS = String.fromCharCode(0x5c), C1 = String.fromCharCode(1);
+  for (const bad of [`mcp://h/safe/..${BS}admin`, "mcp://h/safe/%2e%2e", "mcp://h/safe/%252e%252e/admin", "mcp://h/a/%2f/b"]) {
+    assert.throws(() => pathSubsumes("mcp://h/safe/**", bad), /backslashes and percent-encoding/, bad); // F2
+  }
+  assert.throws(() => pathSubsumes("mcp://h/**", `mcp://h/a${C1}b`), /control characters/);
+  assert.equal(pathSubsumes("git://repo/**", "git://repo/lap-git/lap-git.mjs"), true);   // the git binding still works
+  assert.equal(pathSubsumes("git://repo/lap-git/**", "git://repo/output/x"), false);
 });

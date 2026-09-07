@@ -1,6 +1,6 @@
 # LIP-3: LAP-Core Scope Algebra v0 (draft v0.3)
 
-*Status: DRAFT v0.3 (property-based fuzzing round merged 2026-09-08; round-2 corrections merged 2026-08-29). Origin: base design contributed by Gemini (round 1, inbox/2026-08-28_gemini_scope-algebra.md); soundness corrections contributed by Gemini 3.7 (round 2, inbox/2026-08-29_gemini37_design-review.md and _scope-algebra.md); triaged and refined by Claude+author. Resolves founding-document open problem §22.1; correction record in spec §25.1.*
+*Status: DRAFT v0.4 (external hostile-review round merged 2026-09-08: closed scheme set, decoded-canonical patterns, budget-check corrected to the debit; property-based fuzzing merged the same day; round-2 corrections 2026-08-29). Origin: base design contributed by Gemini (round 1, inbox/2026-08-28_gemini_scope-algebra.md); soundness corrections contributed by Gemini 3.7 (round 2, inbox/2026-08-29_gemini37_design-review.md and _scope-algebra.md); triaged and refined by Claude+author. Resolves founding-document open problem §22.1; correction record in spec §25.1.*
 
 ## 1. Purpose and design stance
 
@@ -22,7 +22,7 @@ Every enforcement claim in LAP (attenuation proofs, CHARTER disclosure, conforma
 
 - `v` — mandatory; unknown versions rejected (`UNSUPPORTED_ALGEBRA_VERSION`). Never default-allow unknown constructs.
 - `act` — a verb from the **LIP Action Registry, which is an explicit versioned DAG** (v0.2 change): namespaces `data | finance | compute | comm | identity | governance`; every verb and every parent→child subsumption edge is registered by LIP with a reviewed narrowing rationale. **String prefixing confers nothing**: `compute:exec:unconfined` is not a child of `compute:exec` unless the registry declares that edge (it must not — "unconfined" broadens). Unregistered verbs are invalid outright.
-- `res` — URI, scheme from a closed set (`mcp | a2a | ap2 | https | did | urn`), **segment-tokenized** path pattern: `*` = exactly one segment; `**` terminal only; matching is per whole segment (`finance_admin` is NOT a child of `finance`). **Closed syntax (v0.3):** a pattern is scheme, authority and path — nothing else. A query, a fragment, or an empty interior segment (`//`) MUST be rejected (`LAP_ERR_RES`), never default-allowed; one trailing slash is tolerated. A `*` pattern subsumes the identical `*` pattern at the same depth (they denote the same set — the fuzzer found the reference refusing an identical delegation); it never subsumes `**`.
+- `res` — URI, scheme from a closed set (`mcp | a2a | ap2 | https`; `git` is reserved for the experimental lap-git commit binding), **segment-tokenized** path pattern: `*` = exactly one segment; `**` terminal only; matching is per whole segment (`finance_admin` is NOT a child of `finance`). **Closed syntax (v0.3):** a pattern is scheme, authority and path — nothing else. A query, a fragment, or an empty interior segment (`//`) MUST be rejected (`LAP_ERR_RES`), never default-allowed; one trailing slash is tolerated. **Decoded canonical text (v0.4):** a pattern MUST contain no percent-encoding, no backslash, and no control character — these are exactly the forms a downstream proxy resolves *after* authorization (`/safe/..\admin`, `/safe/%252e%252e/admin`), so with dot-segment rejection they close the traversal class; a verifier decodes and canonicalizes the request resource before matching. **Scheme is validated against the closed set (v0.4):** any other scheme (`http`, `file`, `gopher`, …) is refused, and `did`/`urn` are identifiers used in `cp` (counterparties), not resources. A `*` pattern subsumes the identical `*` pattern at the same depth (they denote the same set — the fuzzer found the reference refusing an identical delegation); it never subsumes `**`.
 - `cap` — see §4 (two-dimensional rule, v0.2).
 - `cp` — explicit allow/deny sets of canonical identifiers; no patterns. **Effective-set semantics (v0.2)**: `E(X) = (X.allow ≠ ∅ ? X.allow : Universe) \ X.deny`.
 - `depth` — remaining delegation hops (0–16).
@@ -64,7 +64,7 @@ Verify-Envelope-Attenuation(P, C):
   remaining[p] := p.cap.max_cumulative for each p in P
   for c in C (canonical sorted order):
     find first p in P (canonical sorted order) with c ⊑ p (§5) AND,
-      if p.cap defined: c.cap.max_cumulative ≤ remaining[p]
+      if p.cap defined: debit(p.cap, c.cap) ≤ remaining[p]   // v0.4: the DEBIT, not the raw
     if none: REJECT(c)
     remaining[p] -= debit(p.cap, c.cap)    (when p.cap defined)
   ACCEPT

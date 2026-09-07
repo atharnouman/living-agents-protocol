@@ -323,3 +323,47 @@ test("fuzz 8: cross-port parity — same seed, same decisions in Node and Python
   const expected = JSON.parse(readFileSync(DIGEST_PATH, "utf8"));
   assert.equal(digest, expected.digest, "decision digest differs from the committed one: a port diverged, or the algebra changed on purpose (LAP_FUZZ_WRITE=1 to regenerate, then run pytest)");
 });
+
+test("fuzz 6b: budget conservation is SOUND across MULTIPLE overlapping parents (brute-force oracle) [F5]", () => {
+  const g = makeGen(xorshift32(SEED ^ 23), true);
+  // Does SOME full assignment of children -> subsuming parents fit every per-parent budget (in
+  // parent-window units)? Greedy's own accept is one such assignment, so ok ⟹ feasible; a failure
+  // here would be a real soundness bug. F5: property 6 only ever exercised a single parent.
+  const feasible = (parents, children) => {
+    const budget = parents.map((p) => (p.cap ? BigInt(p.cap.max_cumulative) : null));
+    const go = (i) => {
+      if (i === children.length) return true;
+      const c = children[i];
+      for (let jx = 0; jx < parents.length; jx++) {
+        if (!scopeSubsumes(parents[jx], c)) continue;
+        if (budget[jx] === null) { if (go(i + 1)) return true; continue; }
+        const d = oracleDebit(parents[jx].cap, c.cap);
+        if (d > budget[jx]) continue;
+        budget[jx] -= d; if (go(i + 1)) return true; budget[jx] += d;
+      }
+      return false;
+    };
+    return go(0);
+  };
+  let accepted = 0;
+  for (let i = 0; i < 500; i++) {
+    const np = 2 + g.rint(2);                                  // 2-3 parents sharing a resource family (overlap on purpose)
+    const parents = [];
+    for (let kx = 0; kx < np; kx++) {
+      const s = g.scope();
+      s.res = "mcp://h/pay/**";
+      if (!s.cap) s.cap = { max_per_tx: 100, max_cumulative: 100000, unit: "USD", window: "utc_day" };
+      s.depth = 5; delete s.cp; delete s.decay_max_sec;
+      parents.push(s);
+    }
+    const nc = 1 + g.rint(4);
+    const children = [];
+    for (let kx = 0; kx < nc; kx++) children.push(g.attenuate(parents[g.rint(np)]));
+    if (children.some((c) => !capIsValid(c.cap))) continue;
+    let got;
+    try { got = verifyEnvelopeAttenuation(parents, children).ok; } catch { continue; }
+    assert.ok(!got || feasible(parents, children), `unsound multi-parent accept: ${j({ parents, children })}`);
+    if (got) accepted++;
+  }
+  assert.ok(accepted > 30, `multi-parent accept rate too low (${accepted}/500) to test soundness`);
+});

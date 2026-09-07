@@ -48,7 +48,7 @@ from .microcore import (
     verify_request_signature,
 )
 
-__version__ = "0.4.9"
+__version__ = "0.4.10"
 
 __all__ = [
     "b58encode",

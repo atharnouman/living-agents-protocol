@@ -68,7 +68,7 @@ def test_f9_scope_subsumes_includes_caps():
 def test_f10_path_traversal_rejected():
     with pytest.raises(ValueError, match="dot-segments"):
         path_subsumes("https://api.example/safe/**", "https://api.example/safe/../admin/delete")
-    with pytest.raises(ValueError, match="encoded path"):
+    with pytest.raises(ValueError, match="percent-encoding"):
         path_subsumes("https://api.example/safe/**", "https://api.example/safe/%2e%2e/admin")
 
 
@@ -109,13 +109,15 @@ def test_f1_issuer_and_proof_class_policy(vectors):
                                   min_proof_class="org-validated")
 
 
-def test_f6_idempotency_claim_atomic():
+def test_f6_idempotency_claim_three_state():
+    # v0.4.10: a fresh reservation and an in-flight duplicate MUST be distinguishable, or two
+    # concurrent mutating requests both see "free" and both execute (Gemini hostile-review F1).
     cache = make_idempotency_cache()
-    assert cache.claim("did:key:a", "one") is None
-    assert cache.claim("did:key:a", "one") is None
+    assert cache.claim("did:key:a", "one") == {"status": "reserved"}      # first: won the slot
+    assert cache.claim("did:key:a", "one") == {"status": "in_flight"}     # duplicate while pending -> reject, do NOT execute
     cache.complete("did:key:a", "one", {"receipt": "R"})
-    assert cache.claim("did:key:a", "one") == {"receipt": "R"}
-    assert cache.claim("did:key:b", "one") is None
+    assert cache.claim("did:key:a", "one") == {"status": "completed", "receipt": {"receipt": "R"}}
+    assert cache.claim("did:key:b", "one") == {"status": "reserved"}
 
 
 def test_f12_overlong_did_rejected():

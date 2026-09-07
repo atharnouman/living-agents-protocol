@@ -36,6 +36,7 @@ def test_verify_envelope_decorator_success(vectors):
         server_private_key=server_priv,
         server_did=server_did,
         expected_aud="did:web:tools.example.com",
+        bind_target=False,  # HTTP vector: @target-uri is the https transport URL, not the mcp resource
     )
     def pay_tool(invoice: str, amount: int, unit: str):
         return {"status": "paid", "invoice": invoice, "paid_amount": amount}
@@ -76,6 +77,7 @@ def test_verify_envelope_decorator_cap_rejection(vectors):
         amount_param="amount",
         unit_param="unit",
         expected_aud="did:web:tools.example.com",
+        bind_target=False,  # HTTP vector: @target-uri is the https transport URL, not the mcp resource
     )
     def pay_tool(invoice: str, amount: int, unit: str):
         return {"status": "paid"}
@@ -103,6 +105,7 @@ def test_verify_envelope_positional_args_cannot_bypass_cap(vectors):
         amount_param="amount",
         unit_param="unit",
         expected_aud="did:web:tools.example.com",
+        bind_target=False,  # HTTP vector: @target-uri is the https transport URL, not the mcp resource
     )
     def pay_tool(invoice: str, amount: int, unit: str):
         return {"status": "paid"}
@@ -239,3 +242,32 @@ def test_mcp_missing_lap_auth_is_refused_before_the_tool_runs():
     with pytest.raises(ValueError, match="LAP_ERR_AUTH_MISSING"):
         tool(invoice="INV-6")
     assert ran == []
+
+
+def _auth_with_target(passport, signing_key, agent_did, signed_args, target):
+    """Like _auth, but lets the caller forge a different @target-uri (to prove the server binds it)."""
+    body = jcs(signed_args)
+    base = "\n".join([
+        '"@method": tools/call',
+        f'"@target-uri": {target}',
+        f'"content-digest": sha-256=:{sha256_b64url(body)}:',
+        f'"lap-passport-hash": sha256:{sha256_hex(passport)}',
+        f'"@signature-params": ("@method" "@target-uri" "content-digest" "lap-passport-hash");created={NOW};keyid="{agent_did}#key-1"',
+    ])
+    return {"passport_jwt": passport, "signature_base": base,
+            "signature_b64url": b64url_encode(signing_key.sign(base.encode("ascii"))), "now": NOW}
+
+
+def test_mcp_signature_target_is_bound_to_the_tool():
+    """F6 (Gemini hostile review): the middleware binds the signed @target-uri to the tool's
+    resource by default, so a signature scoped to one tool cannot be replayed against another
+    under the same envelope. bind_target=False restores the un-bound behaviour for HTTP profiles."""
+    pkey, pdid = _keypair()
+    akey, adid = _keypair()
+    passport = _mint(pkey, pdid, adid)
+    args = {"invoice": "INV-9", "amount": 10, "unit": "USD"}
+    assert _mcp_tool()(**args, lap_auth=_auth(passport, akey, adid, args))["status"] == "paid"  # correct target
+    forged = _auth_with_target(passport, akey, adid, args, "mcp://tools.example.com/billing/refund")
+    with pytest.raises(ValueError, match="LAP_ERR_TARGET"):
+        _mcp_tool()(**args, lap_auth=forged)                                  # sibling-tool target -> refused
+    assert _mcp_tool(bind_target=False)(**args, lap_auth=forged)["status"] == "paid"  # opt-out

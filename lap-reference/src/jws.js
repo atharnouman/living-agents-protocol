@@ -11,13 +11,21 @@ export function signJws(payload, privateKey, kid, typ = "lap-passport+jwt") {
 
 export const SKEW_SECONDS = 60; // LIP-1 §2 default clock-skew tolerance
 
+function parseJwsJson(b64, what) {
+  // F7: a valid-base64url-but-invalid-JSON segment must be a typed protocol error, not a
+  // raw language SyntaxError leaking out of a verifier.
+  try { return JSON.parse(b64urlDecode(b64).toString()); }
+  catch (e) { throw new Error(`LAP_ERR_SIG: malformed JWS ${what} (${e.message})`); }
+}
+
 export function decodeJws(token) {
+  if (typeof token !== "string") throw new Error("LAP_ERR_SIG: token must be a string"); // F8
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("LAP_ERR_SIG: not a compact JWS");
   const [h, p, s] = parts;
   return {
-    header: JSON.parse(b64urlDecode(h).toString()),
-    payload: JSON.parse(b64urlDecode(p).toString()),
+    header: parseJwsJson(h, "header"),
+    payload: parseJwsJson(p, "payload"),
     signature: b64urlDecode(s),
     signingInput: Buffer.from(h + "." + p),
   };

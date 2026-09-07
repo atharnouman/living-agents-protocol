@@ -28,6 +28,7 @@ def verify_envelope(
     expected_aud: Optional[str] = None,
     allowed_issuers: Optional[list] = None,
     min_proof_class: Optional[str] = None,
+    bind_target: bool = True,
 ) -> Callable:
     """
     Decorator for MCP tool functions enforcing LAP LIP-4 Micro-Core authorization.
@@ -84,8 +85,17 @@ def verify_envelope(
             envelope = passport_payload["lap"]["envelope"]
             sub = passport_payload["sub"]  # F2: holder-of-key from the verified passport
 
-            # Step 2: Verify RFC 9421 Request Signature against the verified subject
-            verify_request_signature(passport_jwt, sub, signature_base, signature_b64url, request_body)
+            # Step 2: Verify RFC 9421 Request Signature against the verified subject.
+            # F6 (v0.4.10): bind the signed @target-uri to THIS tool's resource by default
+            # (LIP-4 F3 — the server compares the signed target to what it serves), so a
+            # signature scoped to one tool cannot be replayed against another under one
+            # envelope. MCP clients set @target-uri to the tool resource (see examples/mcp-server).
+            # `bind_target=False` is for transports whose signed target is a distinct URL that a
+            # different layer verifies. Method binding is transport-specific and left to that layer.
+            verify_request_signature(
+                passport_jwt, sub, signature_base, signature_b64url, request_body,
+                expected_target=(resource if bind_target else None),
+            )
 
             # Steps 3-4: Verify Action, Resource Path, and Budget Cap (bound amount)
             amount = call_args.get(amount_param) if amount_param else None

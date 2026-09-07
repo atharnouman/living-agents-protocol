@@ -33,7 +33,7 @@ def test_ipv6_literal_resources():
     assert path_subsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:DB8::1]:4107/billing/pay")
     assert not path_subsumes("mcp://[2001:db8::1]:4107/billing/**", "mcp://[2001:db8::2]:4107/billing/pay")
     assert not path_subsumes("mcp://[::1]:4107/billing/**", "mcp://127.0.0.1:4107/billing/pay")
-    assert path_subsumes("http://[::1]:4107/pay", "http://[::1]:4107/pay")
+    assert path_subsumes("https://[::1]:4107/pay", "https://[::1]:4107/pay")
     # Documented interop hazard: matching is TEXTUAL — expanded and compressed forms of
     # the same address do not match. Scopes MUST use RFC 5952 canonical form.
     assert not path_subsumes("mcp://[2001:db8:0:0:0:0:0:1]/x/**", "mcp://[2001:db8::1]/x/y")
@@ -194,3 +194,22 @@ def test_v03_exact_integer_window_arithmetic_matches_node():
     assert verify_envelope_attenuation([parent], [child])["ok"] is True
     extra = S(res="mcp://h/y", cap={"unit": "USD", "window": "utc_hour", "max_per_tx": 1, "max_cumulative": 1})
     assert verify_envelope_attenuation([parent], [child, extra])["ok"] is False
+
+# ---- v0.4 external hostile-review round (Gemini, 2026-09-08; see llm-collab/IMPROVEMENTS-LOG.md) ----
+def test_v04_closed_scheme_set_and_decoded_canonical_patterns():
+    for ok in ["mcp://h/x", "a2a://h/x", "ap2://h/x", "https://h/x", "git://repo/lap-git/x"]:
+        path_subsumes(ok, ok)  # must not raise
+    for bad in ["gopher://e/x", "file://h/x", "http://h/x", "ftp://h/x"]:
+        with pytest.raises(ValueError, match="scheme not in the closed set"):  # F3
+            path_subsumes("mcp://h/**", bad)
+    for ident in ["did:key:z6MkA/x", "urn:isbn:1/x"]:  # did/urn are cp identifiers, not resources
+        with pytest.raises(ValueError, match="LAP_ERR_RES"):
+            path_subsumes("mcp://h/**", ident)
+    bs, c1 = chr(0x5c), chr(1)
+    for bad in ["mcp://h/safe/.." + bs + "admin", "mcp://h/safe/%2e%2e", "mcp://h/safe/%252e%252e/admin", "mcp://h/a/%2f/b"]:
+        with pytest.raises(ValueError, match="backslashes and percent-encoding"):  # F2
+            path_subsumes("mcp://h/safe/**", bad)
+    with pytest.raises(ValueError, match="control characters"):
+        path_subsumes("mcp://h/**", "mcp://h/a" + c1 + "b")
+    assert path_subsumes("git://repo/**", "git://repo/lap-git/lap-git.mjs") is True
+    assert path_subsumes("git://repo/lap-git/**", "git://repo/output/x") is False
