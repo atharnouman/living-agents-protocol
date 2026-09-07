@@ -29,7 +29,7 @@ Covered: the Agent Passport and Genesis Record (LIP-1), the MEET handshake (LIP-
 - **Agent ↔ stranger agent (LIP-2).** Mutual proof of keys, then a transcript-hashed handshake with reservation tickets, so neither side can rewrite what was agreed.
 - **Everyone → transparency-log operator.** Trust-minimised: the verifier checks the inclusion proof and the log's signed timestamp itself. Today one operator (Rekor) is bound; certification needs two unrelated ones.
 - **The network.** Assumed hostile: capture, replay, modification, and delay are all in scope.
-- **Proxies and routers between the verifier and the resource.** They normalise paths *after* authorization, which is why the algebra refuses dot-segments, encoded separators, queries, fragments, and empty segments instead of interpreting them.
+- **Proxies and routers between the verifier and the resource.** They normalise paths *after* authorization, which is why the algebra refuses dot-segments, percent-encoding, backslashes, control characters, queries, fragments, and empty segments instead of interpreting them.
 - **The project's own AI agents.** Commits by agents carry a passport whose audience is this repository and whose envelope lists the paths the agent may touch; the commit is refused before it exists if a staged path falls outside.
 
 ## 4. Attacker model
