@@ -58,7 +58,7 @@ Follow `LAP-recording-playbook.md`. Minimum: one ~70s terminal MP4 of `node cond
 
 1. [ME] **Freeze + re-anchor** after the URL sweep (B.3) so priority locks to exactly the published bytes.
 2. [ME→YOU] **Essay** — I finalize `LAP-essay.md` with the real links; you publish it (personal blog / Substack / Medium — never the company blog).
-3. [ME→YOU] **Release tag** — I create the annotated tag `v0.4.9`; you push it (B.4) and create the GitHub Release with the MP4 + cast attached. Stable links for every post.
+3. [ME→YOU] **Release tag** — I create the annotated tag `v0.4.9`; you push it (B.4) and create the GitHub Release from A.7 (attach the MP4 later, when the film exists). Stable links for every post.
 4. [YOU] **Show HN** — A.2. Post Tue–Thu, ~8–10am US Eastern, when you can babysit comments for ~4 hours. Answer with facts; never argue; a cool reception is not failure.
 5. [YOU] **LinkedIn + X** — A.3, A.4. First mention everywhere: *Living Agents Protocol (LAP)*.
 
@@ -99,6 +99,16 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 
 ## Appendix A — Launch copy (paste-ready)
 
+### A.0 — Launch-day order (2026-09-08 refresh; everything below is [YOU] unless marked)
+1. **GitHub Release** for `v0.4.9` — repo → Releases → *Draft a new release* → choose existing tag `v0.4.9` → title + body from A.7 → *Publish release*.
+2. **Social preview** — Settings → General → *Social preview* → upload `docs/social-preview.png` (1280×640). Without it, links on X/LinkedIn/HN render blank.
+3. **Essay** — publish `output/LAP-essay.md` on your personal blog / Substack / Medium (never the company blog). Send me the URL: [ME] adds it to the README "Read" line and restamps.
+4. **Show HN** — A.2. Tue–Thu, 8–10 am US Eastern, when you can babysit comments for ~4 hours. Facts, no arguing; a cool reception is not failure.
+5. **LinkedIn + X** — A.3, A.4, the same day, after HN is up (link the HN thread + repo).
+6. **Champion notes** — `outreach/champion-outreach.md` (local, never committed): A2A issue first, then the MCP Discussion, then the W3C CG intro. Re-verify every maintainer name at the cited URL first.
+7. **arXiv track, in parallel** — print `output/LAP-position-paper.html` to PDF; create the account; start the submission (cs.MA, cross-list cs.CR) to get the endorsement code; send A.1.
+8. **Appendix F** every Monday. Solicited vs unsolicited, always separated.
+
 ### A.1 — arXiv endorsement email (send from your personal email, PDF attached)
 > **Subject:** arXiv endorsement request — cs.MA — accountable persistent AI agents
 >
@@ -106,7 +116,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 >
 > I'm an independent researcher preparing a first arXiv submission and, as a new author in cs.MA, I need an endorsement. I'm writing to you because of your work on [specific paper/topic].
 >
-> The paper, *"The Living Agents Protocol: A Reference Model and Research Agenda for Persistent Autonomous Agents"* (attached), proposes a reference model plus implemented wire mechanisms for a gap current agent protocols (MCP, A2A) leave open: how a persistent agent proves who it is, whose authority it carries, whether it is alive, and what it did. It ships two interoperating open-source implementations, a runnable two-process demo, and an explicit open-problems section — including the ones we cannot yet solve.
+> The paper, *"The Living Agents Protocol: A Reference Model and Research Agenda for Persistent Autonomous Agents"* (attached), proposes a reference model plus implemented wire mechanisms for a gap current agent protocols (MCP, A2A) leave open: how a persistent agent proves who it is, whose authority it carries, whether it is alive, and what it did. It ships two interoperating open-source implementations (cross-checked by a shared fuzzing corpus), a runnable two-process demo, registration in a public transparency log, a written threat model, and an explicit open-problems section — including the ones we cannot yet solve.
 >
 > Repository: https://github.com/atharnouman/living-agents-protocol
 >
@@ -122,22 +132,24 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 >
 > Agents recently got standard ways to use tools (MCP), talk to each other (A2A), and pay (AP2). Nothing standardizes an agent's *existence*: who it is, which human answers for it, what it may do unsupervised, whether it's running right now, and how its actions are proven afterward.
 >
-> LAP is a reference model plus small, implemented wire mechanisms for that gap. It's a v0 draft by one author — no consortium, and no claim the "agent economy" is imminent. But the pieces are real and runnable:
+> The Living Agents Protocol (LAP) is a reference model plus small, implemented wire mechanisms for that gap. It's a v0 draft by one author — no consortium, and no claim that the "agent economy" is imminent. But the pieces are real and runnable:
 >
-> - Two interoperating libraries (Node, Python) that produce byte-identical signatures against shared test vectors.
-> - A demo where two strangers' agents meet, verify each other, transact under a budget, one *crashes*, the other's authority suspends automatically, a pending order is safely held, and on recovery it completes — then a morning replay re-verifies every signature. It runs as two real OS processes over real sockets; the crash is a real SIGKILL.
-> - `lap-git`: the same mechanisms applied to commits — a passport + path envelope enforced before a commit exists. It exists because AI agents working in this very repo made an unattributed, out-of-scope commit. Write-up, mistakes included: https://github.com/atharnouman/living-agents-protocol/blob/main/CASE-STUDY.md
+> - Two interoperating libraries (Node with zero dependencies; Python) that produce byte-identical results against shared test vectors, plus a property-based fuzzer whose decision digest fails the build if the two ports ever disagree.
+> - A demo where two strangers' agents meet, verify each other, transact under a budget, one *crashes* (a real SIGKILL; two real processes over real sockets), the other's authority suspends automatically, a pending order is held, and on recovery it completes. A morning replay re-verifies every signature.
+> - A 15-minute tutorial that puts it on a real MCP server: a payment tool that refuses anything outside the caller's signed envelope and returns a signed receipt.
+> - Registration that isn't self-asserted: one command puts an agent's genesis record in Sigstore's public Rekor log and verifies the inclusion proof with the library's own Merkle code.
+> - `lap-git`: the same mechanisms applied to commits, built because AI agents working in this very repo made an unattributed, out-of-scope commit. Write-up, my own mistakes included: https://github.com/atharnouman/living-agents-protocol/blob/main/CASE-STUDY.md
 >
-> Honest limits up front: registration is self-attested in the demo, the payment rail is mocked, and key custody / principal-proofing / the clone problem are documented open problems. Real Ed25519, real sockets, Apache-2.0 code / CC-BY spec.
+> Honest limits up front: the payment rail is mocked; key custody, principal-proofing, and the clone problem are documented open problems; THREAT-MODEL.md says what is *not* defended. Five adversarial review rounds so far across three model families, ~150 verified fixes, all logged with the rejections. Apache-2.0 code, CC-BY spec.
 >
-> Repo: https://github.com/atharnouman/living-agents-protocol · Demo: https://atharnouman.github.io/living-agents-protocol
+> Repo: https://github.com/atharnouman/living-agents-protocol · Demo: https://atharnouman.github.io/living-agents-protocol · Zero-install: the Codespaces badge in the README.
 
 ### A.3 — LinkedIn
 > While building an open standard for always-on AI agents, the AI agents *building it* handed me the clearest argument for why it's needed: one made a commit under my name, with no record of which agent acted or whether it stayed in scope.
 >
 > That's not a rogue-AI story. It's a plumbing story — git has no concept of "which agent, under whose authority, within what scope," so capable tooling does the accountable-looking thing by default and nobody can prove what happened.
 >
-> The **Living Agents Protocol** is a small, open, implemented answer: a passport that says who an agent is and who's responsible, an envelope that bounds what it may do, and a signed record of what it did. There's a runnable demo (two agents transact overnight, one crashes, authority suspends automatically, the morning replay verifies everything) and a tool that applies it to git commits.
+> The **Living Agents Protocol** is a small, open, implemented answer: a passport that says who an agent is and who's responsible, an envelope that bounds what it may do, and a signed record of what it did. There's a runnable demo (two agents transact overnight, one crashes, authority suspends automatically, the morning replay verifies everything), a 15-minute tutorial that puts it on a real MCP server, and a tool that applies it to git commits.
 >
 > v0 draft, honest about its open problems. Code Apache-2.0, spec CC-BY. Repo + demo: https://github.com/atharnouman/living-agents-protocol
 
@@ -150,7 +162,9 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 >
 > 4/ Best part: the AI agents building the repo gave me the argument for it — one committed under my name, out of scope, with no record of which agent acted. So I built `lap-git`: a passport + path envelope enforced before a commit exists.
 >
-> 5/ v0 draft, one author, no consortium, honest about open problems (key custody, principal-proofing, the clone problem). Apache-2.0 / CC-BY. Repo + demo 👇 https://github.com/atharnouman/living-agents-protocol
+> 5/ Want it on your own MCP server? There's a 15-minute tutorial: a payment tool that refuses anything outside the caller's signed envelope and returns a signed receipt. Verified in CI on the official SDK.
+>
+> 6/ v0 draft, one author, no consortium, honest about open problems (key custody, principal-proofing, the clone problem) — and a written threat model that says what is NOT defended. Apache-2.0 / CC-BY. Repo + demo 👇 https://github.com/atharnouman/living-agents-protocol
 
 ### A.5 — GitHub description + topics
 > **Description:** An identity, authority, and lifecycle layer for always-on ("living") AI agents — reference model + implemented wire mechanisms. The existence layer under MCP/A2A.
@@ -159,6 +173,22 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 
 ### A.6 — W3C CG opener
 > Hi all — I've been working on the lifecycle/presence side of agent protocols: how a persistent agent proves it's alive, how authority decays when it goes dark, and how a restart isn't a new identity. It's a small implemented model (two interoperating libraries, a runnable two-process demo) that deliberately slots under MCP/A2A rather than competing. I'd value this group's read on the presence/pulse mechanism specifically — https://github.com/atharnouman/living-agents-protocol. Happy to write it up as a contribution if there's interest.
+
+### A.7 — GitHub Release notes for v0.4.9 (paste as the release body)
+> **Title:** v0.4.9 — fuzzed Scope Algebra, threat model, real registration, MCP tutorial
+>
+> Everything since the first public tag (v0.4.6), newest first:
+>
+> - **Property-based fuzzing of the Scope Algebra (v0.4.9, LIP-3 v0.3).** A generator written identically in both ports drives the same random scopes through Node and Python; a committed decision digest fails the build if they ever disagree. The first run found four defects — an identical `*` delegation refused, language-level errors on malformed scopes, a one-unit floating-point divergence between the ports, and a missing effective-set rule in Python — all fixed with regression tests.
+> - **THREAT-MODEL.md.** Assets, actors, sixteen defended threats each tied to the code that enforces the defence and the test that proves it, and the residual risks stated plainly.
+> - **Canonical encoding made normative (v0.4.8).** Both decoders now reject non-canonical base64url; a lenient decoder gave one signature many textual forms, which text-keyed state could not distinguish.
+> - **Add LAP to your MCP server in 15 minutes.** `examples/mcp-server/`: a FastMCP server whose payment tool refuses anything outside the caller's signed envelope and returns a signed receipt; the stdio round-trip runs in CI.
+> - **Registration made real (v0.4.7).** One command registers a Genesis Record in Sigstore's public Rekor log and verifies the inclusion proof and signed timestamp with the library's own RFC 6962 code.
+> - **Zero-install Codespaces**, an animated README hero built from the live demo, IPv4 + IPv6 networked demo.
+>
+> Tests: Node 61/61, Python 55/55, demo replay 191 checks with tamper detection, lap-git self-test. Every commit since v0.4.6 is signed by a `lap-git` agent passport (`node lap-git/lap-git.mjs verify`); documents are Bitcoin-timestamped (`output/anchors/ANCHORS.md`). Full history: founding document §23 and `llm-collab/IMPROVEMENTS-LOG.md`.
+>
+> Spec CC-BY-4.0 · code Apache-2.0 · demo: https://atharnouman.github.io/living-agents-protocol/
 
 ---
 
