@@ -16,3 +16,5 @@ Thumbs.db
 .lap-git/
 backups/
 outreach/
+# machine-local notes that name accounts (identity rules, pre-flight check)
+local/
