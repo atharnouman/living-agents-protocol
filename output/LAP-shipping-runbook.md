@@ -266,6 +266,17 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 - **"Self-attested registration is worthless."** In the demo, yes — it's labeled as such. The spec's proof classes exist precisely so a verifier treats the *class* as the signal; production requires ≥2 independent transparency-log inclusion proofs.
 - **"Why not just gitsign / GPG?"** Use them — lap-git complements, not replaces. They prove *who signed*; lap-git proves *which agent, under whose authority, within what scope*, and refuses the commit otherwise.
 
+## Launch log
+
+| Date | Event | Link / evidence |
+|---|---|---|
+| 2026-10-08 | GitHub Release v0.4.10 published (verified via the public API) | https://github.com/atharnouman/living-agents-protocol/releases/tag/v0.4.10 |
+| 2026-10-08 | Essay live on the project site (canonical) | https://atharnouman.github.io/living-agents-protocol/essay.html |
+| 2026-10-08 | LinkedIn post, personal profile (day 0 of the launch clock) | https://www.linkedin.com/posts/atharnouman1987_aiagents-opensource-mcp-share-7513693439436177408-dyp-/ (short: https://lnkd.in/p/ewA5Qu3c) |
+| 2026-10-08 | Show HN deferred: HN restricts new accounts | see Phase 3 step 4 and Appendix C |
+| pending | Social preview upload | og:image still the default card at last check |
+| pending | X thread (A.4), champion notes (A2A, MCP, W3C), Medium import | |
+
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
 |---|---|---|---|---|---|---|---|---|
@@ -274,4 +285,4 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 | … | | | | | | | | |
 | 8 (gate) | | | | | | | | decision: |
 
-*Next action: create the personal-account repo (1A.1), tell me the URL, and I run the URL sweep, re-anchor, tag, and hand you the push commands — the entire remaining path is then yours to click through.*
+*Next action (2026-10-08): X thread (A.4), then the champion notes (A2A issue → MCP discussion → W3C CG), then the Medium import of the essay. Show HN retry after ~2 weeks of genuine participation. Fill Appendix F each Monday from 2026-10-13.*
