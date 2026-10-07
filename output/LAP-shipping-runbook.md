@@ -277,7 +277,8 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 | pending | Social preview upload | og:image still the default card at last check |
 | 2026-10-08 | X thread, personal account @atharnouman (new account: reduced discoverability until it graduates) | https://x.com/atharnouman/status/2107930680738881662 |
 | 2026-10-08 | A2A extension proposal filed (Proposal Phase issue; solicited signal; awaits community discussion and a maintainer sponsor) | https://github.com/a2aproject/A2A/issues/2323 |
-| pending | MCP discussion, W3C CG intro, Medium import | |
+| 2026-10-08 | MCP: GitHub Discussions refused the account (no New discussion button in that repo); asked in the MCP Contributors Discord, #security-ig, per their communication guidelines (Discord first); written proposal held in outreach/MCP-discussion-final.md | Discord #security-ig, 2026-10-08 01:56 local |
+| pending | W3C AI Agent Protocol CG intro, Medium import | |
 
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
