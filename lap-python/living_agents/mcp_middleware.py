@@ -3,6 +3,7 @@ FastMCP & Tool Server Middleware for Living Agents Protocol (LAP) LIP-4 Micro-Co
 Provides the @verify_envelope decorator to authorize tool invocations and emit tripartite receipts.
 """
 
+import copy
 import functools
 import inspect
 from typing import Any, Callable, Dict, Optional
@@ -11,6 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from .crypto_util import jcs
 from .microcore import (
+    IdempotencyCache,
     check_invocation,
     mint_receipt,
     verify_microcore_passport,
@@ -29,6 +31,7 @@ def verify_envelope(
     allowed_issuers: Optional[list] = None,
     min_proof_class: Optional[str] = None,
     bind_target: bool = True,
+    idempotency_cache: Optional[IdempotencyCache] = None,
 ) -> Callable:
     """
     Decorator for MCP tool functions enforcing LAP LIP-4 Micro-Core authorization.
@@ -41,6 +44,14 @@ def verify_envelope(
         server_private_key: Tool server Ed25519 private key for minting receipts
         server_did: Tool server did:key identifier
         expected_aud: Expected audience in the incoming passport JWT
+        allowed_issuers: Optional allow-list of principal DIDs (F1: identity is not authorization)
+        min_proof_class: Optional floor on the passport's proof class (F1)
+        bind_target: Compare the signed ``@target-uri`` to ``resource`` (default; LIP-4 F3)
+        idempotency_cache: Mark the tool as MUTATING: ``lap_auth["idempotency_key"]`` becomes
+            mandatory and must be a covered component of the signature; ``(sub, key)`` is
+            claimed atomically before execution (LIP-4 section 2 step 5, F6). A completed
+            claim returns the cached result and receipt without re-executing; an in-flight
+            duplicate is refused. The in-process cache is single-process only.
     """
 
     def decorator(fn: Callable) -> Callable:
@@ -102,20 +113,36 @@ def verify_envelope(
             unit = call_args.get(unit_param) if unit_param else None
             check_invocation(envelope, act=action, resource=resource, amount=amount, unit=unit)
 
-            # LIP-4 §2(5) note: idempotency caching for mutating requests is the
-            # server's duty and is NOT handled by this decorator yet — integrate
-            # IdempotencyCache at the transport layer (keyed by the signed
-            # Idempotency-Key) before exposing mutating tools publicly.
+            # Step 5 (LIP-4 section 2 step 5, F6): a mutating tool claims (sub, idempotency key)
+            # atomically BEFORE executing. The key must sit inside the signed base (LIP-4 section 1),
+            # so a captured key cannot be re-attached to a different request. A completed claim
+            # returns the cached result (with its receipt) without re-executing; a concurrent
+            # in-flight duplicate is refused rather than run twice (three-state claim, v0.4.10).
+            idem_key = lap_auth.get("idempotency_key")
+            if idempotency_cache is not None:
+                if not idem_key:
+                    raise ValueError("LAP_ERR_IDEMPOTENCY: idempotency_key required for a mutating tool")
+                if f'"idempotency-key": {idem_key}' not in signature_base.split("\n"):
+                    raise ValueError("LAP_ERR_SIG_PARAMS: idempotency-key is not a covered component")
+                claim = idempotency_cache.claim(sub, idem_key)
+                if claim["status"] == "completed":
+                    return copy.deepcopy(claim["receipt"])  # the stored result, receipt included
+                if claim["status"] == "in_flight":
+                    raise ValueError("LAP_ERR_REPLAY: duplicate request already in flight")
 
             # Execute the tool function
             result = fn(*args, **kwargs)
 
-            # Step 5: Mint Tripartite Receipt if server key is configured
+            # Step 6: Mint Tripartite Receipt if server key is configured
             if server_private_key and server_did:
                 response_body = jcs(result) if isinstance(result, (dict, list)) else str(result)
                 receipt = mint_receipt(server_private_key, server_did, request_body, response_body)
                 if isinstance(result, dict):
                     result["_lap_receipt"] = receipt
+
+            if idempotency_cache is not None:
+                # Single-process cache (F6): production backs this with a shared store.
+                idempotency_cache.complete(sub, idem_key, copy.deepcopy(result))
 
             return result
 

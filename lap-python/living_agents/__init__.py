@@ -37,6 +37,14 @@ from .jws import (
     verify_jws,
     verify_passport,
 )
+from .mcp_extension import (
+    EXTENSION_ID,
+    lap_auth_from_meta,
+    lap_tool,
+    microcore_extension,
+    sign_tool_call,
+    tool_meta,
+)
 from .mcp_middleware import verify_envelope
 from .microcore import (
     IdempotencyCache,
@@ -48,7 +56,7 @@ from .microcore import (
     verify_request_signature,
 )
 
-__version__ = "0.4.11"
+__version__ = "0.4.12"
 
 __all__ = [
     "b58encode",
@@ -83,6 +91,12 @@ __all__ = [
     "mint_receipt",
     "verify_receipt",
     "verify_envelope",
+    "EXTENSION_ID",
+    "sign_tool_call",
+    "tool_meta",
+    "lap_auth_from_meta",
+    "lap_tool",
+    "microcore_extension",
     "ACTION_REGISTRY_V0",
     "WINDOW_SECONDS",
 ]

@@ -4,7 +4,7 @@
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.10 (draft)` · `Node 64/64 · Python 59/59` · `two interoperating implementations` · `IPv4 + IPv6` · `6 adversarial review rounds, ~160 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.10 (draft)` · `Node 64/64 · Python 66/66` · `two interoperating implementations` · `IPv4 + IPv6` · `6 adversarial review rounds, ~160 verified fixes` · `Bitcoin-timestamped`
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
 
@@ -25,14 +25,14 @@ LAP is a reference model plus wire mechanisms for that missing control plane —
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/atharnouman/living-agents-protocol?quickstart=1)
 *Zero install: the Codespace arrives with Node, Python, and the test suite already run — then try the two-process demo.*
 
-**Use it from your own code** (both packages published 8 October 2026 at library version 0.4.11; the specification is v0.4.10):
+**Use it from your own code** (packages published 8 October 2026; the MCP extension binding needs `living-agents` 0.4.12 or later; the specification is v0.4.10):
 
 ```bash
 npm install @living-agents/reference        # Node ≥ 20, zero dependencies
 ```
 
 ```bash
-pip install "living-agents[mcp]"            # Python ≥ 3.10; the extra adds the official MCP SDK (1.x or 2.x)
+pip install "living-agents[mcp]>=0.4.12"         # Python ≥ 3.10; the extra adds the official MCP SDK (1.x or 2.x)
 ```
 
 **Or run everything from this checkout:**
@@ -58,7 +58,7 @@ cd lap-demo && node register-genesis.mjs   # register a genesis in the PUBLIC Si
 ```
 
 ```bash
-cd examples/mcp-server && python client.py   # a real MCP server protected by LAP: one paid call + four refusals, receipt verified
+cd examples/mcp-server && python client.py   # a real MCP server protected by LAP: two paid calls (the retry is a cached replay) + five refusals, receipts verified
 ```
 
 The single-process demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**; `node replay.js --tamper` catches a single modified log entry to the exact record.
@@ -77,6 +77,7 @@ Requirements: Node ≥ 20. The Node implementation has zero dependencies: `npm i
 | [LIP-2 — MEET](output/lip/LIP-2-meet-draft.md) | The six-step stranger handshake: transcript-hashed, collision-safe, with reservation tickets, fair-exchange turns, and split-view defense |
 | [LIP-3 — Scope Algebra v0](output/lip/LIP-3-scope-algebra-v0-draft.md) | A deliberately tiny permission language where subset-checking is decidable — delegation can be *proven* narrower, budgets conserve across children |
 | [LIP-4 — Micro-Core](output/lip/LIP-4-micro-core-draft.md) | The afternoon-sized profile: two HTTP headers + a receipt, single-server adoptable, upgrade-compatible with everything above |
+| [MCP extension `io.github.atharnouman/lap-microcore` (draft)](output/lip/LIP-4-mcp-extension-draft.md) | LIP-4 bound to the Model Context Protocol: passport and call signature in request `_meta`, receipt in result `_meta`, per-tool declaration, capability negotiation, graceful degradation, idempotent retries; reference binding on the official Python SDK, 1.x and 2.x |
 
 The full reference model (LAP-7 layers, trust states, ownership & transfer, lifecycle from witnessed birth to economic mortality and the unbroken **Accountability Chain** of responsible humans) lives in the [founding document](output/LAP-founding-document.md). Deterministic cross-language test vectors (Python ↔ JS byte-identical): [`output/lip/test-vectors/`](output/lip/test-vectors/).
 
@@ -85,10 +86,10 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | Path | Contents |
 |---|---|
 | `lap-reference/` | Zero-dependency Node implementation: JWS, did:key, scope algebra, Micro-Core invariant, RFC 6962 Merkle log, Sigstore Rekor binding |
-| `lap-python/` | Python port + FastMCP `@verify_envelope` middleware (single dependency: `cryptography`); the same vectors, plus the property-based fuzzer, in pytest |
+| `lap-python/` | Python port, the `@verify_envelope` middleware and the MCP extension binding (`lap_tool`, SDK 1.x and 2.x; single dependency: `cryptography`); the same vectors, plus the property-based fuzzer, in pytest |
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
-| [`examples/mcp-server/`](examples/mcp-server/) | **Tutorial:** add LAP to your MCP server in 15 minutes — a real FastMCP server + LAP-aware client (stdio round-trip, verified in CI) |
+| [`examples/mcp-server/`](examples/mcp-server/) | **Tutorial:** add LAP to your MCP server in 15 minutes — a real MCP server + LAP-aware client speaking the extension over request and result `_meta` (stdio round-trip on SDK 1.x and 2.x, verified in CI) |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
 | [`CONFORMANCE.md`](CONFORMANCE.md) | Implement Micro-Core in an afternoon — a ten-check challenge against the shared test vectors |
 | [`THREAT-MODEL.md`](THREAT-MODEL.md) | What LAP defends against and what it does not: assets, actors, sixteen threats each tied to its enforcing code and regression test, residual risks stated plainly |

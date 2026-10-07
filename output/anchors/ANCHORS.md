@@ -1,6 +1,6 @@
 # LAP — Bitcoin Anchors (OpenTimestamps)
 
-*Current stamping: **2026-09-08, v0.4.10** (essay re-stamped 2026-10-08) — 4 independent OpenTimestamps calendars. **Confirmed on Bitcoin (2026-10-08):** every proof except the freshly re-stamped essay now carries block-header attestations, each verified against a public block explorer with `lap_upgrade.py`; the blocks are listed below. Superseded hashes remain valid for their own bytes in git history.*
+*Current stamping: **2026-09-08, v0.4.10** (essay, README and the MCP extension draft re-stamped 2026-10-08) — 4 independent OpenTimestamps calendars. **Confirmed on Bitcoin (2026-10-08):** every proof except the three stamped on 2026-10-08 (essay, README, MCP extension draft) now carries block-header attestations, each verified against a public block explorer with `lap_upgrade.py`; the blocks are listed below. Superseded hashes remain valid for their own bytes in git history.*
 
 | SHA-256 | Artifact |
 |---|---|
@@ -12,7 +12,8 @@
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `563deaa95bb6f4bef1fba1974abb6a36b6159026341a3d2c0404afd90485ab48` | LAP-position-paper.md (v1.2-draft) |
 | `ad2369fbf56470d4019ae737919fe2f840a2e3b1d59508297a702065ec0fddfb` | LAP-essay.md (October 2026 byline) |
-| `e2852477fa6ab06f0c6eb0f040fbb1e3222acb4e9f7dac83740425ff2d52b54c` | ../README.md (v0.4.10 spec, packages 0.4.11; re-stamped 2026-10-08, pending) |
+| `00aaf2a69b06bfcacde8fd5377330e6a8e50d3d76ee37f5fce58ad0cf03bfbb3` | ../README.md (v0.4.10 spec; packages npm 0.4.11, PyPI 0.4.12; MCP extension row; re-stamped 2026-10-08 evening, pending) |
+| `c7f67a4e2734e33f63242ccd45530e663030202257aaf33c28d121620814c6f6` | lip/LIP-4-mcp-extension-draft.md (v0.1 draft, 2026-10-08; first stamp, pending) |
 
 ## Status and how to use
 
@@ -21,7 +22,7 @@
   - position paper — blocks 965968, 965969, 965971, 965974 (earliest 2026-09-07 20:07 UTC)
   - LIP-1 — blocks 965661, 965689, 965708 (earliest 2026-09-05 20:14 UTC)
   - LIP-2, test vectors — blocks 964477, 964488, 964496, 964513 (earliest 2026-08-28 20:15 UTC)
-  - essay — re-stamped 2026-10-08 (October byline); pending until the calendars' next aggregation, then `python output/anchors/lap_upgrade.py` confirms it.
+  - essay — re-stamped 2026-10-08 (October byline); README (final 2026-10-08 edit) and the MCP extension draft v0.1 stamped later the same day; all three pending until the calendars' next aggregation, then `python output/anchors/lap_upgrade.py` confirms them.
   A freshly stamped proof is a *pending calendar attestation* until the calendars fold it into a Bitcoin transaction (typically within a day); until then the honest claim for that file is "OpenTimestamps-stamped, pending Bitcoin confirmation."
 - **Upgrade / verify yourself** (any machine, no Bitcoin node): `python output/anchors/lap_upgrade.py` upgrades every proof and checks each attestation against a public block explorer; `--verify-only` checks without writing. The stock `ots upgrade` / `ots verify` work too (the `ots` CLI is broken on Windows, which is why stamping uses `lap_stamp.py` and upgrading uses `lap_upgrade.py`).
 - **What a proof establishes**: these exact bytes existed no later than the anchored block's time — priority evidence independent of any company, platform, or machine.

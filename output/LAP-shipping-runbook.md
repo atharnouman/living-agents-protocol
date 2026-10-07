@@ -15,7 +15,7 @@ Everything public uses **your personal identity only**: GitHub (personal account
 
 ## Status snapshot (verified)
 
-- **Green:** Node 64/64 · Python 59/59 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
+- **Green:** Node 64/64 · Python 66/66 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
 - **Clean:** no secrets or private-key files tracked; company domain appears nowhere; working tree committed via `lap-git`; local backup zip taken (`backups/`, git-ignored).
 - **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.10 / 51 / 45 / five rounds / ~150.
 - **Ready:** CI workflow, `SECURITY.md`, `CITATION.cff`, a `docs/` folder for GitHub Pages (visual demo, terminal playback, asciinema cast), the paper refreshed to v1.1-draft (clone problem as open problem #7, two implementations, lap-git, three-model acknowledgments) and rendered to print-ready HTML, the essay refreshed with the case-study hook.
@@ -188,7 +188,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 > - **Registration made real (v0.4.7).** One command registers a Genesis Record in Sigstore's public Rekor log and verifies the inclusion proof and signed timestamp with the library's own RFC 6962 code.
 > - **Zero-install Codespaces**, an animated README hero built from the live demo, IPv4 + IPv6 networked demo.
 >
-> Tests: Node 64/64, Python 59/59, demo replay 191 checks with tamper detection, lap-git self-test. Every commit since v0.4.6 is signed by a `lap-git` agent passport (`node lap-git/lap-git.mjs verify`); documents are Bitcoin-timestamped (`output/anchors/ANCHORS.md`). Full history: founding document §23 and `llm-collab/IMPROVEMENTS-LOG.md`.
+> Tests: Node 64/64, Python 66/66, demo replay 191 checks with tamper detection, lap-git self-test. Every commit since v0.4.6 is signed by a `lap-git` agent passport (`node lap-git/lap-git.mjs verify`); documents are Bitcoin-timestamped (`output/anchors/ANCHORS.md`). Full history: founding document §23 and `llm-collab/IMPROVEMENTS-LOG.md`.
 >
 > Spec CC-BY-4.0 · code Apache-2.0 · demo: https://atharnouman.github.io/living-agents-protocol/
 
@@ -230,7 +230,7 @@ ots upgrade output/LAP-founding-document.md.ots && ots verify output/LAP-foundin
 **B.6 Anyone can verify the repo in 5 minutes (drop into a reply when a skeptic asks)**
 ```bash
 cd lap-reference && node --test test/                                      # 64/64
-cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 59/59
+cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 66/66
 cd ../lap-demo/net && node conductor.mjs && node verify.mjs                # 2 processes, receipts verified
 cd ../.. && node lap-git/lap-git.mjs selftest                              # scope refused, tamper caught
 ```
@@ -299,6 +299,7 @@ Both packages are built, checked and smoke-tested from a clean install (`@living
 | 2026-10-08 | W3C AI Agent Protocol CG: intro emailed to public-agentprotocol@w3.org from the personal address; subscribed; archive approval submitted (awaiting distribution) | archive link pending |
 | 2026-10-08 | npm: @living-agents/reference published from the personal account (org living-agents). An interrupted first upload wedged 0.4.10 in npm's staged state (npm/cli#9889); the registry later released it together with a public 0.0.0-stage placeholder; 0.4.11 (packaging-only bump, spec stays v0.4.10) published on top, live. Placeholder 0.0.0-stage to be unpublished. | https://www.npmjs.com/package/@living-agents/reference |
 | 2026-10-08 | PyPI: living-agents 0.4.11 published from the personal account (first upload got a 403, second succeeded); clean-install + tutorial verified against the published wheel | https://pypi.org/project/living-agents/ |
+| 2026-10-08 | MCP extension specification draft v0.1 written in MCP's extension format (`output/lip/LIP-4-mcp-extension-draft.md`): LIP-4 bound to request/result `_meta`, per-tool declaration, negotiation, graceful degradation, idempotent retries. Reference binding `living_agents.mcp_extension` (`lap_tool`) on SDK 1.x and 2.x; the tutorial moved off the `lap_auth` argument; idempotency claiming added to the middleware; Python 66/66. Not posted anywhere: waits for the Security IG's answer. PyPI 0.4.12 to publish (B.6). | repository |
 
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
@@ -308,4 +309,4 @@ Both packages are built, checked and smoke-tested from a clean install (`@living
 | … | | | | | | | | |
 | 8 (gate) | | | | | | | | decision: |
 
-*Next action (2026-10-08): X thread (A.4), then the champion notes (A2A issue → MCP discussion → W3C CG), then the Medium import of the essay. Show HN retry after ~2 weeks of genuine participation. Fill Appendix F each Monday from 2026-10-13.*
+*Next action (2026-10-08, evening): publish PyPI 0.4.12 (Appendix B.6; the tutorial's install line now requires it); reply at the venues as replies arrive; fill Appendix F each Monday from 2026-10-13; Show HN retry after ~2 weeks of genuine participation; a TypeScript middleware for the TypeScript MCP SDK once an interest group responds.*
