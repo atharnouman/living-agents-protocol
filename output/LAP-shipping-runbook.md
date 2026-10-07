@@ -279,7 +279,8 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 | 2026-10-08 | X thread, personal account @atharnouman (new account: reduced discoverability until it graduates) | https://x.com/atharnouman/status/2107930680738881662 |
 | 2026-10-08 | A2A extension proposal filed (Proposal Phase issue; solicited signal; awaits community discussion and a maintainer sponsor) | https://github.com/a2aproject/A2A/issues/2323 |
 | 2026-10-08 | MCP: GitHub Discussions refused the account (no New discussion button in that repo); asked in the MCP Contributors Discord, #security-ig, per their communication guidelines (Discord first); written proposal held in outreach/MCP-discussion-final.md | Discord #security-ig, 2026-10-08 01:56 local |
-| pending | W3C AI Agent Protocol CG intro, Medium import | |
+| 2026-10-08 | Essay cross-posted to Medium via import (canonical = project page) | https://medium.com/@atharnouman/agents-need-a-birth-certificate-a-leash-a-black-box-and-an-estate-plan-295436ba6c97 |
+| 2026-10-08 | W3C AI Agent Protocol CG: intro emailed to public-agentprotocol@w3.org from the personal address; subscribed; archive approval submitted (awaiting distribution) | archive link pending |
 
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
