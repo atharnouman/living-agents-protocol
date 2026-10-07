@@ -8,6 +8,8 @@
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
 
+**Read the essay:** [Agents need a birth certificate, a leash, a black box, and an estate plan](https://atharnouman.github.io/living-agents-protocol/essay.html) (the five questions the protocol answers, in about 1,100 words).
+
 [![LAP overnight demo — two strangers' agents transact while both humans sleep; one crashes, its authority suspends automatically, a held order completes on recovery, and the morning replay verifies every signature](docs/demo.gif)](https://atharnouman.github.io/living-agents-protocol/demo.html)
 
 *Click the animation for the live, interactive version.*
