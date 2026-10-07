@@ -141,7 +141,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 > - Registration that isn't self-asserted: one command puts an agent's genesis record in Sigstore's public Rekor log and verifies the inclusion proof with the library's own Merkle code.
 > - `lap-git`: the same mechanisms applied to commits, built because AI agents working in this very repo made an unattributed, out-of-scope commit. Write-up, my own mistakes included: https://github.com/atharnouman/living-agents-protocol/blob/main/CASE-STUDY.md
 >
-> Honest limits up front: the payment rail is mocked; key custody, principal-proofing, and the clone problem are documented open problems; THREAT-MODEL.md says what is *not* defended. Five adversarial review rounds so far across three model families, ~150 verified fixes, all logged with the rejections. Apache-2.0 code, CC-BY spec.
+> Honest limits up front: the payment rail is mocked; key custody, principal-proofing, and the clone problem are documented open problems; THREAT-MODEL.md says what is *not* defended. Six adversarial review rounds so far across three model families, ~160 verified fixes, all logged with the rejections. Apache-2.0 code, CC-BY spec.
 >
 > Repo: https://github.com/atharnouman/living-agents-protocol · Demo: https://atharnouman.github.io/living-agents-protocol · Zero-install: the Codespaces badge in the README.
 
