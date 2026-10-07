@@ -276,7 +276,8 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 | 2026-10-08 | Show HN deferred: HN restricts new accounts | see Phase 3 step 4 and Appendix C |
 | pending | Social preview upload | og:image still the default card at last check |
 | 2026-10-08 | X thread, personal account @atharnouman (new account: reduced discoverability until it graduates) | https://x.com/atharnouman/status/2107930680738881662 |
-| pending | Champion notes (A2A issue, MCP discussion, W3C CG), Medium import | |
+| 2026-10-08 | A2A extension proposal filed (Proposal Phase issue; solicited signal; awaits community discussion and a maintainer sponsor) | https://github.com/a2aproject/A2A/issues/2323 |
+| pending | MCP discussion, W3C CG intro, Medium import | |
 
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
