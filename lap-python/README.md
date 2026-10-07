@@ -2,7 +2,7 @@
 
 Official Python implementation of the **Living Agents Protocol (LAP)**:
 - **LIP-1 Agent Passport**: Ed25519 JWS identity documents with responsible-human principal binding.
-- **LIP-3 Scope Algebra (v0.2)**: Capability attenuation, DAG action lattices, resource prefix matching, and integer budget conservation.
+- **LIP-3 Scope Algebra (v0.4)**: capability attenuation, a registered action DAG, segment-wise resource matching with terminal-only wildcards, two-dimensional caps, and exact-integer budget conservation.
 - **LIP-4 Micro-Core**: FastMCP middleware for server-side authorization, RFC 9421 request signature validation, and signed tripartite audit receipts.
 
 Zero runtime dependencies beyond `cryptography`.
@@ -11,7 +11,12 @@ Zero runtime dependencies beyond `cryptography`.
 
 ## Installation
 
-Not yet published to PyPI — install from the repository:
+```bash
+pip install living-agents            # the library (one dependency: cryptography)
+pip install "living-agents[mcp]"     # plus the official MCP SDK, 1.x or 2.x
+```
+
+From a checkout, for development:
 
 ```bash
 cd lap-python
@@ -29,7 +34,7 @@ pip install -e ".[dev]"
 Wrap any MCP tool function with `@verify_envelope` to enforce authorization bounds and emit tripartite receipts:
 
 ```python
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP          # mcp 1.x; on mcp 2.x: from mcp.server.mcpserver import MCPServer
 from living_agents import verify_envelope
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 

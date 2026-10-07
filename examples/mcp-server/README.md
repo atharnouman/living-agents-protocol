@@ -22,8 +22,8 @@ examples/mcp-server/
 ## 1. Install (2 min)
 
 ```bash
-pip install -e ../../lap-python        # the LAP Python library (one dependency: cryptography)
-pip install mcp                        # the official MCP Python SDK: 1.2+ or 2.x, both work (both run in CI)
+pip install "living-agents[mcp]"       # the LAP library from PyPI plus the official MCP SDK (1.2+ or 2.x; both run in CI)
+# from a checkout instead:  pip install -e ../../lap-python mcp
 ```
 
 ## 2. Protect a tool (3 lines) — `server.py`

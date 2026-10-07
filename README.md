@@ -25,8 +25,20 @@ LAP is a reference model plus wire mechanisms for that missing control plane —
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/atharnouman/living-agents-protocol?quickstart=1)
 *Zero install: the Codespace arrives with Node, Python, and the test suite already run — then try the two-process demo.*
 
+**Use it from your own code** (both packages published 8 October 2026 at library version 0.4.11; the specification is v0.4.10):
+
 ```bash
-cd lap-reference && node --test test/     # 49 tests: crypto, algebra, Micro-Core, Merkle log, Rekor, integrity + audit canaries
+npm install @living-agents/reference        # Node ≥ 20, zero dependencies
+```
+
+```bash
+pip install "living-agents[mcp]"            # Python ≥ 3.10; the extra adds the official MCP SDK (1.x or 2.x)
+```
+
+**Or run everything from this checkout:**
+
+```bash
+cd lap-reference && node --test test/     # 64 tests: crypto, algebra, Micro-Core, Merkle log, Rekor, integrity + audit canaries
 ```
 
 ```bash
@@ -55,7 +67,7 @@ The [**networked demo**](lap-demo/net/) proves the same story across **two real 
 
 Registration in the demos is self-attested by default; `register-genesis.mjs` registers a real Genesis Record in [Sigstore's public Rekor transparency log](https://rekor.sigstore.dev) and verifies the RFC 6962 inclusion proof and Rekor's signed timestamp with LAP's own Merkle code — birth witnessed, not self-asserted.
 
-Requirements: Node ≥ 20. No `npm install` — the entire implementation uses platform built-ins.
+Requirements: Node ≥ 20. The Node implementation has zero dependencies: `npm install @living-agents/reference` adds nothing else to your tree, and a checkout runs on platform built-ins alone.
 
 ## The protocol drafts (LIPs)
 

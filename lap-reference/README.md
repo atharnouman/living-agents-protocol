@@ -1,8 +1,21 @@
 # @living-agents/reference
 
-Reference implementation of the **Living Agents Protocol (LAP)** — the existence layer for always-on AI agents. Implements LIP-1 (Agent Passport), LIP-3 (Scope Algebra v0.2), and LIP-4 (Micro-Core).
+Reference implementation of the **Living Agents Protocol (LAP)** — the existence layer for always-on AI agents. Implements LIP-1 (Agent Passport), LIP-3 (Scope Algebra v0.4), LIP-4 (Micro-Core), an RFC 6962 Merkle log, and the Sigstore Rekor registration binding.
 
-**Zero dependencies.** Node ≥ 20 (native Ed25519). Run the suite:
+## Install
+
+```bash
+npm install @living-agents/reference     # Node ≥ 20, zero dependencies
+```
+
+```js
+import { verifyMicroCorePassport, verifyRequestSignature, checkInvocation, mintReceipt } from "@living-agents/reference";
+// per module: "@living-agents/reference/microcore", "/algebra", "/jws", "/crypto-util", "/merkle-log", "/rekor"
+```
+
+Specification, test vectors, demos and the 15-minute MCP tutorial: https://github.com/atharnouman/living-agents-protocol
+
+**Zero dependencies.** Node ≥ 20 (native Ed25519). In a repository checkout, run the suite:
 
 ```bash
 node --test test/
@@ -16,6 +29,6 @@ The tests verify the deterministic cross-language test vectors in `../output/lip
 - Micro-Core: audience binding, request-signature body+passport binding, act/res/cap invocation checks, signed receipt verification
 - algebra: sub-verb escalation reject (registry DAG), path prefix-escape reject, window-inversion reject, proportional subdivision accept, cross-currency reject, deny-bypass reject (effective sets), sibling budget-replication reject (conservation), depth/decay monotonicity, NFC/case normalization
 
-Modules (`src/`): `crypto-util.js` (b64url, base58, did:key, JCS subset, normalization), `jws.js` (EdDSA compact JWS, passport verification), `algebra.js` (LIP-3 v0.2 subset checker — sound-but-incomplete by design, canonical-order deterministic), `microcore.js` (LIP-4 server invariant, idempotency cache, receipts).
+Modules (`src/`): `crypto-util.js` (b64url, base58, did:key, JCS subset, normalization), `jws.js` (EdDSA compact JWS, passport verification), `algebra.js` (LIP-3 v0.4 subset checker — sound-but-incomplete by design, canonical-order deterministic), `microcore.js` (LIP-4 server invariant, idempotency cache, receipts), `merkle-log.js` (RFC 6962 log, inclusion proofs, salted commitments), `rekor.js` (Sigstore Rekor registration and verification).
 
 Status: draft v0. Spec texts: `../output/LAP-founding-document.md` and `../output/lip/`. License: Apache-2.0.
