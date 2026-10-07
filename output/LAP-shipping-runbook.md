@@ -275,7 +275,8 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 | 2026-10-08 | LinkedIn post, personal profile (day 0 of the launch clock) | https://www.linkedin.com/posts/atharnouman1987_aiagents-opensource-mcp-share-7513693439436177408-dyp-/ (short: https://lnkd.in/p/ewA5Qu3c) |
 | 2026-10-08 | Show HN deferred: HN restricts new accounts | see Phase 3 step 4 and Appendix C |
 | pending | Social preview upload | og:image still the default card at last check |
-| pending | X thread (A.4), champion notes (A2A, MCP, W3C), Medium import | |
+| 2026-10-08 | X thread, personal account @atharnouman (new account: reduced discoverability until it graduates) | https://x.com/atharnouman/status/2107930680738881662 |
+| pending | Champion notes (A2A issue, MCP discussion, W3C CG), Medium import | |
 
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
