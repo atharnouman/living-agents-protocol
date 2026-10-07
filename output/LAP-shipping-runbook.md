@@ -297,6 +297,7 @@ Both packages are built, checked and smoke-tested from a clean install (`@living
 | 2026-10-08 | MCP: GitHub Discussions refused the account (no New discussion button in that repo); asked in the MCP Contributors Discord, #security-ig, per their communication guidelines (Discord first); written proposal held in outreach/MCP-discussion-final.md | Discord #security-ig, 2026-10-08 01:56 local |
 | 2026-10-08 | Essay cross-posted to Medium via import (canonical = project page) | https://medium.com/@atharnouman/agents-need-a-birth-certificate-a-leash-a-black-box-and-an-estate-plan-295436ba6c97 |
 | 2026-10-08 | W3C AI Agent Protocol CG: intro emailed to public-agentprotocol@w3.org from the personal address; subscribed; archive approval submitted (awaiting distribution) | archive link pending |
+| 2026-10-08 | npm: @living-agents/reference published from the personal account (org living-agents). An interrupted first upload wedged 0.4.10 in npm's staged state (npm/cli#9889); the registry later released it together with a public 0.0.0-stage placeholder; 0.4.11 (packaging-only bump, spec stays v0.4.10) published on top, live. Placeholder 0.0.0-stage to be unpublished. | https://www.npmjs.com/package/@living-agents/reference |
 
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
