@@ -184,7 +184,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 > - **Property-based fuzzing of the Scope Algebra (v0.4.9, LIP-3 v0.3).** A generator written identically in both ports drives the same random scopes through Node and Python; a committed decision digest fails the build if they ever disagree. The first run found four defects — an identical `*` delegation refused, language-level errors on malformed scopes, a one-unit floating-point divergence between the ports, and a missing effective-set rule in Python — all fixed with regression tests.
 > - **THREAT-MODEL.md.** Assets, actors, sixteen defended threats each tied to the code that enforces the defence and the test that proves it, and the residual risks stated plainly.
 > - **Canonical encoding made normative (v0.4.8).** Both decoders now reject non-canonical base64url; a lenient decoder gave one signature many textual forms, which text-keyed state could not distinguish.
-> - **Add LAP to your MCP server in 15 minutes.** `examples/mcp-server/`: a FastMCP server whose payment tool refuses anything outside the caller's signed envelope and returns a signed receipt; the stdio round-trip runs in CI.
+> - **Add LAP to your MCP server in 15 minutes.** `examples/mcp-server/`: an MCP server (SDK 1.x and 2.x) whose payment tool refuses anything outside the caller's signed envelope and returns a signed receipt; the stdio round-trip runs in CI.
 > - **Registration made real (v0.4.7).** One command registers a Genesis Record in Sigstore's public Rekor log and verifies the inclusion proof and signed timestamp with the library's own RFC 6962 code.
 > - **Zero-install Codespaces**, an animated README hero built from the live demo, IPv4 + IPv6 networked demo.
 >
