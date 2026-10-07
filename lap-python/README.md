@@ -20,7 +20,9 @@ pip install -e ".[dev]"
 
 ---
 
-## FastMCP Tool Server Integration (3 Lines)
+## FastMCP / MCPServer Tool Server Integration (3 Lines)
+
+*The decorator is SDK-agnostic: it works with `FastMCP` (mcp 1.x) and `MCPServer` (mcp 2.x) alike.*
 
 > **Complete runnable example (server + client, verified in CI):** [`../examples/mcp-server/`](../examples/mcp-server/) — the 15-minute tutorial.
 

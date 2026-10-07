@@ -1,6 +1,6 @@
 # Living Agents Protocol (LAP) — Project Brief
 
-*Athar Nouman · September 2026 · status: public — https://github.com/atharnouman/living-agents-protocol*
+*Athar Nouman · October 2026 · status: public — https://github.com/atharnouman/living-agents-protocol*
 
 ## What I'm doing, in one paragraph
 

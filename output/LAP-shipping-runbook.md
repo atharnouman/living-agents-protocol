@@ -99,7 +99,8 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 
 ## Appendix A — Launch copy (paste-ready)
 
-### A.0 — Launch-day order (2026-09-08 refresh; everything below is [YOU] unless marked)
+### A.0 — Launch-day order (2026-10-08 refresh; everything below is [YOU] unless marked)
+0. [ME, done 2026-10-08] Pre-launch fixes: the MCP tutorial runs on mcp 1.x and 2.x (both in CI); every OpenTimestamps proof upgraded to a confirmed Bitcoin attestation (`output/anchors/lap_upgrade.py`); dates refreshed.
 1. **GitHub Release** for `v0.4.10` — repo → Releases → *Draft a new release* → choose existing tag `v0.4.10` → title + body from A.7 → *Publish release*.
 2. **Social preview** — Settings → General → *Social preview* → upload `docs/social-preview.png` (1280×640). Without it, links on X/LinkedIn/HN render blank.
 3. **Essay** — publish `output/LAP-essay.md` on your personal blog / Substack / Medium (never the company blog). Send me the URL: [ME] adds it to the README "Read" line and restamps.

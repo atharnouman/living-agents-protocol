@@ -11,12 +11,42 @@ What the decorator enforces on EVERY call, before your code runs:
   5. the amount is within the envelope's per-transaction cap, in the right unit.
 On success the result carries a tripartite receipt signed by this server.
 """
+import functools
+import logging
+
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from mcp.server.fastmcp import FastMCP
+
+# Both majors of the official SDK: mcp 2.x renamed FastMCP to MCPServer (mcp.server.mcpserver);
+# the @server.tool() decorator and server.run() are unchanged, so the LAP decorator below is too.
+try:
+    from mcp.server.mcpserver import MCPServer as Server   # mcp >= 2
+    _SERVER_KW = {}
+except ImportError:
+    from mcp.server.fastmcp import FastMCP as Server        # mcp 1.x
+    _SERVER_KW = {"log_level": "WARNING"}
+try:
+    from mcp.server.mcpserver.exceptions import ToolError   # mcp >= 2
+except ImportError:
+    from mcp.server.fastmcp.exceptions import ToolError     # mcp 1.x
 
 from living_agents import did_key_from_raw_public_key, verify_envelope
 
-mcp = FastMCP("billing-tools", log_level="WARNING")  # keep the demo output clean
+logging.basicConfig(level=logging.WARNING)  # keep the demo output clean on both majors
+mcp = Server("billing-tools", **_SERVER_KW)
+
+
+def lap_refusals_as_tool_errors(fn):
+    """The LAP decorator raises a plain ValueError (it knows nothing about the SDK). The SDK
+    reports a ToolError's message to the caller but deliberately hides any other exception as a
+    generic 'error executing tool', so convert here: the caller sees the LAP_ERR_* reason and
+    nothing else about the server leaks."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except ValueError as e:
+            raise ToolError(str(e)) from e
+    return wrapper
 
 # This server's own identity: it signs receipts. Generated per run for the demo;
 # persist it (and publish the DID) in production so receipts stay verifiable.
@@ -28,6 +58,7 @@ SERVER_ID = "did:web:tools.example.com"
 
 
 @mcp.tool()
+@lap_refusals_as_tool_errors
 @verify_envelope(
     action="finance:pay",
     resource="mcp://tools.example.com/billing/pay",

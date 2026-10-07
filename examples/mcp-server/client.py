@@ -7,6 +7,7 @@ import asyncio
 import json
 import sys
 import time
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -68,9 +69,18 @@ def lap_auth_for(args: dict) -> dict:
     return {"passport_jwt": PASSPORT, "signature_base": base, "signature_b64url": b64url_encode(agent_key.sign(base.encode("ascii")))}
 
 
+def _structured(result):  # mcp 2.x uses snake_case field names, 1.x camelCase
+    return getattr(result, "structured_content", None) or getattr(result, "structuredContent", None)
+
+
+def _is_error(result):
+    return bool(getattr(result, "is_error", getattr(result, "isError", False)))
+
+
 def parse(result):
-    if getattr(result, "structuredContent", None) and isinstance(result.structuredContent, dict) and "status" in result.structuredContent:
-        return result.structuredContent
+    sc = _structured(result)
+    if isinstance(sc, dict) and "status" in sc:
+        return sc
     text = result.content[0].text if result.content else "{}"
     try:
         return json.loads(text)
@@ -78,8 +88,9 @@ def parse(result):
         return {"error": text}
 
 
-async def main():
-    print(f"\nagent     {agent_did}\nprincipal {principal_did}\nenvelope  {jcs(ENVELOPE)}\n")
+async def _run():
+    print(f"\nmcp SDK   {_pkg_version('mcp')} (this example runs on 1.2+ and 2.x)")
+    print(f"agent     {agent_did}\nprincipal {principal_did}\nenvelope  {jcs(ENVELOPE)}\n")
     params = StdioServerParameters(command=sys.executable, args=[str(HERE / "server.py")], cwd=str(HERE))
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -90,7 +101,7 @@ async def main():
             async def call(label, args, auth=None):
                 res = await session.call_tool("pay_invoice", {**args, "lap_auth": auth if auth is not None else lap_auth_for(args)})
                 out = parse(res)
-                if res.isError:
+                if _is_error(res):
                     reason = (out.get("error") or res.content[0].text).split("Error executing tool pay_invoice: ")[-1]
                     print(f"  REFUSED  {label:<34} -> {reason[:90]}")
                     return
@@ -111,6 +122,16 @@ async def main():
             reason = (parse(res).get("error") or res.content[0].text).split("Error executing tool pay_invoice: ")[-1]
             print(f"  REFUSED  {'no passport at all':<34} -> {reason[:90]}")
     print("\nEvery refusal happened BEFORE the tool ran. Every success carries a server-signed receipt.\n")
+
+
+async def main():
+    try:
+        await _run()
+    except Exception as e:  # the server process died, or the SDK is incompatible
+        print(f"\nFAILED: {type(e).__name__}: {str(e)[:140]}")
+        print("If the server exited, its own traceback is printed above this line (its stderr is passed through).")
+        print("Check the installed SDK with `pip show mcp`; this example runs on mcp 1.2+ and mcp 2.x.")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

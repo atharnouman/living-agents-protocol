@@ -4,7 +4,7 @@ By the end you will have an MCP server whose sensitive tool **refuses to run** u
 
 ```
 examples/mcp-server/
-  server.py   # FastMCP server; one tool protected by @verify_envelope
+  server.py   # MCP server (FastMCP on mcp 1.x, MCPServer on 2.x); one tool protected by @verify_envelope
   client.py   # LAP-aware client: mints a passport, signs calls, verifies receipts
 ```
 
@@ -23,7 +23,7 @@ examples/mcp-server/
 
 ```bash
 pip install -e ../../lap-python        # the LAP Python library (one dependency: cryptography)
-pip install "mcp>=1.2,<2"              # the official MCP Python SDK
+pip install mcp                        # the official MCP Python SDK: 1.2+ or 2.x, both work (both run in CI)
 ```
 
 ## 2. Protect a tool (3 lines) — `server.py`
@@ -32,6 +32,7 @@ pip install "mcp>=1.2,<2"              # the official MCP Python SDK
 from living_agents import verify_envelope, did_key_from_raw_public_key
 
 @mcp.tool()
+@lap_refusals_as_tool_errors   # ValueError -> the SDK's ToolError, so the LAP_ERR reason reaches the caller
 @verify_envelope(
     action="finance:pay",
     resource="mcp://tools.example.com/billing/pay",
@@ -42,6 +43,8 @@ from living_agents import verify_envelope, did_key_from_raw_public_key
 def pay_invoice(invoice: str, amount: int, unit: str = "USD", lap_auth: dict | None = None) -> dict:
     return {"status": "paid", "invoice": invoice, "amount": amount, "unit": unit}
 ```
+
+The only thing that differs between SDK majors is the import: 2.x renamed `FastMCP` to `MCPServer` and dropped the `log_level` argument; `server.py` tries the 2.x import first and falls back. Everything LAP-related is identical. One adapter matters on both majors: the LAP decorator raises a plain `ValueError` (it knows nothing about the SDK), and the SDK only forwards the message of its own `ToolError` to the caller, so `server.py` converts one into the other; that is how `LAP_ERR_CAP: amount 6000 exceeds max_per_tx 5000` reaches the client instead of a generic error.
 
 Two details that matter:
 - **`lap_auth: dict | None = None`** must be a parameter of the tool so it appears in the MCP tool schema (the client sends it as an argument over stdio). The decorator removes it before your function runs and never includes it in the signed body.

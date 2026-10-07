@@ -1,6 +1,6 @@
 # Agents need a birth certificate, a leash, a black box, and an estate plan
 
-*Athar Nouman — September 2026. ~1,100 words. Companion to the LAP position paper.*
+*Athar Nouman — October 2026. ~1,100 words. Companion to the LAP position paper.*
 
 Sometime in the last two years, software agents got hands, voices, and wallets. MCP lets them use tools. A2A lets them trade tasks. Payment protocols let them spend money. The plumbing for an agent economy is arriving on schedule.
 

@@ -38,14 +38,18 @@ jobs:
       - run: python -m pytest lap-python/tests -q
 
   mcp-example:
-    name: MCP example (real stdio round-trip)
+    name: MCP example on ${{ matrix.mcp }} (real stdio round-trip)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mcp: ["mcp>=1.2,<2", "mcp>=2,<3"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ./lap-python "mcp>=1.2,<2"
+      - run: pip install -e ./lap-python "${{ matrix.mcp }}"
       - name: client spawns the LAP-protected server; expect one paid call + four refusals
         run: |
           cd examples/mcp-server
