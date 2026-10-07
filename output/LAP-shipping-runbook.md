@@ -238,6 +238,7 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 ---
 
 ## Appendix C — Gotchas & risks
+- **W3C account / CG membership asks for employment affiliation (2026-10-08).** Answer truthfully (affiliated: IO Health); never "no relationship". Joining a CG means agreeing to the Community Contributor License Agreement, which makes patent commitments on contributions, so an employed participant may need the employer's sign-off. Posting to the public list needs no account and no CLA (first post triggers an archive-approval email). Path chosen: email `public-agentprotocol@w3.org` first; decide on membership only if the group wants a written contribution, after settling the employer question.
 - **Hacker News blocks Show HN from new accounts** (seen 2026-10-08 at `/showlim`). The username must be a 2–15 character handle, not an email. Build genuine participation first; no threshold is published, so test again after about two weeks by opening the submit form.
 - **Personal account only.** Re-check `git config user.email` in any fresh clone. Never post from the company blog/handles.
 - **Don't over-polish.** Every strategy review concluded ship > improve. Phase 0.5 is done; stop touching the spec until the gate.
