@@ -104,7 +104,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 1. **GitHub Release** for `v0.4.10` — repo → Releases → *Draft a new release* → choose existing tag `v0.4.10` → title + body from A.7 → *Publish release*.
 2. **Social preview** — Settings → General → *Social preview* → upload `docs/social-preview.png` (1280×640). Without it, links on X/LinkedIn/HN render blank.
 3. **Essay** — publish `output/LAP-essay.md` on your personal blog / Substack / Medium (never the company blog). Send me the URL: [ME] adds it to the README "Read" line and restamps.
-4. **Show HN** — A.2. Tue–Thu, 8–10 am US Eastern, when you can babysit comments for ~4 hours. Facts, no arguing; a cool reception is not failure.
+4. **Show HN** — A.2. **Deferred (2026-10-08):** Hacker News is temporarily blocking Show HN from new accounts (its `/showlim` notice: "take some time to get to know the community"). Plan: account as `atharnouman`, genuine participation for a couple of weeks (substantive comments in agent/security/protocol threads, a few submissions of other people's work), then retry on a Tue–Thu 8–10 am US Eastern. No workarounds: a borrowed account or a disguised self-submission would cost more than the delay. Until then, steps 5–7 carry the launch.
 5. **LinkedIn + X** — A.3, A.4, the same day, after HN is up (link the HN thread + repo).
 6. **Champion notes** — `outreach/champion-outreach.md` (local, never committed): A2A issue first, then the MCP Discussion, then the W3C CG intro. Re-verify every maintainer name at the cited URL first.
 7. **arXiv track, in parallel** — print `output/LAP-position-paper.html` to PDF; create the account; start the submission (cs.MA, cross-list cs.CR) to get the endorsement code; send A.1.
@@ -238,6 +238,7 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 ---
 
 ## Appendix C — Gotchas & risks
+- **Hacker News blocks Show HN from new accounts** (seen 2026-10-08 at `/showlim`). The username must be a 2–15 character handle, not an email. Build genuine participation first; no threshold is published, so test again after about two weeks by opening the submit form.
 - **Personal account only.** Re-check `git config user.email` in any fresh clone. Never post from the company blog/handles.
 - **Don't over-polish.** Every strategy review concluded ship > improve. Phase 0.5 is done; stop touching the spec until the gate.
 - **HN is allergic to hype.** The copy leads with limits on purpose. Answer criticism with facts; a cool reception is not failure.
