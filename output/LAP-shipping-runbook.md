@@ -274,7 +274,7 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 | 2026-10-08 | Essay live on the project site (canonical) | https://atharnouman.github.io/living-agents-protocol/essay.html |
 | 2026-10-08 | LinkedIn post, personal profile (day 0 of the launch clock) | https://www.linkedin.com/posts/atharnouman1987_aiagents-opensource-mcp-share-7513693439436177408-dyp-/ (short: https://lnkd.in/p/ewA5Qu3c) |
 | 2026-10-08 | Show HN deferred: HN restricts new accounts | see Phase 3 step 4 and Appendix C |
-| pending | Social preview upload | og:image still the default card at last check |
+| 2026-10-08 | Social preview set (custom card served as og:image; verified) | repository page |
 | 2026-10-08 | X thread, personal account @atharnouman (new account: reduced discoverability until it graduates) | https://x.com/atharnouman/status/2107930680738881662 |
 | 2026-10-08 | A2A extension proposal filed (Proposal Phase issue; solicited signal; awaits community discussion and a maintainer sponsor) | https://github.com/a2aproject/A2A/issues/2323 |
 | 2026-10-08 | MCP: GitHub Discussions refused the account (no New discussion button in that repo); asked in the MCP Contributors Discord, #security-ig, per their communication guidelines (Discord first); written proposal held in outreach/MCP-discussion-final.md | Discord #security-ig, 2026-10-08 01:56 local |
