@@ -1,15 +1,28 @@
 {
   "name": "@living-agents/reference",
   "version": "0.4.10",
-  "description": "Living Agents Protocol (LAP) reference implementation: passport (LIP-1), scope algebra (LIP-3), Micro-Core (LIP-4). Zero dependencies.",
+  "description": "Living Agents Protocol (LAP) reference implementation: agent passport (LIP-1), scope algebra (LIP-3), Micro-Core request verification and receipts (LIP-4), RFC 6962 Merkle log, Sigstore Rekor binding. Zero dependencies.",
   "type": "module",
   "license": "Apache-2.0",
+  "author": "Athar Nouman <atharnouman@gmail.com>",
+  "homepage": "https://atharnouman.github.io/living-agents-protocol/",
+  "repository": { "type": "git", "url": "git+https://github.com/atharnouman/living-agents-protocol.git", "directory": "lap-reference" },
+  "bugs": { "url": "https://github.com/atharnouman/living-agents-protocol/issues" },
+  "keywords": ["ai-agents", "agent-identity", "authorization", "mcp", "a2a", "did", "ed25519", "jws", "rfc9421", "merkle", "sigstore", "protocol"],
   "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/" },
+  "sideEffects": false,
+  "main": "./src/index.js",
   "exports": {
+    ".": "./src/index.js",
     "./jws": "./src/jws.js",
     "./algebra": "./src/algebra.js",
     "./microcore": "./src/microcore.js",
-    "./crypto-util": "./src/crypto-util.js"
-  }
+    "./crypto-util": "./src/crypto-util.js",
+    "./merkle-log": "./src/merkle-log.js",
+    "./rekor": "./src/rekor.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["src/", "README.md", "LICENSE"],
+  "publishConfig": { "access": "public" },
+  "scripts": { "test": "node --test test/" }
 }

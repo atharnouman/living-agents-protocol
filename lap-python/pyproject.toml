@@ -1,26 +1,47 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "living-agents"
 version = "0.4.10"
-description = "Living Agents Protocol (LAP) Python reference implementation and FastMCP middleware: LIP-1 Passport, LIP-3 Scope Algebra, LIP-4 Micro-Core."
+description = "Living Agents Protocol (LAP) Python reference implementation and MCP server middleware: LIP-1 Passport, LIP-3 Scope Algebra, LIP-4 Micro-Core verification and receipts."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
-authors = [{ name = "Athar Nouman" }]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Athar Nouman", email = "atharnouman@gmail.com" }]
+keywords = ["ai-agents", "agent-identity", "authorization", "mcp", "a2a", "did", "ed25519", "jws", "rfc9421", "protocol"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "cryptography>=42.0.0",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-]
-mcp = [
-    "mcp>=1.0.0",
-]
+dev = ["pytest>=8.0.0"]
+mcp = ["mcp>=1.2"]
+
+[project.urls]
+Homepage = "https://atharnouman.github.io/living-agents-protocol/"
+Repository = "https://github.com/atharnouman/living-agents-protocol"
+Specification = "https://github.com/atharnouman/living-agents-protocol/tree/main/output/lip"
+"MCP tutorial" = "https://github.com/atharnouman/living-agents-protocol/tree/main/examples/mcp-server"
+Issues = "https://github.com/atharnouman/living-agents-protocol/issues"
+
+[tool.setuptools]
+packages = ["living_agents"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

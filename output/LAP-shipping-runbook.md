@@ -237,6 +237,22 @@ cd ../.. && node lap-git/lap-git.mjs selftest                              # sco
 
 ---
 
+## Appendix B.6 — Publishing the packages (prepared 2026-10-08; [YOU] publishes, personal accounts only)
+
+Both packages are built, checked and smoke-tested from a clean install (`@living-agents/reference` on npm, `living-agents` on PyPI; both names were free on 2026-10-08). I never handle tokens: every credential prompt below is yours.
+
+**npm** (`lap-reference/`):
+1. Create a personal npm account with the personal Gmail at https://www.npmjs.com/signup, enable two-factor auth.
+2. Create the organization `living-agents` (free for public packages): https://www.npmjs.com/org/create. The package name `@living-agents/reference` needs this scope to exist under your account.
+3. In a terminal in `E:\LivingAIAgents\lap-reference`: `npm login` (browser flow), then `npm publish` (access is already set to public in package.json). Verify: https://www.npmjs.com/package/@living-agents/reference
+
+**PyPI** (`lap-python/`):
+1. Create a PyPI account with the personal Gmail at https://pypi.org/account/register/, verify the email, enable two-factor auth.
+2. Create an API token at https://pypi.org/manage/account/token/ (scope "entire account" is required for a first upload; afterwards replace it with a project-scoped token).
+3. In `E:\LivingAIAgents\lap-python`: `python -m build` then `python -m twine upload dist/*` — username `__token__`, password = the token (paste it into the prompt; never into a file or a chat). Verify: https://pypi.org/project/living-agents/
+
+**After both are live, tell me** and I switch every install line (README, tutorial, lap-python README, Codespaces post-create) to `npm i @living-agents/reference` and `pip install "living-agents[mcp]"`, restamp, and push. Later releases: bump the three version fields (package.json, pyproject.toml, `__init__.py`), tag, publish both.
+
 ## Appendix C — Gotchas & risks
 - **W3C account / CG membership asks for employment affiliation (2026-10-08).** Answer truthfully (affiliated: IO Health); never "no relationship". Joining a CG means agreeing to the Community Contributor License Agreement, which makes patent commitments on contributions, so an employed participant may need the employer's sign-off. Posting to the public list needs no account and no CLA (first post triggers an archive-approval email). Path chosen: email `public-agentprotocol@w3.org` first; decide on membership only if the group wants a written contribution, after settling the employer question.
 - **Hacker News blocks Show HN from new accounts** (seen 2026-10-08 at `/showlim`). The username must be a 2–15 character handle, not an email. Build genuine participation first; no threshold is published, so test again after about two weeks by opening the submit form.

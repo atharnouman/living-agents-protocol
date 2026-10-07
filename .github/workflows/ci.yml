@@ -56,3 +56,24 @@ jobs:
           python client.py | tee out.txt
           grep -q "receipt verified" out.txt
           test "$(grep -c REFUSED out.txt)" = "4"
+
+  packaging:
+    name: Packages build and pass checks (npm pack, PyPI build + twine)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: npm package packs with only the intended files
+        run: |
+          cd lap-reference
+          npm pack --dry-run 2>&1 | tee pack.txt
+          grep -q "src/index.js" pack.txt && grep -q "LICENSE" pack.txt && ! grep -q "test/" pack.txt
+      - name: PyPI package builds and passes twine check
+        run: |
+          pip install build twine
+          cd lap-python && python -m build && python -m twine check dist/*
