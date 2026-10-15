@@ -4,7 +4,7 @@
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.10 (draft)` · `Node 64/64 · Python 66/66` · `two interoperating implementations` · `IPv4 + IPv6` · `6 adversarial review rounds, ~160 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.10 (draft)` · `Node 64/64 · Python 108/108` · `two interoperating implementations` · `IPv4 + IPv6` · `6 adversarial review rounds, ~160 verified fixes` · `Bitcoin-timestamped`
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
 

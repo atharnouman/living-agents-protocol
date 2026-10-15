@@ -12,7 +12,7 @@
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `563deaa95bb6f4bef1fba1974abb6a36b6159026341a3d2c0404afd90485ab48` | LAP-position-paper.md (v1.2-draft) |
 | `4bf89b8a5b1a188d52584a20721881113ab7d2610fa2d4c60d44a29bb7f652ef` | LAP-essay.md (October 2026 byline; corrected 2026-10-16 per the A2A review, re-stamped, pending) |
-| `532b23239809aa5e7c118527c28cc31834fefe0461815a4025c291e1d988cf0f` | ../README.md (v0.4.10 spec; packages npm 0.4.11, PyPI 0.4.12; essay word count corrected 2026-10-16, re-stamped, pending) |
+| `3b47a1c2709aef142c97cffa25c239093e28933ab5834566a7c2d82c6ab547b6` | ../README.md (v0.4.10 spec; packages npm 0.4.11, PyPI 0.4.12; Python 108/108 after the audit-record interop test; re-stamped 2026-10-16, pending) |
 | `c7f67a4e2734e33f63242ccd45530e663030202257aaf33c28d121620814c6f6` | lip/LIP-4-mcp-extension-draft.md (v0.1 draft, 2026-10-08; confirmed) |
 
 ## Status and how to use

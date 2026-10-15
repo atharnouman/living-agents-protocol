@@ -15,7 +15,7 @@ Everything public uses **your personal identity only**: GitHub (personal account
 
 ## Status snapshot (verified)
 
-- **Green:** Node 64/64 · Python 66/66 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
+- **Green:** Node 64/64 · Python 108/108 · single-process demo 191 checks (+ tamper caught, exit 1) · networked demo (2 processes, IPv4 + IPv6) · `lap-git` self-test.
 - **Clean:** no secrets or private-key files tracked; company domain appears nowhere; working tree committed via `lap-git`; local backup zip taken (`backups/`, git-ignored).
 - **Consistent:** every public number swept — README, brief (md + html), founding document header and "Shipped" line, paper, essay all say v0.4.10 / 51 / 45 / five rounds / ~150.
 - **Ready:** CI workflow, `SECURITY.md`, `CITATION.cff`, a `docs/` folder for GitHub Pages (visual demo, terminal playback, asciinema cast), the paper refreshed to v1.1-draft (clone problem as open problem #7, two implementations, lap-git, three-model acknowledgments) and rendered to print-ready HTML, the essay refreshed with the case-study hook.
@@ -188,7 +188,7 @@ When the endorsement lands: submit the PDF (cs.MA; cross-list cs.CR) with the re
 > - **Registration made real (v0.4.7).** One command registers a Genesis Record in Sigstore's public Rekor log and verifies the inclusion proof and signed timestamp with the library's own RFC 6962 code.
 > - **Zero-install Codespaces**, an animated README hero built from the live demo, IPv4 + IPv6 networked demo.
 >
-> Tests: Node 64/64, Python 66/66, demo replay 191 checks with tamper detection, lap-git self-test. Every commit since v0.4.6 is signed by a `lap-git` agent passport (`node lap-git/lap-git.mjs verify`); documents are Bitcoin-timestamped (`output/anchors/ANCHORS.md`). Full history: founding document §23 and `llm-collab/IMPROVEMENTS-LOG.md`.
+> Tests: Node 64/64, Python 108/108, demo replay 191 checks with tamper detection, lap-git self-test. Every commit since v0.4.6 is signed by a `lap-git` agent passport (`node lap-git/lap-git.mjs verify`); documents are Bitcoin-timestamped (`output/anchors/ANCHORS.md`). Full history: founding document §23 and `llm-collab/IMPROVEMENTS-LOG.md`.
 >
 > Spec CC-BY-4.0 · code Apache-2.0 · demo: https://atharnouman.github.io/living-agents-protocol/
 
@@ -230,7 +230,7 @@ ots upgrade output/LAP-founding-document.md.ots && ots verify output/LAP-foundin
 **B.6 Anyone can verify the repo in 5 minutes (drop into a reply when a skeptic asks)**
 ```bash
 cd lap-reference && node --test test/                                      # 64/64
-cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 66/66
+cd ../lap-python && pip install -e . pytest && python -m pytest tests -q   # 108/108
 cd ../lap-demo/net && node conductor.mjs && node verify.mjs                # 2 processes, receipts verified
 cd ../.. && node lap-git/lap-git.mjs selftest                              # scope refused, tamper caught
 ```
@@ -308,6 +308,7 @@ Both packages are built, checked and smoke-tested from a clean install (`@living
 | 2026-10-16 | Agentic standards map (W3C list thread): the map's author asked for additions as repository issues using his template, so the planned list email was replaced by an issue proposing a LAP entry (verified identical to the draft; spec date corrected to tagged 2026-09-08, GitHub release 2026-10-07). Medium copy of the essay corrected and verified on the public page | https://github.com/frmoretto/agentic-standards-map/issues/5 |
 | 2026-10-16 | MCP Discord: #security-ig is read-only for this account, so the topic went to the Security IG Monthly Meeting thread (where the facilitator asks for topics), next to two related pitches (an audit-record contract seeking routing, an audit-record working group seeking a sponsor): LAP offered as the authority side of the same record, to feed a working group, with a test of the receipt as an audit-record-contract typed extension. #financial-services-ig: asked for 10 minutes on the group's 24 Sep item, Verifiable Record Format for Tool Calls. Both texts verified before sending | https://discord.com/channels/1358869848138059966/1558621168733392998/1560408604966920253 ; https://discord.com/channels/1358869848138059966/1405263188034977865/1560408782998343800 |
 | 2026-10-16 | npm: placeholder 0.0.0-stage deprecated ("Placeholder from npm staged publishing, not a release") with a 7-day stage-only token scoped to @living-agents/reference, confirmed through npm's browser 2FA; 0.4.10 and 0.4.11 untouched, latest stays 0.4.11. The 8 Oct token had expired (npm reports that as 404 on writes) | https://www.npmjs.com/package/@living-agents/reference |
+| 2026-10-16 | Audit-record interop test (promised in the MCP Security IG thread): an independent Python implementation of audit-record-contract/1 reproduces both known-answer digests and passes a clean-room port of all 30 vectors; the MCP tutorial's seven calls recorded with a proposed `delegated-authority` extension form a deterministic chain that verifies, detects edits and keeps the LAP receipt re-verifiable from the record alone. Blocker: the extension is not registered. Three observations on the contract's fixtures and canonicalizer prepared for its author. Python 108/108 | examples/audit-record-contract/README.md |
 
 ## Appendix F — Weekly metrics sheet (fill in every Monday)
 | Week | Stars | Unique clones | Top referrer | Issues opened | PRs (unsolicited / solicited) | Venue replies | asciinema/Pages views | Notes |
