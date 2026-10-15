@@ -1,6 +1,6 @@
 # Agents need a birth certificate, a leash, a black box, and an estate plan
 
-*Athar Nouman — October 2026. ~1,100 words. Companion to the LAP position paper.*
+*Athar Nouman — October 2026. ~1,300 words. Companion to the LAP position paper.*
 
 Sometime in the last two years, software agents got hands, voices, and wallets. MCP lets them use tools. A2A lets them trade tasks. Payment protocols let them spend money. The plumbing for an agent economy is arriving on schedule.
 
@@ -10,7 +10,7 @@ This mattered less when "agent" meant a chatbot that lived for one conversation.
 
 **Who is it, and who does it act for?** Not a username — a verifiable chain from the agent to a responsible legal person. Today an agent's claimed identity is a string. There is no standard way to prove "I act for this company" or "this person spawned me," no witnessed record of when an agent came into existence, and therefore no way to treat an agent's *age* as the trust signal it should be. New domains are treated as suspicious; newborn agents should be too — but only if birth is witnessed. Agents need a **birth certificate**.
 
-**What may it do alone?** The scariest phrase in computing right now is "fully autonomous." The fix isn't less autonomy; it's *legible* autonomy: a signed, machine-readable statement of exactly what an agent may do unsupervised — spend limits, permitted counterparties, quiet hours, who to wake up when things get weird. And that authority should be alive, not archival. Here's a design rule I'd like to see everywhere: **authority should decay when the agent goes dark.** If an agent stops heartbeating — crashed, hijacked, abandoned — its permissions should suspend themselves, automatically, by protocol. Mandates should rot unless re-blessed. Agents need a **leash** — one the agent itself cannot remove by going silent.
+**What may it do alone?** The scariest phrase in computing right now is "fully autonomous." The fix isn't less autonomy; it's *legible* autonomy: a signed, machine-readable statement of exactly what an agent may do unsupervised — spend limits, permitted counterparties, quiet hours, who to wake up when things get weird. And that authority should be alive, not archival. Here's a design rule I'd like to see everywhere: **authority should decay when the agent goes dark.** If an agent stops heartbeating — crashed, cut off, abandoned — its permissions should suspend themselves, automatically, by protocol. A hijacked agent is a different problem: whoever holds its key can keep the heartbeat going, so that case needs short-lived authority, tight limits, and a principal who can pull the plug. Mandates should rot unless re-blessed. Agents need a **leash** — one the agent itself cannot remove by going silent.
 
 **What actually happened?** When an agent transacts overnight, the record of what it did is currently whatever its vendor's logging happened to capture, in whatever format, editable by whoever runs the server. That's not evidence; that's vibes. Agents that act unsupervised need tamper-evident, replayable records — hash-chained, so edits are detectable; tiered, so privacy survives; standardized, so an auditor, insurer, or court can actually consume them. Honesty requires saying what such a record proves: it's the agent's *admissions* — strong for showing it stayed inside its mandate, weaker for proving it did nothing else. Even so limited, it's the difference between an accountable system and an anecdote. Agents need a **black box**.
 
@@ -31,3 +31,5 @@ But I'll make one prediction with full confidence. The last three years standard
 Better to draw the map before the territory catches fire.
 
 *The position paper, full specification, code are at https://github.com/atharnouman/living-agents-protocol, and the live demos at https://atharnouman.github.io/living-agents-protocol/. I'm reachable at atharnouman@gmail.com — especially if you're implementing agent identity, lifecycle, or audit anywhere and want these ideas as extensions rather than another standard.*
+
+*Correction, 16 October 2026: an earlier version listed “hijacked” among the failures a missing heartbeat catches. It isn’t one: a thief holding the agent’s key can keep the heartbeat going, so the sentence now says what does contain that case. Thanks to the reviewer on the A2A extension proposal who pointed it out.*

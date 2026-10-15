@@ -11,8 +11,8 @@
 | `1d022cb5ce84af88c6e07769a0893744e5772362035c3f8155a5edab362d03cd` | lip/LIP-4-micro-core-draft.md (v0.4.10 hardening) |
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `563deaa95bb6f4bef1fba1974abb6a36b6159026341a3d2c0404afd90485ab48` | LAP-position-paper.md (v1.2-draft) |
-| `ad2369fbf56470d4019ae737919fe2f840a2e3b1d59508297a702065ec0fddfb` | LAP-essay.md (October 2026 byline) |
-| `00aaf2a69b06bfcacde8fd5377330e6a8e50d3d76ee37f5fce58ad0cf03bfbb3` | ../README.md (v0.4.10 spec; packages npm 0.4.11, PyPI 0.4.12; MCP extension row; re-stamped 2026-10-08 evening; confirmed) |
+| `4bf89b8a5b1a188d52584a20721881113ab7d2610fa2d4c60d44a29bb7f652ef` | LAP-essay.md (October 2026 byline; corrected 2026-10-16 per the A2A review, re-stamped, pending) |
+| `532b23239809aa5e7c118527c28cc31834fefe0461815a4025c291e1d988cf0f` | ../README.md (v0.4.10 spec; packages npm 0.4.11, PyPI 0.4.12; essay word count corrected 2026-10-16, re-stamped, pending) |
 | `c7f67a4e2734e33f63242ccd45530e663030202257aaf33c28d121620814c6f6` | lip/LIP-4-mcp-extension-draft.md (v0.1 draft, 2026-10-08; confirmed) |
 
 ## Status and how to use
@@ -22,7 +22,7 @@
   - position paper — blocks 965968, 965969, 965971, 965974 (earliest 2026-09-07 20:07 UTC)
   - LIP-1 — blocks 965661, 965689, 965708 (earliest 2026-09-05 20:14 UTC)
   - LIP-2, test vectors — blocks 964477, 964488, 964496, 964513 (earliest 2026-08-28 20:15 UTC)
-  - README.md (final 2026-10-08 edit) and the MCP extension draft v0.1 — blocks 970409, 970411, 970412, 970415; essay (October byline) — blocks 970383, 970387, 970412, 970415 (earliest 2026-10-07 20:00 UTC; upgraded and verified 2026-10-16)
+  - README.md (final 2026-10-08 edit) and the MCP extension draft v0.1 — blocks 970409, 970411, 970412, 970415; essay (October byline) — blocks 970383, 970387, 970412, 970415 (earliest 2026-10-07 20:00 UTC; upgraded and verified 2026-10-16; the README and essay proofs among these are kept in git history, superseded by the 2026-10-16 re-stamps, which are pending)
   A freshly stamped proof is a *pending calendar attestation* until the calendars fold it into a Bitcoin transaction (typically within a day); until then the honest claim for that file is "OpenTimestamps-stamped, pending Bitcoin confirmation."
 - **Upgrade / verify yourself** (any machine, no Bitcoin node): `python output/anchors/lap_upgrade.py` upgrades every proof and checks each attestation against a public block explorer; `--verify-only` checks without writing. The stock `ots upgrade` / `ots verify` work too (the `ots` CLI is broken on Windows, which is why stamping uses `lap_stamp.py` and upgrading uses `lap_upgrade.py`).
 - **What a proof establishes**: these exact bytes existed no later than the anchored block's time — priority evidence independent of any company, platform, or machine.
