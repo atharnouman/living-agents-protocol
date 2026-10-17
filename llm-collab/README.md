@@ -22,7 +22,11 @@
 
 The v0.1 → v0.2 revision came from exactly this method (three adversarial reviews). The bar for a contribution that merges: it must either (a) find a defect we can verify, (b) contribute a concrete design for an open problem (§6 of the pack), (c) surface real prior art we must align with or cite, or (d) materially improve spec precision (schemas, state machines, error paths). Compliments merge nowhere.
 
-## Round 4 (current) — the repository is public
+## Round 5 (current, 2026-10-17): critique the findings and the plan
+
+Use `prompts/14-critique-findings-and-plan.md`. A tool with file access reads the four 2026-10-16 reviews in `inbox/` directly; a chat model gets the prompt plus the local bundle `outreach/REVIEW-BUNDLE-2026-10-17.md`. Prefer a model family other than Claude, since all four reviews came from Claude models. Same rules as always: one new file in `inbox/`, every claim reproduced at triage.
+
+## Round 4 — the repository is public
 
 The context pack is no longer needed: point a model at https://github.com/atharnouman/living-agents-protocol and give it `prompts/13-contribute-from-public-repo.md`. That prompt carries the ground rules (read-only delivery into `inbox/`, verify before claiming, no rediscovery credit, no control characters), a thirty-minute reading order, five tasks to choose from (clean-room implementation in a new language, hostile review of the threat model and LIP-3 v0.3, parser fuzzing, newcomer friction, spec archaeology), and the report shape. Deliverables land in `inbox/YYYY-MM-DD_<model>_<topic>.md`; the maintainer reproduces every claim before merging and logs the outcome in `IMPROVEMENTS-LOG.md` with attribution. Everything produced this way is a **solicited** signal (spec §11).
 

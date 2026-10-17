@@ -229,6 +229,15 @@ def test_lap_receipt_reverifies_from_the_record_alone(chain):
     forged["extensions"]["delegated-authority"]["response_hash"] = "sha256:" + "0" * 64
     with pytest.raises(ValueError):
         verify_lap_receipt_in_record(forged)
+    # The negative pair: a recorder that logs a forged receipt still produces a perfectly valid chain. The chain
+    # proves the log was not edited after commit, not that the decision was authentic; only the receipt check does.
+    logged = c(chain[0])
+    logged["extensions"]["delegated-authority"]["receipt_signature"] = "A" * 86
+    recorder = AuditChain()
+    recorder.append({k: v for k, v in logged.items() if k not in ("event_hash", "previous_hash")})
+    assert recorder.verify() == (True, [])
+    with pytest.raises(ValueError):
+        verify_lap_receipt_in_record(recorder.records[0])
 
 
 def test_lap_chain_detects_edits_and_deletions(chain):
@@ -240,3 +249,4 @@ def test_delegated_authority_is_proposed_not_registered(chain):
     ok, failures = validate_extensions(chain[0])
     assert not ok and failures == ["unregistered extension type: delegated-authority"]
     assert validate_extensions(chain[0], allow_proposed=True) == (True, [])
+

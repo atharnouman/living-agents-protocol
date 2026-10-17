@@ -16,6 +16,9 @@ LAP's per-call decision and receipt fit the contract cleanly as one extension, a
 | LAP chain: 7 records (2 allowed, one an idempotent replay; 5 denied with LAP_ERR_* codes) | verifies; rebuilds byte-identical | `lap-chain.jsonl`, `lap_chain.py` |
 | LAP receipt re-verified from a record alone; a forged response hash rejected | yes | `test_lap_receipt_reverifies_from_the_record_alone` |
 | Edit of `amount` after commit; deletion of a record | both detected | `test_lap_chain_detects_edits_and_deletions` |
+| A forged receipt logged at emission | the chain still verifies; only the LAP receipt check fails | `test_lap_receipt_reverifies_from_the_record_alone` |
+
+Not done here: running the contract's own verifier over this chain. Its code was deliberately not executed on this machine; `lap-chain.jsonl` is published so its author, or anyone, can run it. Its `validateExtensions` will report the unregistered type id, and its chain check should pass.
 
 Reproduce:
 
@@ -27,7 +30,7 @@ cd lap-python && python -m pytest tests/test_audit_record.py -q
 ## What fits
 
 - **Canonical form.** On valid input the contract's sorted-key JSON coincides with the RFC 8785 canonical JSON LAP already uses: values are strings, booleans or null, keys are ASCII, and minimal escaping matches. What LAP had to add were the contract's string rules (NFC, trimming of U+0020 only, rejection of control characters and unpaired surrogates, the length cap).
-- **Roles divide cleanly.** The chain proves the recorder's log was not edited after commit. The LAP receipt, a server signature over the request and response hashes, proves who decided. The `delegated-authority` data proves under whose authority: issuer, subject, audience, a hash of the presented passport and a hash of its envelope.
+- **Roles divide cleanly.** The chain proves the recorder's log was not edited after commit, and nothing more: a forged receipt logged at emission still yields a valid chain. The LAP receipt, a server signature over the request and response hashes, proves who decided. The `delegated-authority` data proves under whose authority: issuer, subject, audience, a hash of the presented passport and a hash of its envelope.
 - **Outcome binding is direct.** `ok` maps to `allowed`, including an idempotent replay; every `LAP_ERR_*` refusal maps to `denied`; a failure of verification itself maps to `error`. Reason codes stay in the extension, as section 2.1.1 requires.
 - **No numbers.** LAP amounts and caps are carried as decimal strings, such as `"4200"`, as section 2.3 asks.
 
