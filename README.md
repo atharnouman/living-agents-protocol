@@ -1,44 +1,72 @@
 # Living Agents Protocol (LAP)
 
-**The existence layer for always-on AI agents** — identity, authority, liveness, and accountability for agents that never log off.
+**A reference model for long-lived AI agents (identity, authority, liveness, accountability), with small, tested mechanisms for the parts no current protocol covers.**
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.10 (draft)` · `Node 64/64 · Python 108/108` · `two interoperating implementations` · `IPv4 + IPv6` · `6 adversarial review rounds, ~160 verified fixes` · `Bitcoin-timestamped`
+`spec v0.4.10 (draft)` · `libraries 0.4.13` · `Node 67/67 · Python 153/153` · `two interoperating implementations` · `6 adversarial review rounds, ~160 verified fixes`
+
+> **Status, 17 October 2026: a research prototype by one author, under review until 1 December 2026.** What works today: the scope algebra with budget conservation (two implementations that agree on a shared fuzz digest and on 25 shared cap vectors), the MCP tool guard below (a tool that refuses to run outside a signed envelope and returns a signed receipt), and the test vectors. What it is not: a protocol anyone else has adopted. A protected tool needs a LAP-aware client, so Claude Desktop, Cursor and other mainstream MCP hosts cannot call it; the agent side and the tool side must both adopt it. On 17 October a cold-start usability test found the per-transaction cap accepting negative amounts in both implementations; fixed the same day in 0.4.13, with vectors. If no maintainer or standards author has engaged by 1 December, the project is parked with this note updated; the map, the vectors and the packages stay.
+
+## The map: seven layers, and who owns them today
+
+Recent protocols gave agents tools ([MCP](https://modelcontextprotocol.io)), task exchange ([A2A](https://a2a-protocol.org)) and payments (AP2, x402). They say little about an agent's *existence*: who it is, which human answers for it, what it may do unsupervised, whether it is alive, and what happens when it stops. LAP-7 is a map in the OSI tradition: it gives the existing protocols coordinates and names the layers nobody owns yet. A map earns its keep by being argued with; the mechanisms below are the parts of it that run.
+
+| Layer | Question | Owned today by | LAP's contribution |
+|---|---|---|---|
+| L7 Accountability | Who answers for it, and how do they see it? | audit tooling, regulation | the responsible human in the passport; signed receipts; the audit-record interop test |
+| L6 Society | How does it deal with others? | **MCP, A2A, AP2, x402** | the MCP extension binding; MEET, the stranger handshake (draft) |
+| L5 Volition | What may it do without a human? | OAuth scopes, vendor policy engines, IETF drafts | **LIP-3 scope algebra**: delegation provably narrower, budgets that cannot grow when delegated |
+| L4 Vitality | Is it alive now, and where in its life? | nothing standard | pulses, automatic suspension, estates (draft; built only in the demo) |
+| L3 Memory | What does it remember, and whose is it? | memory vendors | a portable memory format (draft only) |
+| L2 Identity | Who is it, provably? | DIDs and VCs, SPIFFE, vendor agent IDs | **LIP-1 passport**: `did:key`, principal, labeled proof class |
+| L1 Substrate | Where does it run? | containers, microVMs, WASM | a runtime profile (draft only) |
+
+The full model (trust states, ownership and transfer, the lifecycle from witnessed birth to economic mortality, the Accountability Chain) is the [founding document](output/LAP-founding-document.md); the short version is the [essay](https://atharnouman.github.io/living-agents-protocol/essay.html) (about 1,300 words).
+
+## Protect an MCP tool in ten lines
+
+```python
+from living_agents import IdempotencyCache, lap_tool   # mcp = FastMCP(...) or MCPServer(...); keys: see the tutorial
+
+@lap_tool(mcp, action="finance:pay", resource="mcp://tools.example.com/billing/pay",
+          amount_param="amount", unit="USD",                     # the cap applies to `amount`, always in USD
+          expected_aud="did:web:tools.example.com",              # every passport must name this server
+          server_private_key=SERVER_KEY, server_did=SERVER_DID,  # signs the receipt
+          idempotency_cache=IdempotencyCache())                   # a mutating tool: a retry never pays twice
+def pay_invoice(invoice: str, amount: int) -> dict:
+    return {"status": "paid", "invoice": invoice, "amount": amount}
+```
+
+Before `pay_invoice` runs, the server checks a principal-signed passport addressed to this server, the agent's signature over these exact arguments, the action, the resource, and the cap (a non-negative exact integer at or under `max_per_tx`, in the declared unit). A retry with the same idempotency key gets the cached receipt instead of a second payment. The client side, and what the refusals look like, is the [15-minute tutorial](examples/mcp-server/): two paid calls and six refusals, verified in CI on MCP SDK 1.x and 2.x. **Limit, stated plainly:** the client must speak the extension; a mainstream MCP host cannot call this tool.
+
+## See it run
 
 **▶ Live demos:** [atharnouman.github.io/living-agents-protocol](https://atharnouman.github.io/living-agents-protocol/) — the visual demo (two agents, a crash, automatic suspension and recovery), the terminal playback, and an asciinema recording of the two-process run.
-
-**Read the essay:** [Agents need a birth certificate, a leash, a black box, and an estate plan](https://atharnouman.github.io/living-agents-protocol/essay.html) (the five questions the protocol answers, in about 1,300 words).
 
 [![LAP overnight demo — two strangers' agents transact while both humans sleep; one crashes, its authority suspends automatically, a held order completes on recovery, and the morning replay verifies every signature](docs/demo.gif)](https://atharnouman.github.io/living-agents-protocol/demo.html)
 
 *Click the animation for the live, interactive version.*
-
----
-
-AI agents recently got standard ways to use tools ([MCP](https://modelcontextprotocol.io)), exchange tasks ([A2A](https://a2a-protocol.org)), and pay (AP2, x402). Nothing standardizes an agent's **existence**: who it is, which human answers for it, what it may do while unsupervised, whether it is running right now, what it remembers, and how its actions are proven afterwards. We built the roads before the license plates.
-
-LAP is a reference model plus wire mechanisms for that missing control plane — the handshake-layer role: it never carries the work, it decides *whether, and under whose authority*, work may flow. The one-line version: **agents need a birth certificate, a leash, a black box, and an estate plan.**
 
 ## Try it in two minutes
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/atharnouman/living-agents-protocol?quickstart=1)
 *Zero install: the Codespace arrives with Node, Python, and the test suite already run — then try the two-process demo.*
 
-**Use it from your own code** (packages published 8 October 2026; the MCP extension binding needs `living-agents` 0.4.12 or later; the specification is v0.4.10):
+**Use it from your own code** (libraries 0.4.13; the MCP extension binding needs `living-agents` 0.4.13 or later; the specification is v0.4.10):
 
 ```bash
 npm install @living-agents/reference        # Node ≥ 20, zero dependencies
 ```
 
 ```bash
-pip install "living-agents[mcp]>=0.4.12"         # Python ≥ 3.10; the extra adds the official MCP SDK (1.x or 2.x)
+pip install "living-agents[mcp]>=0.4.13"         # Python ≥ 3.10; the extra adds the official MCP SDK (1.x or 2.x)
 ```
 
 **Or run everything from this checkout:**
 
 ```bash
-cd lap-reference && node --test test/     # 64 tests: crypto, algebra, Micro-Core, Merkle log, Rekor, integrity + audit canaries
+cd lap-reference && node --test test/     # 67 tests: crypto, algebra, Micro-Core, Merkle log, Rekor, integrity + audit canaries
 ```
 
 ```bash
@@ -58,7 +86,7 @@ cd lap-demo && node register-genesis.mjs   # register a genesis in the PUBLIC Si
 ```
 
 ```bash
-cd examples/mcp-server && python client.py   # a real MCP server protected by LAP: two paid calls (the retry is a cached replay) + five refusals, receipts verified
+cd examples/mcp-server && python client.py   # a real MCP server protected by LAP: two paid calls (the retry is a cached replay) + six refusals, receipts verified
 ```
 
 The single-process demo runs the whole story: two strangers' agents MEET (passports, Merkle registration proofs, a reservation ticket), sign a contract, and transact real Ed25519-signed payments overnight — then one agent *crashes*, its authority suspends automatically (confirmed by two independent witnesses), a pending order safely holds, and on recovery everything completes. The morning replay re-verifies **191 signatures and hash chains**; `node replay.js --tamper` catches a single modified log entry to the exact record.
@@ -90,6 +118,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
 | [`examples/mcp-server/`](examples/mcp-server/) | **Tutorial:** add LAP to your MCP server in 15 minutes — a real MCP server + LAP-aware client speaking the extension over request and result `_meta` (stdio round-trip on SDK 1.x and 2.x, verified in CI) |
+| [`examples/budget-slices/`](examples/budget-slices/) | **Delegation budgets:** "a child gets a slice, not a view of the whole" as 15 vectors and a dependency-free checker, including the 24× trap; the Python algebra reproduces every verdict |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
 | [`CONFORMANCE.md`](CONFORMANCE.md) | Implement Micro-Core in an afternoon — a ten-check challenge against the shared test vectors |
 | [`THREAT-MODEL.md`](THREAT-MODEL.md) | What LAP defends against and what it does not: assets, actors, sixteen threats each tied to its enforcing code and regression test, residual risks stated plainly |
