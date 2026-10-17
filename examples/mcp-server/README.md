@@ -38,7 +38,14 @@ or download `server.py` and `client.py` from this folder on GitHub into an empty
 ## 2. Protect a tool (one decorator): `server.py`
 
 ```python
-from living_agents import IdempotencyCache, lap_tool, microcore_extension
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from living_agents import IdempotencyCache, did_key_from_raw_public_key, lap_tool, microcore_extension
+from mcp.server import MCPServer            # mcp 2.x; on mcp 1.x: from mcp.server.fastmcp import FastMCP
+
+SERVER_ID = "did:web:tools.example.com"     # this server's audience: every passport must name it
+SERVER_KEY = Ed25519PrivateKey.generate()   # signs receipts; persist it in production (a restart is a nap, not a death)
+SERVER_DID = did_key_from_raw_public_key(SERVER_KEY.public_key().public_bytes_raw())
+mcp = MCPServer("billing-tools", extensions=[microcore_extension(SERVER_ID, server_did=SERVER_DID)])  # 1.x: FastMCP("billing-tools")
 
 PAYMENTS = IdempotencyCache()   # single-process; back it with a shared store in production
 
@@ -57,13 +64,13 @@ def pay_invoice(invoice: str, amount: int, unit: str = "USD") -> dict:
 
 What the decorator does: it keeps your function's own signature in `tools/list` (no auth argument, no context argument) and marks the tool as requiring the extension in its `_meta`; on each call it reads the extension object from the request `_meta` through the SDK's context, runs the LIP-4 checks before your function, converts a refusal into the SDK's `ToolError` so that the `LAP_ERR_*` reason reaches the caller, and returns a `CallToolResult` whose `_meta` carries the receipt.
 
-The only SDK-major difference is the server import: 2.x renamed `FastMCP` to `MCPServer` and has a server-side extension registry, so `server.py` passes `microcore_extension(SERVER_ID, server_did=SERVER_DID)` to advertise the extension and this server's audience in `server/discover`; 1.x has no registry, and the tool enforces the extension per call anyway.
+The only SDK-major difference is the server import (`from mcp.server import MCPServer` on 2.x, `from mcp.server.fastmcp import FastMCP` on 1.x; the example tries the first and falls back): 2.x renamed `FastMCP` to `MCPServer` and has a server-side extension registry, so `server.py` passes `microcore_extension(SERVER_ID, server_did=SERVER_DID)` to advertise the extension and this server's audience in `server/discover`; 1.x has no registry, and the tool enforces the extension per call anyway.
 
 Two details that matter:
 - **`expected_aud` is mandatory.** Without an audience a passport would be valid for every server; the spec calls that fail-open, and the decorator refuses to run that way.
 - **Mutating tools pass `idempotency_cache`.** The request must then carry a signed idempotency key; without one it is refused (`LAP_ERR_IDEMPOTENCY`).
 - **A capped tool must know its unit.** Either name a unit argument (`unit_param="unit"`, as above, a default is fine) or fix it: `unit="USD"` for a tool such as `transfer(to: str, amount: int)` that has no unit argument. Without either, every call fails the unit check.
-- **Synchronous functions only**, and configuration mistakes fail at startup: an `async def` tool, a missing `expected_aud`, or an `amount_param` that is not one of the tool's parameters raise `TypeError` when the decorator is applied, not on the first call.
+- **Synchronous functions only**, and configuration mistakes fail at startup: an `async def` tool, a missing `expected_aud`, an `amount_param` that is not one of the tool's parameters, or (from 0.4.14) an `amount_param` with neither `unit_param` nor `unit` raise `TypeError` when the decorator is applied, not on the first call. On 0.4.13 the last case surfaces per call as `LAP_ERR_CAP: unit mismatch (None vs USD)`.
 
 Optional server policy, because *a valid passport is identity, not authorization*:
 ```python
@@ -76,20 +83,42 @@ Optional server policy, because *a valid passport is identity, not authorization
 Two keys: the **principal** (who is responsible) issues the passport; the **agent** (the software) signs calls. The passport says: *this agent, for this principal, may do these things (`envelope`), when talking to this server (`aud`), until this time (`exp`).*
 
 ```python
+import time
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from living_agents import EXTENSION_ID, did_key_from_raw_public_key, jcs, sign_jws, sign_tool_call, verify_receipt
+
+def keypair():
+    key = Ed25519PrivateKey.generate()
+    return key, did_key_from_raw_public_key(key.public_key().public_bytes_raw())
+
+principal_key, principal_did = keypair()    # who is responsible
+agent_key, agent_did = keypair()            # the software that acts
+SERVER_ID = "did:web:tools.example.com"     # the audience the server expects (its `aud`)
+RESOURCE = "mcp://tools.example.com/billing/pay"
+NOW = int(time.time())
+
 ENVELOPE = {"act": ["finance:pay"], "res": "mcp://tools.example.com/billing/**",
             "cap": {"max_per_tx": 5000, "unit": "USD", "window": "tx"}}
 PASSPORT = sign_jws({"iss": principal_did, "sub": agent_did, "aud": SERVER_ID, "iat": NOW, "exp": NOW + 600,
-                     "lap": {"v": 0, "proof_class": "self-asserted", "envelope": ENVELOPE, ...}},
+                     "lap": {"v": 0, "proof_class": "self-asserted", "envelope": ENVELOPE}},
                     principal_key, principal_did + "#key-1", "lap-microcore+jwt")
 ```
 
 Each call signs an RFC 9421-style base over the canonical JSON of the arguments, the tool's resource, the passport hash and the idempotency key, with the **agent** key, and sends it as request metadata:
 
 ```python
+args = {"invoice": "INV-1001", "amount": 4200, "unit": "USD"}
 meta = {EXTENSION_ID: sign_tool_call(args, RESOURCE, PASSPORT, agent_key, agent_did, NOW, "pay-1001")}
 result = await session.call_tool("pay_invoice", args, meta=meta)
-receipt = result.meta[EXTENSION_ID]            # verify it with verify_receipt(...)
+receipt = result.meta[EXTENSION_ID]            # {"receipt_base", "receipt_signature_b64url", "server_did"}
+try:                                           # verify_receipt returns True or raises; it never returns False
+    verify_receipt(receipt["receipt_base"], receipt["receipt_signature_b64url"], receipt["server_did"],
+                   request_body=jcs(args), response_body=jcs(result.structured_content))  # 1.x: result.structuredContent
+except ValueError as e:                        # LAP_ERR_RECEIPT_SIG or LAP_ERR_RECEIPT, with the reason
+    raise SystemExit(f"receipt rejected: {e}")
 ```
+
+Pin the server's DID rather than trusting the one inside the receipt: on mcp 2.x read it from the server's advertised settings, `(await session.discover()).capabilities.extensions[EXTENSION_ID]["server_did"]`; on 1.x take it from configuration. Then compare it with `receipt["server_did"]` before verifying.
 
 On mcp 2.x the client also declares the extension in its capabilities (`ClientSession(..., extensions={EXTENSION_ID: {}})`) and reads the server's settings from `server/discover`; 1.x has no hook for either, and the server enforces per call regardless.
 
@@ -99,7 +128,7 @@ On mcp 2.x the client also declares the extension in its capabilities (`ClientSe
 python client.py
 ```
 
-You should see two paid calls (the second a retry that got the cached receipt back) and six refusals, each with its reason:
+There is nothing to start first: `client.py` launches `server.py` itself as a subprocess and talks to it over stdio. You should see two paid calls (the second a retry that got the cached receipt back) and six refusals, each with its reason:
 
 ```
   PAID     in-scope: $4200 (cap $5000)          -> paid INV-1001 $4200  receipt verified (server did:key:z6Mk...)

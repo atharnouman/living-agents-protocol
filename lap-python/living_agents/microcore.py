@@ -239,7 +239,12 @@ def verify_receipt(
     request_body: Optional[str] = None,
     response_body: Optional[str] = None,
 ) -> bool:
-    """LIP-4 §3: Verify a tripartite receipt line with constant-time equality."""
+    """LIP-4 §3: Verify a tripartite receipt line with constant-time equality.
+
+    Returns True, or raises ``ValueError`` carrying the typed reason (``LAP_ERR_RECEIPT_SIG`` for
+    a bad signature, ``LAP_ERR_RECEIPT`` for a malformed line or a hash mismatch). It never
+    returns False, so callers wrap it in ``try``/``except ValueError``; the Node port throws too.
+    """
     key = public_key_from_did(server_did)
     sig_bytes = b64url_decode(receipt_signature_b64url)
     if not verify_ed25519(key, receipt_base.encode("ascii"), sig_bytes):

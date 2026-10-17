@@ -262,5 +262,14 @@ Source: `llm-collab/inbox/2026-10-17_fable_budget-suite-review.md`. The main ses
 - **Nuance:** on A2A #2121, elang2 favours slices and reads others' vectors closely, but asked one participant for test cases they had offered; this is peer review in a thread with no maintainer, not adoption.
 - **Adopted (owner's go, 2026-10-17) and built the same day:** the cap check fixed in both ports with 25 shared vectors (libraries 0.4.13); a 15-vector slice checker in `examples/budget-slices/` (dependency-free, 150 lines) whose verdicts the Python algebra reproduces vector for vector; the #2121 post drafted for the owner's approval. Kill criterion: if by 2026-12-01 no maintainer, draft author or identifiable project owner runs or answers the vectors, park LAP and leave the vectors as the artifact. Grok's critique proposed the same #2121 checker independently.
 
+## Cold-start retest after 0.4.13 (fresh agent, 2026-10-17, afternoon)
+
+Source: `llm-collab/inbox/2026-10-17_coldstart-retest-0.4.13.md`. The morning's test repeated against the published 0.4.13 and the rewritten README and tutorial.
+
+- **Confirmed fixed:** the first impression now matches what the project is; the clone instruction, the sixth refusal and the `unit=` option all work as documented; a misspelled `amount_param` fails at startup; a negative amount is refused before the tool runs; own code reached a receipted call without opening the example files.
+- **Found and fixed the same afternoon (documentation plus one check):** keys and DIDs were never shown; `verify_receipt` is annotated `-> bool` but raises (now documented, `try`/`except` shown); a capped tool with no unit at all failed per call rather than at startup (startup `TypeError` from 0.4.14, test added); no code showed how a 2.x client learns the server DID (the `server/discover` line and DID pinning added); the tutorial never said `client.py` launches the server or gave the 2.x import.
+- **Unchanged, structural:** a protected tool needs a LAP-aware client.
+- **Lesson:** the morning's fixes held; a ten-minute retest after a documentation change is cheap insurance and found the gaps a reviewer reading the diff would not.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

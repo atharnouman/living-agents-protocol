@@ -131,3 +131,7 @@ def test_configuration_mistakes_fail_at_startup_not_on_the_first_call():
     with pytest.raises(TypeError, match="not both"):
         verify_envelope(action="finance:pay", resource=RESOURCE, amount_param="amount", unit_param="unit",
                         unit="USD", expected_aud=SERVER_ID)(pay)
+    # A capped tool with no unit at all used to fail every call with "unit mismatch (None vs USD)"
+    # (cold-start retest, 2026-10-17); now it is a startup error like the others.
+    with pytest.raises(TypeError, match="needs its unit"):
+        verify_envelope(action="finance:pay", resource=RESOURCE, amount_param="amount", expected_aud=SERVER_ID)(pay)

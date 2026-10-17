@@ -27,7 +27,7 @@ The full model (trust states, ownership and transfer, the lifecycle from witness
 ## Protect an MCP tool in ten lines
 
 ```python
-from living_agents import IdempotencyCache, lap_tool   # mcp = FastMCP(...) or MCPServer(...); keys: see the tutorial
+from living_agents import IdempotencyCache, lap_tool   # mcp = FastMCP(...) or MCPServer(...); keys and DIDs: tutorial section 2
 
 @lap_tool(mcp, action="finance:pay", resource="mcp://tools.example.com/billing/pay",
           amount_param="amount", unit="USD",                     # the cap applies to `amount`, always in USD

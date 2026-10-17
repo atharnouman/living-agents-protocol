@@ -13,7 +13,7 @@
 | `85df4217bc1cd7c675308c284f6a286fc9b6c0dceebfde5ff8d89c8bbbcec106` | lip/test-vectors/microcore-cap-vectors.json (25 cap and amount vectors, first stamped 2026-10-17, pending) |
 | `563deaa95bb6f4bef1fba1974abb6a36b6159026341a3d2c0404afd90485ab48` | LAP-position-paper.md (v1.2-draft) |
 | `4bf89b8a5b1a188d52584a20721881113ab7d2610fa2d4c60d44a29bb7f652ef` | LAP-essay.md (October 2026 byline; corrected 2026-10-16 per the A2A review, re-stamped, pending) |
-| `6302b2f1746c4d0a6f063ef55c07200202a90b40fcd038def7065d5774551990` | ../README.md (v0.4.10 spec; libraries 0.4.13; Node 67/67, Python 153/153; leads with the LAP-7 map and the 2026-12-01 review; re-stamped 2026-10-17, pending) |
+| `6302b2f1746c4d0a6f063ef55c07200202a90b40fcd038def7065d5774551990` | ../README.md as released with 0.4.13 (commit 2665413: v0.4.10 spec; libraries 0.4.13; Node 67/67, Python 153/153; leads with the LAP-7 map and the 2026-12-01 review; re-stamped 2026-10-17, pending). Later README edits are not restamped until the next release freeze |
 | `f672bc951f4f1e315e5e392ba7d8cb728fec204da384b787936ed368a440d1a7` | lip/LIP-4-mcp-extension-draft.md (v0.2 draft, 2026-10-17: the amount rule and the optional `unit` member; re-stamped 2026-10-17, pending) |
 
 ## Status and how to use

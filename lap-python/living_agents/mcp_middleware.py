@@ -73,6 +73,8 @@ def verify_envelope(
         for label, name in (("amount_param", amount_param), ("unit_param", unit_param)):
             if name and name not in params and not accepts_any:
                 raise TypeError(f"verify_envelope: {label}={name!r} is not a parameter of {fn.__name__}()")
+        if amount_param and not (unit_param or unit):
+            raise TypeError("verify_envelope: a capped tool needs its unit: pass unit_param (an argument name) or unit (a fixed unit)")
 
         @functools.wraps(fn)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
