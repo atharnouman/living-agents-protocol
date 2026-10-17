@@ -18,7 +18,7 @@ Every mechanism change needs tests, and anything touching the algebra needs adve
 
 ## Review culture (read this — it's the project's signature)
 
-This spec was hardened by structured adversarial review across multiple frontier AI models before any human community saw it: four rounds, ~140 verified findings merged, with every external claim verified before merging and **rejections logged with reasons** in `llm-collab/IMPROVEMENTS-LOG.md`. The same standard applies to human contributions: findings need evidence or a failing case; flattery and vibes-based objections score zero; and being wrong with a concrete example is worth more than being vague and safe. If you want to run an AI-assisted review yourself, the kit in `llm-collab/` is the instrument — **treat it as read-only and deliver findings as new files in `llm-collab/inbox/`** (two in-place file corruptions by review tools taught us this rule).
+This spec was hardened by structured adversarial review across multiple frontier AI models before any human community saw it: six rounds, about 160 verified fixes merged, with every external claim verified before merging and **rejections logged with reasons** in `llm-collab/IMPROVEMENTS-LOG.md`. The same standard applies to human contributions: findings need evidence or a failing case; flattery and vibes-based objections score zero; and being wrong with a concrete example is worth more than being vague and safe. If you want to run an AI-assisted review yourself, the kit in `llm-collab/` is the instrument — **treat it as read-only and deliver findings as new files in `llm-collab/inbox/`** (two in-place file corruptions by review tools taught us this rule).
 
 ## Provenance
 
