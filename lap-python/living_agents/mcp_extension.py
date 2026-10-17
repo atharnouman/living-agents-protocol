@@ -90,6 +90,7 @@ def tool_meta(
     amount_param: Optional[str] = None,
     unit_param: Optional[str] = None,
     mutating: bool = False,
+    unit: Optional[str] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Server side: the ``_meta`` entry a tool carries in ``tools/list`` to say it requires the extension."""
     entry: Dict[str, Any] = {"action": action, "resource": resource}
@@ -97,6 +98,8 @@ def tool_meta(
         entry["amount_param"] = amount_param
     if unit_param:
         entry["unit_param"] = unit_param
+    if unit:
+        entry["unit"] = unit  # a capped tool with no unit argument: the amount is always in this unit
     if mutating:
         entry["mutating"] = True
     return {META_KEY: entry}
@@ -197,6 +200,7 @@ def lap_tool(
     min_proof_class: Optional[str] = None,
     idempotency_cache: Optional[IdempotencyCache] = None,
     tool_kwargs: Optional[Dict[str, Any]] = None,
+    unit: Optional[str] = None,
 ) -> Callable:
     """Register a tool that REQUIRES the extension on a FastMCP (mcp 1.x) or MCPServer (mcp 2.x) instance.
 
@@ -205,13 +209,17 @@ def lap_tool(
     from the request ``_meta`` through the SDK's context, the LIP-4 invariant runs via
     ``verify_envelope`` before the function executes, a refusal reaches the caller as a ``ToolError``
     carrying its ``LAP_ERR_*`` reason, and a success returns a ``CallToolResult`` whose ``_meta``
-    carries the server-signed receipt. Pass ``idempotency_cache`` for a mutating tool. Synchronous
-    functions only. ``tool_kwargs`` are forwarded to ``server.tool()`` (title, description, ...).
+    carries the server-signed receipt. Pass ``idempotency_cache`` for a mutating tool; ``unit="USD"``
+    for a capped tool that has no unit argument. Synchronous functions only (an ``async def`` tool
+    raises ``TypeError`` here; wrap the async work or run it on a thread). ``tool_kwargs`` are
+    forwarded to ``server.tool()`` (title, description, ...). Configuration mistakes raise
+    ``TypeError`` at decoration time, not on the first call.
     """
     Context, ToolError, types = _sdk()
     options = dict(tool_kwargs or {})
     options["meta"] = {**options.get("meta", {}),
-                       **tool_meta(action, resource, amount_param, unit_param, mutating=idempotency_cache is not None)}
+                       **tool_meta(action, resource, amount_param, unit_param,
+                                   mutating=idempotency_cache is not None, unit=unit)}
 
     def decorator(fn: Callable) -> Callable:
         if inspect.iscoroutinefunction(fn):
@@ -223,7 +231,7 @@ def lap_tool(
             action=action, resource=resource, amount_param=amount_param, unit_param=unit_param,
             server_private_key=server_private_key, server_did=server_did, expected_aud=expected_aud,
             allowed_issuers=allowed_issuers, min_proof_class=min_proof_class,
-            idempotency_cache=idempotency_cache,
+            idempotency_cache=idempotency_cache, unit=unit,
         )(fn)
         with_ctx = list(signature.parameters.values()) + [
             inspect.Parameter("ctx", inspect.Parameter.KEYWORD_ONLY, annotation=Context)

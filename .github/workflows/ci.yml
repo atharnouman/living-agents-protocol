@@ -56,7 +56,7 @@ jobs:
           python client.py | tee out.txt
           test "$(grep -c 'receipt verified' out.txt)" = "2"
           grep -q "same receipt, no second payment: yes" out.txt
-          test "$(grep -c REFUSED out.txt)" = "5"
+          test "$(grep -c REFUSED out.txt)" = "6"
 
   packaging:
     name: Packages build and pass checks (npm pack, PyPI build + twine)

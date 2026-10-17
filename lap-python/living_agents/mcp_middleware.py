@@ -32,6 +32,7 @@ def verify_envelope(
     min_proof_class: Optional[str] = None,
     bind_target: bool = True,
     idempotency_cache: Optional[IdempotencyCache] = None,
+    unit: Optional[str] = None,
 ) -> Callable:
     """
     Decorator for MCP tool functions enforcing LAP LIP-4 Micro-Core authorization.
@@ -43,7 +44,7 @@ def verify_envelope(
         unit_param: Name of the function argument containing the currency/unit string
         server_private_key: Tool server Ed25519 private key for minting receipts
         server_did: Tool server did:key identifier
-        expected_aud: Expected audience in the incoming passport JWT
+        expected_aud: Expected audience in the incoming passport JWT (required)
         allowed_issuers: Optional allow-list of principal DIDs (F1: identity is not authorization)
         min_proof_class: Optional floor on the passport's proof class (F1)
         bind_target: Compare the signed ``@target-uri`` to ``resource`` (default; LIP-4 F3)
@@ -52,9 +53,27 @@ def verify_envelope(
             claimed atomically before execution (LIP-4 section 2 step 5, F6). A completed
             claim returns the cached result and receipt without re-executing; an in-flight
             duplicate is refused. The in-process cache is single-process only.
+        unit: The fixed unit of the amount, for a capped tool that has no unit argument
+            (``unit="USD"``); the alternative to ``unit_param``, never both.
+
+    Configuration mistakes (a missing audience, an ``amount_param`` that is not one of the
+    tool's parameters) raise ``TypeError`` when the decorator is applied, so a misconfigured
+    server fails at startup rather than refusing every call.
     """
 
     def decorator(fn: Callable) -> Callable:
+        # Startup checks (cold-start test, 2026-10-17): these used to surface only as a
+        # refusal of every call, with a message that did not name the mistake.
+        if not expected_aud:
+            raise TypeError("verify_envelope: expected_aud (this server's identity) is required (LIP-4 F4)")
+        if unit_param and unit:
+            raise TypeError("verify_envelope: pass unit_param (an argument name) or unit (a fixed unit), not both")
+        params = inspect.signature(fn).parameters
+        accepts_any = any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+        for label, name in (("amount_param", amount_param), ("unit_param", unit_param)):
+            if name and name not in params and not accepts_any:
+                raise TypeError(f"verify_envelope: {label}={name!r} is not a parameter of {fn.__name__}()")
+
         @functools.wraps(fn)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Extract lap_auth context if passed
@@ -108,10 +127,12 @@ def verify_envelope(
                 expected_target=(resource if bind_target else None),
             )
 
-            # Steps 3-4: Verify Action, Resource Path, and Budget Cap (bound amount)
+            # Steps 3-4: Verify Action, Resource Path, and Budget Cap (bound amount). The amount
+            # must be a non-negative exact integer; check_invocation refuses anything else
+            # before comparing it with the cap (0.4.13).
             amount = call_args.get(amount_param) if amount_param else None
-            unit = call_args.get(unit_param) if unit_param else None
-            check_invocation(envelope, act=action, resource=resource, amount=amount, unit=unit)
+            call_unit = call_args.get(unit_param) if unit_param else unit
+            check_invocation(envelope, act=action, resource=resource, amount=amount, unit=call_unit)
 
             # Step 5 (LIP-4 section 2 step 5, F6): a mutating tool claims (sub, idempotency key)
             # atomically BEFORE executing. The key must sit inside the signed base (LIP-4 section 1),

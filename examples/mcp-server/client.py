@@ -116,6 +116,8 @@ async def _run():
             again = await call("retry with the same idempotency key", args, "pay-1001")
             print(f"           same receipt, no second payment: {'yes' if again and again == first else 'NO'}")
             await call("over cap: $6000", {"invoice": "INV-1002", "amount": 6000, "unit": "USD"}, "pay-1002")
+            # A negative amount is not "under the cap": the amount must be a non-negative exact integer.
+            await call("negative amount: -$500", {"invoice": "INV-1007", "amount": -500, "unit": "USD"}, "pay-1007")
             # Tamper: sign for $100, then send $4200 with that signature -> digest mismatch.
             await call("tampered: signed $100, sent $4200", {"invoice": "INV-1003", "amount": 4200, "unit": "USD"}, "pay-1003",
                        meta=lap_meta({"invoice": "INV-1003", "amount": 100, "unit": "USD"}, "pay-1003"))

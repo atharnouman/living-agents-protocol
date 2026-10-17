@@ -1,0 +1,39 @@
+{
+  "_note": "LIP-4 Micro-Core cap vectors (2026-10-17, libraries 0.4.13). The per-transaction cap check MUST refuse every amount that is not a non-negative exact integer, and every malformed cap, BEFORE comparing (LIP-4 section 2 step 4; LIP-3 section 4). Found by a cold-start usability test: both reference ports compared `-500000 <= 1000` as true and executed the payment. Each vector is run through check_invocation / checkInvocation with the envelope and invocation below; `expect` is `ok` or the error code. JSON cannot carry NaN or infinities, and an integral float such as 1000.0 is not a vector because JSON parsers disagree on its type (Python yields a float, JavaScript an integer); each port's unit tests cover those cases in its own language. Both reference test suites load this file.",
+  "envelope": {
+    "act": ["finance:pay"],
+    "res": "mcp://tools.example.com/billing/**",
+    "cap": {"max_per_tx": 1000, "unit": "USD", "window": "tx"}
+  },
+  "invocation": {"act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay"},
+  "probe": {"amount": 10, "unit": "USD"},
+  "amount_vectors": [
+    {"id": "CAP-A01", "amount": 1000, "unit": "USD", "expect": "ok", "note": "exactly the cap"},
+    {"id": "CAP-A02", "amount": 0, "unit": "USD", "expect": "ok", "note": "zero is an amount"},
+    {"id": "CAP-A03", "amount": 1001, "unit": "USD", "expect": "LAP_ERR_CAP", "note": "one over the cap"},
+    {"id": "CAP-A04", "amount": -5, "unit": "USD", "expect": "LAP_ERR_CAP", "note": "negative: `-5 <= 1000` is true, so the comparison alone passes it"},
+    {"id": "CAP-A05", "amount": -1000000000, "unit": "USD", "expect": "LAP_ERR_CAP", "note": "large negative"},
+    {"id": "CAP-A06", "amount": 999.5, "unit": "USD", "expect": "LAP_ERR_CAP", "note": "fractional"},
+    {"id": "CAP-A07", "amount": true, "unit": "USD", "expect": "LAP_ERR_CAP", "note": "boolean (a subclass of int in Python; coerces to 1 in JavaScript)"},
+    {"id": "CAP-A08", "amount": "500", "unit": "USD", "expect": "LAP_ERR_CAP", "note": "numeric string (JavaScript compares it as a number)"},
+    {"id": "CAP-A09", "amount": null, "unit": "USD", "expect": "LAP_ERR_CAP", "note": "no amount on a capped operation (F5)"},
+    {"id": "CAP-A10", "amount": 9007199254740992, "unit": "USD", "expect": "LAP_ERR_CAP", "note": "2^53: above the exact-integer interop bound (LIP-3 section 4)"},
+    {"id": "CAP-A11", "amount": 10, "unit": "EUR", "expect": "LAP_ERR_CAP", "note": "unit mismatch"},
+    {"id": "CAP-A12", "amount": 10, "unit": null, "expect": "LAP_ERR_CAP", "note": "unit missing"}
+  ],
+  "cap_vectors": [
+    {"id": "CAP-S01", "cap": {"max_per_tx": 1000, "unit": "USD", "window": "tx"}, "expect": "ok", "note": "the tutorial's cap"},
+    {"id": "CAP-S02", "cap": {"max_per_tx": 1000, "unit": "USD"}, "expect": "ok", "note": "window is informational in Micro-Core"},
+    {"id": "CAP-S03", "cap": {"max_per_tx": 1000, "unit": "USD", "max_cumulative": 5000, "window": "utc_day"}, "expect": "ok", "note": "max_cumulative is informational in Micro-Core (LIP-4 section 2 step 4)"},
+    {"id": "CAP-S04", "cap": null, "expect": "ok", "note": "a null cap is no cap"},
+    {"id": "CAP-S05", "cap": {}, "expect": "LAP_ERR_CAP", "note": "an empty cap object is malformed, not 'no cap'"},
+    {"id": "CAP-S06", "cap": {"max_per_tx": -1, "unit": "USD"}, "expect": "LAP_ERR_CAP", "note": "negative cap"},
+    {"id": "CAP-S07", "cap": {"max_per_tx": 999.5, "unit": "USD"}, "expect": "LAP_ERR_CAP", "note": "fractional cap"},
+    {"id": "CAP-S08", "cap": {"max_per_tx": "1000", "unit": "USD"}, "expect": "LAP_ERR_CAP", "note": "cap as a string"},
+    {"id": "CAP-S09", "cap": {"max_per_tx": true, "unit": "USD"}, "expect": "LAP_ERR_CAP", "note": "cap as a boolean"},
+    {"id": "CAP-S10", "cap": {"max_per_tx": 9007199254740992, "unit": "USD"}, "expect": "LAP_ERR_CAP", "note": "cap above the interop bound"},
+    {"id": "CAP-S11", "cap": {"max_per_tx": 1000, "unit": ""}, "expect": "LAP_ERR_CAP", "note": "empty unit"},
+    {"id": "CAP-S12", "cap": {"max_per_tx": 1000}, "expect": "LAP_ERR_CAP", "note": "unit missing"},
+    {"id": "CAP-S13", "cap": "1000 USD", "expect": "LAP_ERR_CAP", "note": "cap is not an object"}
+  ]
+}

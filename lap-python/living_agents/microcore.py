@@ -111,6 +111,31 @@ def verify_request_signature(
     return True
 
 
+MAX_SAFE_AMOUNT = 2**53 - 1  # LIP-3 §4 interop bound: envelopes are JSON read by JavaScript verifiers too
+
+
+def is_exact_amount(value: Any) -> bool:
+    """A cap-comparable amount: a non-negative exact integer no larger than 2^53-1.
+
+    Not a bool (a subclass of int in Python), not a float (999.5, nan, inf), not a string.
+    Anything else compared with ``<=`` either passes a negative or compares nonsense, so the
+    check refuses it before comparing (cold-start test, 2026-10-17: both ports ran -500000
+    under a 1000 cap).
+    """
+    return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= MAX_SAFE_AMOUNT
+
+
+def microcore_cap_is_valid(cap: Any) -> bool:
+    """LIP-4 cap schema, checked before any comparison: ``max_per_tx`` a non-negative exact
+    integer within the interop bound, ``unit`` a non-empty string. ``max_cumulative`` and
+    ``window`` are informational in Micro-Core (LIP-4 §2 step 4), so they are not validated
+    here; the full LIP-3 shape is ``algebra.cap_is_valid``. Returns False, never raises."""
+    if not isinstance(cap, dict):
+        return False
+    unit = cap.get("unit")
+    return is_exact_amount(cap.get("max_per_tx")) and isinstance(unit, str) and unit != ""
+
+
 def check_invocation(
     envelope: Dict[str, Any],
     act: str,
@@ -129,14 +154,21 @@ def check_invocation(
         raise ValueError(f"LAP_ERR_RES: {resource} not covered by {envelope.get('res')}")
 
     cap = envelope.get("cap")
-    if cap:
+    if cap is not None:  # a present-but-empty cap is malformed, not "no cap"
+        # Schema before arithmetic (LIP-3 §4 F8): a malformed cap never reaches a comparison.
+        if not microcore_cap_is_valid(cap):
+            raise ValueError("LAP_ERR_CAP: malformed cap (max_per_tx must be a non-negative exact integer, unit a non-empty string)")
         # F5: a capped tool with an indeterminable amount MUST fail closed.
         if amount is None:
             raise ValueError("LAP_ERR_CAP: capped operation requires an amount")
-        if unit != cap.get("unit"):
-            raise ValueError(f"LAP_ERR_CAP: unit mismatch ({unit} vs {cap.get('unit')})")
-        if amount > cap.get("max_per_tx", 0):
-            raise ValueError(f"LAP_ERR_CAP: amount {amount} exceeds max_per_tx {cap.get('max_per_tx')}")
+        # The amount is compared only once it is known to be a non-negative exact integer:
+        # ``-500 <= cap`` is true, and nan/inf/bool/str compare to nonsense or raise.
+        if not is_exact_amount(amount):
+            raise ValueError(f"LAP_ERR_CAP: amount must be a non-negative exact integer (got {amount!r})")
+        if unit != cap["unit"]:
+            raise ValueError(f"LAP_ERR_CAP: unit mismatch ({unit} vs {cap['unit']})")
+        if amount > cap["max_per_tx"]:
+            raise ValueError(f"LAP_ERR_CAP: amount {amount} exceeds max_per_tx {cap['max_per_tx']}")
 
     return True
 

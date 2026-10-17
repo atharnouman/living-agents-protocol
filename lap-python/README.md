@@ -13,7 +13,7 @@ Zero runtime dependencies beyond `cryptography`.
 
 ```bash
 pip install living-agents            # the library (one dependency: cryptography)
-pip install "living-agents[mcp]>=0.4.12"   # plus the official MCP SDK, 1.x or 2.x (0.4.12 adds the MCP extension binding)
+pip install "living-agents[mcp]>=0.4.13"   # plus the official MCP SDK, 1.x or 2.x (0.4.12 added the MCP extension binding; 0.4.13 refuses negative and non-integer amounts at the cap)
 ```
 
 From a checkout, for development:

@@ -61,15 +61,34 @@ export function verifyRequestSignature({ passportJwt, sub, signatureBase, signat
   return true;
 }
 
+// A cap-comparable amount: a non-negative safe integer (LIP-3 §4 interop bound, 2^53-1).
+// `-500 <= cap` is true, NaN compares false both ways, and a string compares as a number,
+// so anything else is refused BEFORE the comparison (cold-start test, 2026-10-17: both
+// ports ran -500000 under a 1000 cap).
+export function isExactAmount(value) {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
+// LIP-4 cap schema, checked before any comparison: max_per_tx a non-negative safe integer,
+// unit a non-empty string. max_cumulative and window are informational in Micro-Core
+// (LIP-4 §2 step 4), so they are not validated here; the full LIP-3 shape is capIsValid.
+export function microCoreCapIsValid(cap) {
+  return typeof cap === "object" && cap !== null && !Array.isArray(cap)
+    && isExactAmount(cap.max_per_tx) && typeof cap.unit === "string" && cap.unit !== "";
+}
+
 // Steps 3-4: the invoked operation must match the envelope (registered-verb equality,
 // segment-wise resource match, per-transaction cap in the exact unit).
 export function checkInvocation(envelope, { act, resource, amount, unit }) {
   if (envelope.act.includes("*")) throw new Error("LAP_ERR_ACT: wildcard not allowed in Micro-Core envelopes");
   if (!envelope.act.includes(act)) throw new Error("LAP_ERR_ACT");
   if (!pathSubsumes(envelope.res, resource)) throw new Error("LAP_ERR_RES");
-  if (envelope.cap) {
+  if (envelope.cap !== undefined && envelope.cap !== null) { // a present-but-empty cap is malformed, not "no cap"
+    // Schema before arithmetic (LIP-3 §4 F8): a malformed cap never reaches a comparison.
+    if (!microCoreCapIsValid(envelope.cap)) throw new Error("LAP_ERR_CAP: malformed cap");
     // F5 parity: a capped tool with an indeterminable amount MUST fail closed.
     if (amount === undefined || amount === null) throw new Error("LAP_ERR_CAP: capped operation requires an amount");
+    if (!isExactAmount(amount)) throw new Error("LAP_ERR_CAP: amount must be a non-negative exact integer");
     if (unit !== envelope.cap.unit) throw new Error("LAP_ERR_CAP: unit");
     if (amount > envelope.cap.max_per_tx) throw new Error("LAP_ERR_CAP");
   }
