@@ -279,5 +279,18 @@ Source: `llm-collab/inbox/2026-10-20_haot3x_a2a-2323-recovery-case.md` (the comm
 - **Done the same day:** the recovery rule in LIP-4 (reservation before the effect, completion after; a dead executor's claim is indeterminate; never re-executed, never released by time; resolved only by reconciliation; the non-queryable case is the deployment's decision; a refused client must not mint a new key); extension draft v0.3; `indeterminate` modelled in both reference caches with `mark_indeterminate` / `release`, the Python middleware refusing it with a reason that names reconciliation; tests in both ports; threat model row 9; the issue text narrowed with an edit note and a reply drafted (owner's approval).
 - **Lesson:** the probe was ten lines and two processes against the published package. The reviewer read the documented limitation and asked what happens after it, which is where the specification work was missing.
 
+## Reply on A2A #2121: two vector additions (roy-tong, 2026-10-17; acted on 2026-10-21)
+
+Source: `llm-collab/inbox/2026-10-17_roy-tong_a2a-2121-slice-additions.md`. The maintainer of AgentMeasure (delegation-boundary conformance vectors) replied three hours after the slice-checker comment; the reply went unseen until 2026-10-21 because the Monday scheduled run stalled.
+
+- **Accepted:** sibling-split observability as an optional provenance rule (`{"parent", "ordinal", "of"}`; all or none; one parent; `of` equal to the slice count; ordinals exactly 1..n), with the trade-off stated rather than decided: provenance reveals the fan-out width that elang2's synthesis chose to hide. SL-16 (consistent, ok) and SL-17 (three slices each "1 of 1": arithmetic passes, labels fail). The n-times-remainder window already existed as SL-02 and is now titled for it.
+- **Kept separate:** the parity test checks the arithmetic (rules 1 to 5) against the library and the labels (rule 6) against the checker alone; the library knows caps, not labels.
+- **Accepted the cross-walk offer** against AgentMeasure's delegation-boundary vectors (reply drafted for the owner's approval).
+
+## Housekeeping (2026-10-21)
+
+- The two one-time scheduled runs of 2026-10-18 and 2026-10-19 both stalled after their first tool call with no report (no permission mode had been saved with them; nobody present to approve). Lesson: set the task's permission mode in the app, or run it once while present, before relying on it. The proof upgrade was run by hand on 2026-10-21: all five pending proofs confirmed on Bitcoin.
+- The agentic standards map v1.1 (2026-10-19) lists LAP under `a2a-core` as "Issue #2323: an extension proposal in the Proposal Phase ... no maintainer sponsor", linked to the issue, in `entries/a2a-core.yaml`, `MAP.md` and the site; a listing of its own waits for a maintainer decision or an MCP venue.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

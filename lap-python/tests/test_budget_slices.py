@@ -22,9 +22,13 @@ def _scope(cap):
     return {"v": "lap-scope-v0", "act": "finance:pay", "res": "ap2://rails/pay/**", "cap": cap}
 
 
+def _strip(cap):
+    return {k: v for k, v in cap.items() if k != "provenance"}  # the algebra knows caps, not labels
+
+
 def _library_verdict(vec):
     try:
-        return verify_envelope_attenuation([_scope(vec["parent"])], [_scope(c) for c in vec["children"]])["ok"]
+        return verify_envelope_attenuation([_scope(_strip(vec["parent"]))], [_scope(_strip(c)) for c in vec["children"]])["ok"]
     except ValueError:  # LAP_ERR_CAP_SCHEMA / LAP_ERR_SCOPE_SCHEMA: a malformed cap is a refusal
         return False
 
@@ -34,7 +38,19 @@ def test_checker_library_and_vector_agree(vec):
     expected = vec["expect"] == "ok"
     checker_ok, reason, _ = slice_check.check_slices(vec["parent"], vec["children"])
     assert checker_ok == expected, f"{vec['id']} checker: {reason}"
-    assert _library_verdict(vec) == expected, f"{vec['id']} library disagrees with the vector"
+    # The library checks the arithmetic (rules 1-5); provenance (rule 6) is the checker's alone,
+    # so a vector refused only for its labels must pass the library's arithmetic.
+    library_expected = True if reason.startswith("provenance") else expected
+    assert _library_verdict(vec) == library_expected, f"{vec['id']} library disagrees with the vector"
+
+
+def test_provenance_catches_the_lie_the_arithmetic_cannot():
+    by_id = {v["id"]: v for v in VECTORS}
+    ok, reason, _ = slice_check.check_slices(by_id["SL-17"]["parent"], by_id["SL-17"]["children"])
+    assert not ok and reason.startswith("provenance") and "number of slices issued (3)" in reason
+    assert _library_verdict(by_id["SL-17"]) is True          # 3 x 30000 <= 100000: the caps are fine
+    ok, reason, trace = slice_check.check_slices(by_id["SL-16"]["parent"], by_id["SL-16"]["children"])
+    assert ok and "[1 of 2]" in trace[0] + trace[1]
 
 
 def test_the_24x_trap_is_what_the_debit_rule_refuses():

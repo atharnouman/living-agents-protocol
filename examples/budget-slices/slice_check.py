@@ -17,6 +17,12 @@ file can be read in five minutes and run anywhere:
      an hourly child of a daily parent debits 24 x its max_cumulative. This is the "24x trap":
      24 hourly children of 1/24 each look individually fine and together allow 24x the budget.
   5. Children are debited in canonical order; the running remainder never goes negative.
+  6. Optional provenance: a slice MAY carry {"provenance": {"parent": id, "ordinal": k, "of": n}}
+     so the child learns it holds "k of n", not "the whole remainder". If any slice carries it, all
+     must, with one parent, `of` equal to the number of slices, and ordinals exactly 1..n. Three
+     slices each labelled "1 of 1" pass the arithmetic and fail here: the labels are the lie.
+     Provenance reveals the fan-out width to every child; whether that observability is worth the
+     loss of sibling privacy is the draft's decision, not the checker's.
 
 What this does NOT do, stated plainly: it is not a runtime ledger. Concurrent children drawing on
 one shared pool need reserve-then-settle accounting at the moment of spend (shape (b)); a static
@@ -85,8 +91,29 @@ def debit(parent, child):
     return child["max_cumulative"]
 
 
+def provenance_problem(children):
+    """Rule 6 (optional). Returns None when no slice carries provenance or the set is consistent."""
+    tagged = [c for c in children if "provenance" in c]
+    if not tagged:
+        return None
+    if len(tagged) != len(children):
+        return "some slices carry provenance and some do not"
+    ps = [c["provenance"] for c in children]
+    for p in ps:
+        if not isinstance(p, dict) or not isinstance(p.get("parent"), str) or not is_amount(p.get("ordinal")) or not is_amount(p.get("of")):
+            return "provenance needs parent (a string), ordinal and of (non-negative exact integers)"
+    if len({p["parent"] for p in ps}) != 1:
+        return "slices name different parents"
+    if {p["of"] for p in ps} != {len(children)}:
+        return f"`of` must equal the number of slices issued ({len(children)})"
+    ordinals = sorted(p["ordinal"] for p in ps)
+    if ordinals != list(range(1, len(children) + 1)):
+        return f"ordinals must be exactly 1..{len(children)} without repeats, got {ordinals}"
+    return None
+
+
 def check_slices(parent, children):
-    """Rules 1-5 over a parent cap and the list of slices it wants to issue.
+    """Rules 1-6 over a parent cap and the list of slices it wants to issue.
     Returns (ok, reason, trace); the trace lists one line per child."""
     trace = []
     problem = cap_problem(parent)
@@ -96,6 +123,9 @@ def check_slices(parent, children):
         problem = cap_problem(child)
         if problem:
             return False, f"child {i}: {problem}", trace
+    problem = provenance_problem(children)
+    if problem:
+        return False, f"provenance: {problem}", trace
     remaining = parent["max_cumulative"]
     # Canonical order (LIP-3 section 6): sorted by the canonical JSON of the cap, so every
     # implementation debits in the same order and reaches the same verdict.
@@ -115,7 +145,9 @@ def check_slices(parent, children):
 
 
 def fmt(cap):
-    return f"{cap.get('max_per_tx')}/call, {cap.get('max_cumulative')}/{cap.get('window')} {cap.get('unit')}"
+    p = cap.get("provenance")
+    tag = f" [{p.get('ordinal')} of {p.get('of')}]" if isinstance(p, dict) else ""
+    return f"{cap.get('max_per_tx')}/call, {cap.get('max_cumulative')}/{cap.get('window')} {cap.get('unit')}{tag}"
 
 
 def main(argv):

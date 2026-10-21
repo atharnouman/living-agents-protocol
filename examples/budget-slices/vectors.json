@@ -1,90 +1,562 @@
 {
-  "_note": "Budget-slice vectors for delegation (2026-10-17). Each vector is a parent cap and the slices it wants to issue to children; `expect` is `ok` when the set is admissible under LIP-3 sections 4 and 6 (a child gets a slice, not a view of the whole; the debit is taken in the parent's window units). Amounts are exact integers in the unit's minor denomination (cents for USD). Windows: `tx` = per call, `utc_hour`, `utc_day`, `epoch_total` = lifetime. Run: python slice_check.py vectors.json. The Living Agents Protocol reference libraries (Node and Python) reach the same verdict on every vector; lap-python/tests/test_budget_slices.py checks that.",
-  "vectors": [
-    {"id": "SL-01", "title": "one child gets the whole budget", "expect": "ok",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"}]},
-    {"id": "SL-02", "title": "two children each told 'the remainder is 100000' (a view, not a slice)", "expect": "reject",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-                  {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"}],
-     "note": "the n-times-remainder window: each child's number is valid alone; together they double the budget"},
-    {"id": "SL-03", "title": "two slices that add up to the parent", "expect": "ok",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10000, "max_cumulative": 60000, "unit": "USD", "window": "utc_day"},
-                  {"max_per_tx": 10000, "max_cumulative": 40000, "unit": "USD", "window": "utc_day"}]},
-    {"id": "SL-04", "title": "three slices that over-allocate by 20%", "expect": "reject",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10000, "max_cumulative": 40000, "unit": "USD", "window": "utc_day"},
-                  {"max_per_tx": 10000, "max_cumulative": 40000, "unit": "USD", "window": "utc_day"},
-                  {"max_per_tx": 10000, "max_cumulative": 40000, "unit": "USD", "window": "utc_day"}]},
-    {"id": "SL-05", "title": "the 24x trap: an hourly child carrying the parent's daily total", "expect": "reject",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_hour"}],
-     "note": "100000 per hour is 2400000 per day; a check that compares raw totals (100000 <= 100000) admits it"},
-    {"id": "SL-06", "title": "an hourly slice that fits: 1/24 of the day, rounded down", "expect": "ok",
-     "parent": {"max_per_tx": 1000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"}],
-     "note": "4166 x 24 = 99984 <= 100000"},
-    {"id": "SL-07", "title": "an hourly slice one unit too large", "expect": "reject",
-     "parent": {"max_per_tx": 1000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 1000, "max_cumulative": 4167, "unit": "USD", "window": "utc_hour"}],
-     "note": "4167 x 24 = 100008 > 100000; integer floor scaling, no rounding up"},
-    {"id": "SL-08", "title": "24 hourly children, each a fair 1/24: fine alone, 24x together", "expect": "reject",
-     "parent": {"max_per_tx": 1000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"},
-       {"max_per_tx": 1000, "max_cumulative": 4166, "unit": "USD", "window": "utc_hour"}],
-     "note": "each hourly child may spend its 4166 in EVERY hour of the day, so each debits 99984 per day; the first child consumes the parent and the second is refused"},
-    {"id": "SL-09", "title": "the per-call ceiling cannot grow when delegated", "expect": "reject",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10001, "max_cumulative": 50000, "unit": "USD", "window": "utc_day"}]},
-    {"id": "SL-10", "title": "the currency cannot change", "expect": "reject",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10000, "max_cumulative": 50000, "unit": "EUR", "window": "utc_day"}],
-     "note": "no cross-currency arithmetic: a mismatch is a refusal, never a conversion"},
-    {"id": "SL-11", "title": "a child's window cannot be wider than its parent's", "expect": "reject",
-     "parent": {"max_per_tx": 1000, "max_cumulative": 10000, "unit": "USD", "window": "utc_hour"},
-     "children": [{"max_per_tx": 1000, "max_cumulative": 10000, "unit": "USD", "window": "utc_day"}]},
-    {"id": "SL-12", "title": "a per-call parent admits only per-call children", "expect": "reject",
-     "parent": {"max_per_tx": 1000, "max_cumulative": 1000, "unit": "USD", "window": "tx"},
-     "children": [{"max_per_tx": 1000, "max_cumulative": 1000, "unit": "USD", "window": "utc_hour"}],
-     "note": "a timed child of a per-call parent would turn one bounded call into a bounded rate"},
-    {"id": "SL-13", "title": "a negative slice is malformed, not a refund", "expect": "reject",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 100000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 10000, "max_cumulative": 60000, "unit": "USD", "window": "utc_day"},
-                  {"max_per_tx": 10000, "max_cumulative": -20000, "unit": "USD", "window": "utc_day"}],
-     "note": "a negative cumulative would increase the remainder on subtraction (a credit); schema is checked before arithmetic"},
-    {"id": "SL-14", "title": "slices nest: a child re-slices its own slice", "expect": "ok",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 60000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 5000, "max_cumulative": 30000, "unit": "USD", "window": "utc_day"},
-                  {"max_per_tx": 10000, "max_cumulative": 30000, "unit": "USD", "window": "utc_day"}],
-     "note": "the parent here is SL-03's first slice; the rule is the same at every depth"},
-    {"id": "SL-15", "title": "a re-slice one unit over its own slice", "expect": "reject",
-     "parent": {"max_per_tx": 10000, "max_cumulative": 60000, "unit": "USD", "window": "utc_day"},
-     "children": [{"max_per_tx": 5000, "max_cumulative": 30000, "unit": "USD", "window": "utc_day"},
-                  {"max_per_tx": 10000, "max_cumulative": 30001, "unit": "USD", "window": "utc_day"}]}
-  ]
+ "_note": "Budget-slice vectors for delegation (2026-10-17; SL-16 and SL-17 added 2026-10-21 after a reply on A2A #2121). Each vector is a parent cap and the slices it wants to issue to children; `expect` is `ok` when the set is admissible under LIP-3 sections 4 and 6, plus the optional provenance rule (rule 6 in slice_check.py) (a child gets a slice, not a view of the whole; the debit is taken in the parent's window units). Amounts are exact integers in the unit's minor denomination (cents for USD). Windows: `tx` = per call, `utc_hour`, `utc_day`, `epoch_total` = lifetime. Run: python slice_check.py vectors.json. The Living Agents Protocol reference libraries (Node and Python) reach the same verdict on every vector; lap-python/tests/test_budget_slices.py checks that.",
+ "vectors": [
+  {
+   "id": "SL-01",
+   "title": "one child gets the whole budget",
+   "expect": "ok",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 100000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ]
+  },
+  {
+   "id": "SL-02",
+   "title": "the n-times-remainder window: two children each told 'the remainder is 100000' (a view, not a slice)",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 100000,
+     "unit": "USD",
+     "window": "utc_day"
+    },
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 100000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ],
+   "note": "each child's number is valid alone; together they double the budget. The delegation twin of retry double-counting: every per-child log looks correct"
+  },
+  {
+   "id": "SL-03",
+   "title": "two slices that add up to the parent",
+   "expect": "ok",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 60000,
+     "unit": "USD",
+     "window": "utc_day"
+    },
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 40000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ]
+  },
+  {
+   "id": "SL-04",
+   "title": "three slices that over-allocate by 20%",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 40000,
+     "unit": "USD",
+     "window": "utc_day"
+    },
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 40000,
+     "unit": "USD",
+     "window": "utc_day"
+    },
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 40000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ]
+  },
+  {
+   "id": "SL-05",
+   "title": "the 24x trap: an hourly child carrying the parent's daily total",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 100000,
+     "unit": "USD",
+     "window": "utc_hour"
+    }
+   ],
+   "note": "100000 per hour is 2400000 per day; a check that compares raw totals (100000 <= 100000) admits it"
+  },
+  {
+   "id": "SL-06",
+   "title": "an hourly slice that fits: 1/24 of the day, rounded down",
+   "expect": "ok",
+   "parent": {
+    "max_per_tx": 1000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    }
+   ],
+   "note": "4166 x 24 = 99984 <= 100000"
+  },
+  {
+   "id": "SL-07",
+   "title": "an hourly slice one unit too large",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 1000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4167,
+     "unit": "USD",
+     "window": "utc_hour"
+    }
+   ],
+   "note": "4167 x 24 = 100008 > 100000; integer floor scaling, no rounding up"
+  },
+  {
+   "id": "SL-08",
+   "title": "24 hourly children, each a fair 1/24: fine alone, 24x together",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 1000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    },
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 4166,
+     "unit": "USD",
+     "window": "utc_hour"
+    }
+   ],
+   "note": "each hourly child may spend its 4166 in EVERY hour of the day, so each debits 99984 per day; the first child consumes the parent and the second is refused"
+  },
+  {
+   "id": "SL-09",
+   "title": "the per-call ceiling cannot grow when delegated",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10001,
+     "max_cumulative": 50000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ]
+  },
+  {
+   "id": "SL-10",
+   "title": "the currency cannot change",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 50000,
+     "unit": "EUR",
+     "window": "utc_day"
+    }
+   ],
+   "note": "no cross-currency arithmetic: a mismatch is a refusal, never a conversion"
+  },
+  {
+   "id": "SL-11",
+   "title": "a child's window cannot be wider than its parent's",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 1000,
+    "max_cumulative": 10000,
+    "unit": "USD",
+    "window": "utc_hour"
+   },
+   "children": [
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 10000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ]
+  },
+  {
+   "id": "SL-12",
+   "title": "a per-call parent admits only per-call children",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 1000,
+    "max_cumulative": 1000,
+    "unit": "USD",
+    "window": "tx"
+   },
+   "children": [
+    {
+     "max_per_tx": 1000,
+     "max_cumulative": 1000,
+     "unit": "USD",
+     "window": "utc_hour"
+    }
+   ],
+   "note": "a timed child of a per-call parent would turn one bounded call into a bounded rate"
+  },
+  {
+   "id": "SL-13",
+   "title": "a negative slice is malformed, not a refund",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 100000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 60000,
+     "unit": "USD",
+     "window": "utc_day"
+    },
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": -20000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ],
+   "note": "a negative cumulative would increase the remainder on subtraction (a credit); schema is checked before arithmetic"
+  },
+  {
+   "id": "SL-14",
+   "title": "slices nest: a child re-slices its own slice",
+   "expect": "ok",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 60000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 5000,
+     "max_cumulative": 30000,
+     "unit": "USD",
+     "window": "utc_day"
+    },
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 30000,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ],
+   "note": "the parent here is SL-03's first slice; the rule is the same at every depth"
+  },
+  {
+   "id": "SL-15",
+   "title": "a re-slice one unit over its own slice",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "max_cumulative": 60000,
+    "unit": "USD",
+    "window": "utc_day"
+   },
+   "children": [
+    {
+     "max_per_tx": 5000,
+     "max_cumulative": 30000,
+     "unit": "USD",
+     "window": "utc_day"
+    },
+    {
+     "max_per_tx": 10000,
+     "max_cumulative": 30001,
+     "unit": "USD",
+     "window": "utc_day"
+    }
+   ]
+  },
+  {
+   "id": "SL-16",
+   "title": "slices with provenance: each child learns it holds 'k of n'",
+   "expect": "ok",
+   "parent": {
+    "max_per_tx": 10000,
+    "unit": "USD",
+    "window": "utc_day",
+    "max_cumulative": 100000
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 60000,
+     "provenance": {
+      "parent": "P-1",
+      "ordinal": 1,
+      "of": 2
+     }
+    },
+    {
+     "max_per_tx": 10000,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 40000,
+     "provenance": {
+      "parent": "P-1",
+      "ordinal": 2,
+      "of": 2
+     }
+    }
+   ],
+   "note": "provenance is optional and reveals the fan-out width to every child; observability for the child against the privacy of siblinghood is the draft's decision, not the checker's"
+  },
+  {
+   "id": "SL-17",
+   "title": "a parent that tells every child it holds the whole remainder",
+   "expect": "reject",
+   "parent": {
+    "max_per_tx": 10000,
+    "unit": "USD",
+    "window": "utc_day",
+    "max_cumulative": 100000
+   },
+   "children": [
+    {
+     "max_per_tx": 10000,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 30000,
+     "provenance": {
+      "parent": "P-1",
+      "ordinal": 1,
+      "of": 1
+     }
+    },
+    {
+     "max_per_tx": 10000,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 30000,
+     "provenance": {
+      "parent": "P-1",
+      "ordinal": 1,
+      "of": 1
+     }
+    },
+    {
+     "max_per_tx": 10000,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 30000,
+     "provenance": {
+      "parent": "P-1",
+      "ordinal": 1,
+      "of": 1
+     }
+    }
+   ],
+   "note": "the arithmetic passes (90000 <= 100000); the labels are the lie. This pins 'the budget was small' against 'I was told my share wrongly'"
+  }
+ ]
 }
