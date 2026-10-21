@@ -173,6 +173,9 @@ def check_invocation(
     return True
 
 
+_INDETERMINATE = object()  # a claim whose executor died after the effect may have happened
+
+
 class IdempotencyCache:
     """Helper: in-memory idempotency cache keyed by (agent_did, idempotency_key).
 
@@ -180,6 +183,15 @@ class IdempotencyCache:
     race. NOT distributed - production deployments MUST back this with a shared store
     (Redis SET NX / DB unique constraint) or a load balancer replays a signed key
     once per replica.
+
+    Recovery rule (LIP-4, 2026-10-21; raised on A2A #2323): the reservation is written
+    before the external effect, the completion after it. A claim whose executor died
+    between the two is INDETERMINATE: the effect may or may not have happened. It is
+    refused on retry, never re-executed, never released by time alone, and resolves only
+    by reconciliation against the effect's system of record: ``complete()`` with the
+    reconciled result if the effect happened, ``release()`` if it verifiably did not.
+    This in-process map cannot observe its own death; a durable backend detects dead
+    executors (for example through a lease the executor renews) and marks their claims.
     """
 
     def __init__(self) -> None:
@@ -190,21 +202,46 @@ class IdempotencyCache:
         return f"{agent_did}\u0000{idempotency_key}"
 
     def claim(self, agent_did: str, idempotency_key: str) -> Dict[str, Any]:
-        """F1 (v0.4.10): three-state atomic reservation — see the Node port for the rationale.
+        """F1 (v0.4.10): atomic reservation — see the Node port for the rationale.
         Callers proceed ONLY on {"status": "reserved"}; "in_flight" is a duplicate to reject;
-        "completed" returns the cached receipt."""
+        "indeterminate" is a duplicate to reject until reconciliation; "completed" returns
+        the cached receipt."""
         key = self._key(agent_did, idempotency_key)
         if key not in self._seen:
             self._seen[key] = None
             return {"status": "reserved"}
         receipt = self._seen[key]
-        return {"status": "in_flight"} if receipt is None else {"status": "completed", "receipt": receipt}
+        if receipt is None:
+            return {"status": "in_flight"}
+        if receipt is _INDETERMINATE:
+            return {"status": "indeterminate"}
+        return {"status": "completed", "receipt": receipt}
 
     def complete(self, agent_did: str, idempotency_key: str, receipt: Any) -> None:
+        """Store the result (with its receipt) for a reserved claim, or for an indeterminate
+        one once reconciliation found that the effect happened."""
         self._seen[self._key(agent_did, idempotency_key)] = receipt
 
+    def mark_indeterminate(self, agent_did: str, idempotency_key: str) -> None:
+        """The executor holding this in-flight claim is known to have died before storing
+        its completion. Only an in-flight claim can become indeterminate."""
+        key = self._key(agent_did, idempotency_key)
+        if key not in self._seen or self._seen[key] is not None:
+            raise ValueError("LAP_ERR_REPLAY: only an in-flight claim can become indeterminate")
+        self._seen[key] = _INDETERMINATE
+
+    def release(self, agent_did: str, idempotency_key: str) -> None:
+        """Reconciliation found that the effect did not happen: forget the claim, so the next
+        request with this key executes fresh. Only an indeterminate claim can be released;
+        an in-flight one may still be executing."""
+        key = self._key(agent_did, idempotency_key)
+        if self._seen.get(key) is not _INDETERMINATE:
+            raise ValueError("LAP_ERR_REPLAY: only an indeterminate claim can be released, after reconciliation")
+        del self._seen[key]
+
     def check(self, agent_did: str, idempotency_key: str) -> Optional[Any]:
-        return self._seen.get(self._key(agent_did, idempotency_key))
+        value = self._seen.get(self._key(agent_did, idempotency_key))
+        return None if value is _INDETERMINATE else value
 
     def store(self, agent_did: str, idempotency_key: str, receipt: Any) -> None:
         self._seen[self._key(agent_did, idempotency_key)] = receipt

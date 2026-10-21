@@ -271,5 +271,13 @@ Source: `llm-collab/inbox/2026-10-17_coldstart-retest-0.4.13.md`. The morning's 
 - **Unchanged, structural:** a protected tool needs a LAP-aware client.
 - **Lesson:** the morning's fixes held; a ten-minute retest after a documentation change is cheap insurance and found the gaps a reviewer reading the diff would not.
 
+## External review on A2A #2323: the crash-after-effect recovery case (haot3x, 2026-10-20)
+
+Source: `llm-collab/inbox/2026-10-20_haot3x_a2a-2323-recovery-case.md` (the comment and an MIT-licensed gist of probes). The second outside reply on the A2A proposal, three days after the 0.4.13 release.
+
+- **Accepted, SERIOUS (specification gap):** LIP-4 required a durable, three-state claim but never said how an in-flight claim resolves once its executor is dead. An effect that completes before the process dies leaves a key that a naive durable store refuses forever, and that a naive retry executes twice; the gist's two-process probe reproduced the documented process-local case. The A2A issue text overstated what the key guarantees.
+- **Done the same day:** the recovery rule in LIP-4 (reservation before the effect, completion after; a dead executor's claim is indeterminate; never re-executed, never released by time; resolved only by reconciliation; the non-queryable case is the deployment's decision; a refused client must not mint a new key); extension draft v0.3; `indeterminate` modelled in both reference caches with `mark_indeterminate` / `release`, the Python middleware refusing it with a reason that names reconciliation; tests in both ports; threat model row 9; the issue text narrowed with an edit note and a reply drafted (owner's approval).
+- **Lesson:** the probe was ten lines and two processes against the published package. The reviewer read the documented limitation and asked what happens after it, which is where the specification work was missing.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

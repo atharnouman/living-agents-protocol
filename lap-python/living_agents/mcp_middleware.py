@@ -152,6 +152,11 @@ def verify_envelope(
                     return copy.deepcopy(claim["receipt"])  # the stored result, receipt included
                 if claim["status"] == "in_flight":
                     raise ValueError("LAP_ERR_REPLAY: duplicate request already in flight")
+                if claim["status"] == "indeterminate":
+                    # LIP-4 recovery rule: the earlier execution may have completed; never run it
+                    # again, never guess from the missing receipt; the operator reconciles.
+                    raise ValueError("LAP_ERR_REPLAY: an earlier execution of this key may have completed; "
+                                     "awaiting reconciliation, not retried")
 
             # Execute the tool function
             result = fn(*args, **kwargs)

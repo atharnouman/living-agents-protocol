@@ -100,25 +100,53 @@ export function checkInvocation(envelope, { act, resource, amount, unit }) {
 // closing the check-then-await-then-store race. NOT distributed — production
 // deployments MUST back this with a shared store (Redis SET NX / DB unique
 // constraint) or a load balancer replays a signed key once per replica.
+// Recovery rule (LIP-4, 2026-10-21; raised on A2A #2323): the reservation is written before the
+// external effect, the completion after it. A claim whose executor died between the two is
+// INDETERMINATE: the effect may or may not have happened. It is refused on retry, never
+// re-executed, never released by time alone, and resolves only by reconciliation against the
+// effect's system of record: complete() with the reconciled result if the effect happened,
+// release() if it verifiably did not. This in-process map cannot observe its own death; a
+// durable backend detects dead executors (for example through a lease) and marks their claims.
+const INDETERMINATE = Symbol("indeterminate");
+
 export function makeIdempotencyCache() {
   const seen = new Map();
   const k = (agentDid, idempotencyKey) => `${agentDid}\u0000${idempotencyKey}`;
   return {
-    // F1 (v0.4.10): three-state atomic reservation. A binary null return could not tell a
-    // FRESH reservation from an IN-FLIGHT one, so two concurrent mutating requests both saw
-    // "free" and both executed. Callers proceed ONLY on {status:"reserved"}; {status:"in_flight"}
-    // is a duplicate to reject (e.g. HTTP 409); {status:"completed"} returns the cached receipt.
+    // F1 (v0.4.10): atomic reservation. A binary null return could not tell a FRESH reservation
+    // from an IN-FLIGHT one, so two concurrent mutating requests both saw "free" and both
+    // executed. Callers proceed ONLY on {status:"reserved"}; {status:"in_flight"} is a duplicate
+    // to reject (e.g. HTTP 409); {status:"indeterminate"} is a duplicate to reject until
+    // reconciliation; {status:"completed"} returns the cached receipt.
     claim(agentDid, idempotencyKey) {
       const key = k(agentDid, idempotencyKey);
       if (!seen.has(key)) { seen.set(key, null); return { status: "reserved" }; }
       const receipt = seen.get(key);
-      return receipt === null ? { status: "in_flight" } : { status: "completed", receipt };
+      if (receipt === null) return { status: "in_flight" };
+      if (receipt === INDETERMINATE) return { status: "indeterminate" };
+      return { status: "completed", receipt };
     },
+    // Store the result for a reserved claim, or for an indeterminate one once reconciliation
+    // found that the effect happened.
     complete(agentDid, idempotencyKey, receipt) {
       seen.set(k(agentDid, idempotencyKey), receipt);
     },
+    // The executor holding this in-flight claim died before storing its completion.
+    markIndeterminate(agentDid, idempotencyKey) {
+      const key = k(agentDid, idempotencyKey);
+      if (seen.get(key) !== null) throw new Error("LAP_ERR_REPLAY: only an in-flight claim can become indeterminate");
+      seen.set(key, INDETERMINATE);
+    },
+    // Reconciliation found that the effect did not happen: the next request with this key
+    // executes fresh. An in-flight claim cannot be released; its executor may still be running.
+    release(agentDid, idempotencyKey) {
+      const key = k(agentDid, idempotencyKey);
+      if (seen.get(key) !== INDETERMINATE) throw new Error("LAP_ERR_REPLAY: only an indeterminate claim can be released, after reconciliation");
+      seen.delete(key);
+    },
     check(agentDid, idempotencyKey) {
-      return seen.get(k(agentDid, idempotencyKey));
+      const value = seen.get(k(agentDid, idempotencyKey));
+      return value === INDETERMINATE ? null : value;
     },
     store(agentDid, idempotencyKey, receipt) {
       seen.set(k(agentDid, idempotencyKey), receipt);
