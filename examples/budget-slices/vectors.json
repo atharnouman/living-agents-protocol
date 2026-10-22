@@ -1,5 +1,5 @@
 {
- "_note": "Budget-slice vectors for delegation (2026-10-17; SL-16 and SL-17 added 2026-10-21 after a reply on A2A #2121). Each vector is a parent cap and the slices it wants to issue to children; `expect` is `ok` when the set is admissible under LIP-3 sections 4 and 6, plus the optional provenance rule (rule 6 in slice_check.py) (a child gets a slice, not a view of the whole; the debit is taken in the parent's window units). Amounts are exact integers in the unit's minor denomination (cents for USD). Windows: `tx` = per call, `utc_hour`, `utc_day`, `epoch_total` = lifetime. Run: python slice_check.py vectors.json. The Living Agents Protocol reference libraries (Node and Python) reach the same verdict on every vector; lap-python/tests/test_budget_slices.py checks that.",
+ "_note": "Budget-slice vectors for delegation (2026-10-17; SL-16 and SL-17 added 2026-10-21 after a reply on A2A #2121). Each vector is a parent cap and the slices it wants to issue to children; `expect` is `ok` when the set is admissible under LIP-3 sections 4 and 6, plus the optional provenance rule (rule 6 in slice_check.py); `expect_provenance` pins the three-state provenance outcome per vector: `consistent`, `inconsistent`, or `absent` (the fan-out is unprovable from the slices alone, a finding rather than a pass; added 2026-10-22 after a second reply on A2A #2121) (a child gets a slice, not a view of the whole; the debit is taken in the parent's window units). Amounts are exact integers in the unit's minor denomination (cents for USD). Windows: `tx` = per call, `utc_hour`, `utc_day`, `epoch_total` = lifetime. Run: python slice_check.py vectors.json. The Living Agents Protocol reference libraries (Node and Python) reach the same verdict on every vector; lap-python/tests/test_budget_slices.py checks that.",
  "vectors": [
   {
    "id": "SL-01",
@@ -18,7 +18,8 @@
      "unit": "USD",
      "window": "utc_day"
     }
-   ]
+   ],
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-02",
@@ -44,7 +45,8 @@
      "window": "utc_day"
     }
    ],
-   "note": "each child's number is valid alone; together they double the budget. The delegation twin of retry double-counting: every per-child log looks correct"
+   "note": "each child's number is valid alone; together they double the budget. The delegation twin of retry double-counting: every per-child log looks correct",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-03",
@@ -69,7 +71,8 @@
      "unit": "USD",
      "window": "utc_day"
     }
-   ]
+   ],
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-04",
@@ -100,7 +103,8 @@
      "unit": "USD",
      "window": "utc_day"
     }
-   ]
+   ],
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-05",
@@ -120,7 +124,8 @@
      "window": "utc_hour"
     }
    ],
-   "note": "100000 per hour is 2400000 per day; a check that compares raw totals (100000 <= 100000) admits it"
+   "note": "100000 per hour is 2400000 per day; a check that compares raw totals (100000 <= 100000) admits it",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-06",
@@ -140,7 +145,8 @@
      "window": "utc_hour"
     }
    ],
-   "note": "4166 x 24 = 99984 <= 100000"
+   "note": "4166 x 24 = 99984 <= 100000",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-07",
@@ -160,7 +166,8 @@
      "window": "utc_hour"
     }
    ],
-   "note": "4167 x 24 = 100008 > 100000; integer floor scaling, no rounding up"
+   "note": "4167 x 24 = 100008 > 100000; integer floor scaling, no rounding up",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-08",
@@ -318,7 +325,8 @@
      "window": "utc_hour"
     }
    ],
-   "note": "each hourly child may spend its 4166 in EVERY hour of the day, so each debits 99984 per day; the first child consumes the parent and the second is refused"
+   "note": "each hourly child may spend its 4166 in EVERY hour of the day, so each debits 99984 per day; the first child consumes the parent and the second is refused",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-09",
@@ -337,7 +345,8 @@
      "unit": "USD",
      "window": "utc_day"
     }
-   ]
+   ],
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-10",
@@ -357,7 +366,8 @@
      "window": "utc_day"
     }
    ],
-   "note": "no cross-currency arithmetic: a mismatch is a refusal, never a conversion"
+   "note": "no cross-currency arithmetic: a mismatch is a refusal, never a conversion",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-11",
@@ -376,7 +386,8 @@
      "unit": "USD",
      "window": "utc_day"
     }
-   ]
+   ],
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-12",
@@ -396,7 +407,8 @@
      "window": "utc_hour"
     }
    ],
-   "note": "a timed child of a per-call parent would turn one bounded call into a bounded rate"
+   "note": "a timed child of a per-call parent would turn one bounded call into a bounded rate",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-13",
@@ -422,7 +434,8 @@
      "window": "utc_day"
     }
    ],
-   "note": "a negative cumulative would increase the remainder on subtraction (a credit); schema is checked before arithmetic"
+   "note": "a negative cumulative would increase the remainder on subtraction (a credit); schema is checked before arithmetic",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-14",
@@ -448,7 +461,8 @@
      "window": "utc_day"
     }
    ],
-   "note": "the parent here is SL-03's first slice; the rule is the same at every depth"
+   "note": "the parent here is SL-03's first slice; the rule is the same at every depth",
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-15",
@@ -473,7 +487,8 @@
      "unit": "USD",
      "window": "utc_day"
     }
-   ]
+   ],
+   "expect_provenance": "absent"
   },
   {
    "id": "SL-16",
@@ -509,7 +524,8 @@
      }
     }
    ],
-   "note": "provenance is optional and reveals the fan-out width to every child; observability for the child against the privacy of siblinghood is the draft's decision, not the checker's"
+   "note": "provenance is optional and reveals the fan-out width to every child; observability for the child against the privacy of siblinghood is the draft's decision, not the checker's",
+   "expect_provenance": "consistent"
   },
   {
    "id": "SL-17",
@@ -556,7 +572,8 @@
      }
     }
    ],
-   "note": "the arithmetic passes (90000 <= 100000); the labels are the lie. This pins 'the budget was small' against 'I was told my share wrongly'"
+   "note": "the arithmetic passes (90000 <= 100000); the labels are the lie. This pins 'the budget was small' against 'I was told my share wrongly'",
+   "expect_provenance": "inconsistent"
   }
  ]
 }

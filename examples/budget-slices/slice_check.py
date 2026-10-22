@@ -18,11 +18,14 @@ file can be read in five minutes and run anywhere:
      24 hourly children of 1/24 each look individually fine and together allow 24x the budget.
   5. Children are debited in canonical order; the running remainder never goes negative.
   6. Optional provenance: a slice MAY carry {"provenance": {"parent": id, "ordinal": k, "of": n}}
-     so the child learns it holds "k of n", not "the whole remainder". If any slice carries it, all
-     must, with one parent, `of` equal to the number of slices, and ordinals exactly 1..n. Three
-     slices each labelled "1 of 1" pass the arithmetic and fail here: the labels are the lie.
-     Provenance reveals the fan-out width to every child; whether that observability is worth the
-     loss of sibling privacy is the draft's decision, not the checker's.
+     so the child learns it holds "k of n", not "the whole remainder". The outcome has three states,
+     reported beside the verdict: CONSISTENT (every slice carries it, one parent, `of` equal to the
+     number of slices, ordinals exactly 1..n), INCONSISTENT (a failure: three slices each labelled
+     "1 of 1" pass the arithmetic and fail here, the labels are the lie), and ABSENT (no slice carries
+     it: the fan-out is UNPROVABLE from the slices alone, a finding rather than a pass). Hiding the
+     fan-out from children can be a privacy property of the draft; the billable side still needs at
+     least one party (an issuer record or a ledger) to hold {parent, ordinal, of} in a form it cannot
+     edit after the fact, or a dispute has no arbiter. Which party is the draft's decision.
 
 What this does NOT do, stated plainly: it is not a runtime ledger. Concurrent children drawing on
 one shared pool need reserve-then-settle accounting at the moment of spend (shape (b)); a static
@@ -91,6 +94,13 @@ def debit(parent, child):
     return child["max_cumulative"]
 
 
+def provenance_state(children):
+    """Rule 6: "consistent", "inconsistent" or "absent" (fan-out unprovable from the slices alone)."""
+    if not any("provenance" in c for c in children):
+        return "absent"
+    return "inconsistent" if provenance_problem(children) else "consistent"
+
+
 def provenance_problem(children):
     """Rule 6 (optional). Returns None when no slice carries provenance or the set is consistent."""
     tagged = [c for c in children if "provenance" in c]
@@ -114,18 +124,21 @@ def provenance_problem(children):
 
 def check_slices(parent, children):
     """Rules 1-6 over a parent cap and the list of slices it wants to issue.
-    Returns (ok, reason, trace); the trace lists one line per child."""
+    Returns (ok, reason, trace, provenance): the verdict, its reason, one trace line per child, and
+    the provenance state ("consistent", "inconsistent" or "absent"), which is reported beside the
+    verdict rather than folded into it, so an absent fan-out record is a finding, not a pass."""
     trace = []
+    prov = provenance_state(children)
     problem = cap_problem(parent)
     if problem:
-        return False, f"parent: {problem}", trace
+        return False, f"parent: {problem}", trace, prov
     for i, child in enumerate(children):
         problem = cap_problem(child)
         if problem:
-            return False, f"child {i}: {problem}", trace
+            return False, f"child {i}: {problem}", trace, prov
     problem = provenance_problem(children)
     if problem:
-        return False, f"provenance: {problem}", trace
+        return False, f"provenance: {problem}", trace, prov
     remaining = parent["max_cumulative"]
     # Canonical order (LIP-3 section 6): sorted by the canonical JSON of the cap, so every
     # implementation debits in the same order and reaches the same verdict.
@@ -134,14 +147,14 @@ def check_slices(parent, children):
         problem = slice_problem(parent, child)
         if problem:
             trace.append(f"  refuse {fmt(child)}: {problem}")
-            return False, problem, trace
+            return False, problem, trace, prov
         d = debit(parent, child)
         if d > remaining:
             trace.append(f"  refuse {fmt(child)}: debits {d} per {parent['window']} but only {remaining} of {parent['max_cumulative']} remains")
-            return False, f"conservation: the slices total more than the parent (this child debits {d}, {remaining} remained)", trace
+            return False, f"conservation: the slices total more than the parent (this child debits {d}, {remaining} remained)", trace, prov
         remaining -= d
         trace.append(f"  admit  {fmt(child)}: debits {d} per {parent['window']}, {remaining} remains")
-    return True, f"all slices admitted, {remaining} of {parent['max_cumulative']} unallocated", trace
+    return True, f"all slices admitted, {remaining} of {parent['max_cumulative']} unallocated", trace, prov
 
 
 def fmt(cap):
@@ -156,17 +169,24 @@ def main(argv):
         return 2
     verbose = "-v" in argv
     data = json.load(open(argv[1], encoding="utf-8"))
-    failures = 0
+    failures, unprovable = 0, 0
     for v in data["vectors"]:
-        ok, reason, trace = check_slices(v["parent"], v["children"])
+        ok, reason, trace, prov = check_slices(v["parent"], v["children"])
         got = "ok" if ok else "reject"
         mark = "PASS" if got == v["expect"] else "FAIL"
+        # A vector may also pin the provenance state; a mismatch is a failure like any other.
+        if "expect_provenance" in v and v["expect_provenance"] != prov:
+            mark = "FAIL"
         failures += mark == "FAIL"
-        print(f"{mark}  {v['id']}  expect {v['expect']:<6} got {got:<6}  {v['title']}")
+        unprovable += prov == "absent"
+        label = {"consistent": "provenance consistent", "inconsistent": "provenance INCONSISTENT",
+                 "absent": "fan-out UNPROVABLE (no provenance)"}[prov]
+        print(f"{mark}  {v['id']}  expect {v['expect']:<6} got {got:<6}  {label:<34}  {v['title']}")
         print(f"      {reason}")
         if verbose:
             print("\n".join(trace))
-    print(f"\n{len(data['vectors']) - failures} of {len(data['vectors'])} vectors agree with their expected verdict")
+    n = len(data["vectors"])
+    print(f"\n{n - failures} of {n} vectors agree with their expected verdict; {unprovable} carry no provenance (fan-out unprovable from the slices alone)")
     return 1 if failures else 0
 
 

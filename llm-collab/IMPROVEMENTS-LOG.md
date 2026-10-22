@@ -292,5 +292,13 @@ Source: `llm-collab/inbox/2026-10-17_roy-tong_a2a-2121-slice-additions.md`. The 
 - The two one-time scheduled runs of 2026-10-18 and 2026-10-19 both stalled after their first tool call with no report (no permission mode had been saved with them; nobody present to approve). Lesson: set the task's permission mode in the app, or run it once while present, before relying on it. The proof upgrade was run by hand on 2026-10-21: all five pending proofs confirmed on Bitcoin.
 - The agentic standards map v1.1 (2026-10-19) lists LAP under `a2a-core` as "Issue #2323: an extension proposal in the Proposal Phase ... no maintainer sponsor", linked to the issue, in `entries/a2a-core.yaml`, `MAP.md` and the site; a listing of its own waits for a maintainer decision or an MCP venue.
 
+## Second reply on A2A #2121: cross-walk files and a three-state provenance outcome (roy-tong, 2026-10-21; acted on 2026-10-22)
+
+Source: `llm-collab/inbox/2026-10-21_roy-tong_a2a-2121-crosswalk-and-three-state.md`.
+
+- **Accepted and done:** the three-state provenance outcome (`consistent` / `inconsistent` / `absent` = fan-out unprovable, a finding, not a pass), reported beside the verdict and pinned per vector by `expect_provenance`; his reasoning (children may be kept blind, but one party must hold the labels tamper-evidently or a dispute has no arbiter) is in the checker's docstring and README.
+- **Cross-walk written** (`examples/budget-slices/CROSSWALK.md`): all 21 AgentMeasure delegation vectors classified against the six rules; 7 agree in effect, 1 differs in framing (002b: cycles are not a danger to authority under attenuation), 1 matches via the library only (007c: no budget means unbounded), 12 out of scope (measurement and attribution after spend). The same two failures appear in both families one layer apart (005a ↔ SL-02/SL-17, 005c ↔ SL-08). Their runner was read, not executed, per the project's rule on third-party code.
+- **Lesson:** the useful cross-project work was not adopting each other's format but naming which layer each family can and cannot see.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

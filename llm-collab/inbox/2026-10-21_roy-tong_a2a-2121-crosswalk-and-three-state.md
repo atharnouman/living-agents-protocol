@@ -1,0 +1,13 @@
+# Second reply on A2A #2121: the cross-walk files and a three-state provenance outcome (roy-tong, 2026-10-21)
+
+**Source.** https://github.com/a2aproject/A2A/issues/2121, roy-tong's comment of 2026-10-21 (16:18 PKT), replying to the provenance vectors. Author association NONE; maintainer of AgentMeasure (MIT, 217 stars).
+
+**What it says.**
+- SL-02 "carrying the framing is exactly right"; SL-17 "is the best kind of vector: arithmetic passes, labels fail. A failure that survives every per-child check and only exists between the slices is precisely the shape delegation billing needs pinned."
+- The cross-walk material: DELEGATION-001..007 in `conformance/vectors/delegation-001-003.json` (001 delegation is not an operation; 002 DAG and depth; 003 cross-harness cost attribution) and `conformance/vectors/delegation-004-007.json` (004 under-count; 005 over-count via an inherited cumulative counter; 006 mis-attribution across a handoff; 007 non-propagation of a declared budget); runner `conformance/runners/run_delegation.py` (stdlib, exit 1 on disagreement). He expects the interesting disagreements around 005 against SL-02 and SL-17.
+- A suggestion on the provenance trade-off: three states per slice set, consistent (pass), internally inconsistent (fail, SL-17), and absent (fan-out UNPROVABLE, a finding, not a pass). Reasoning: what a child may see and what an auditor can reconstruct are different blind spots; hiding fan-out from children can be the draft's privacy property, but for the billable side at least one party must hold `{parent, ordinal, of}` in a form it cannot edit after the fact, or a dispute has no arbiter.
+- AgentMeasure will run the 17 vectors through its invariants where the shapes overlap and post its table, listing out-of-scope vectors as such rather than forcing a verdict.
+
+**Verdict.** The three-state suggestion is right and cheap; adopted as proposed, with his reasoning in the checker's docstring. The cross-walk is the work he offered on 2026-10-17 and we accepted.
+
+**Done 2026-10-22.** `check_slices` returns the provenance state beside the verdict (`consistent`, `inconsistent`, `absent`); the CLI prints "fan-out UNPROVABLE (no provenance)" for absent and counts them in the summary; `expect_provenance` pins the state on all 17 vectors and the runner fails on a mismatch; the parity test checks it. `CROSSWALK.md` maps all 21 of his vectors against the six rules: 7 agree in effect, 1 differs in framing (002b, a cycle is not a danger to authority under attenuation), 1 is out of the checker's scope but matches via the library (007c), 12 are out of scope (001, 003, 004, 006: measurement and attribution after spend). His runner was read as text, not executed. Reply drafted for the owner's approval.
