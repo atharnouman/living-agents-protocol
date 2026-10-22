@@ -300,5 +300,21 @@ Source: `llm-collab/inbox/2026-10-21_roy-tong_a2a-2121-crosswalk-and-three-state
 - **Cross-walk written** (`examples/budget-slices/CROSSWALK.md`): all 21 AgentMeasure delegation vectors classified against the six rules; 7 agree in effect, 1 differs in framing (002b: cycles are not a danger to authority under attenuation), 1 matches via the library only (007c: no budget means unbounded), 12 out of scope (measurement and attribution after spend). The same two failures appear in both families one layer apart (005a ↔ SL-02/SL-17, 005c ↔ SL-08). Their runner was read, not executed, per the project's rule on third-party code.
 - **Lesson:** the useful cross-project work was not adopting each other's format but naming which layer each family can and cannot see.
 
+## Two-model review of the second A2A #2121 reply (Sonnet 5.5 and Opus 5.5, 2026-10-22)
+
+Before posting, the drafted reply, CROSSWALK.md and the three-state change were reviewed independently by two other models, read-only, against the AgentMeasure files and our own code. Both passed the code (17 of 17 vectors, parity test green) and both found the same overclaims in the prose, which were corrected before posting:
+
+- "never folded into the verdict": false for `inconsistent`, which fails the set as proposed; only `absent` sits beside the verdict.
+- "chains terminate": only where the root envelope carries `depth`, which is optional in both libraries.
+- "authority only shrinks": it never widens; subsumption is reflexive, so a child may equal its parent.
+- 005a counted as agreement: it is the disagreement its author predicted, since a slice is an allowance with no spent-so-far counter to inherit; 005c, not 005a, matches SL-02, and SL-08's multiplier is window conversion rather than sharing.
+- "under-count cannot occur at the allocation layer": true only within one issuance; across separately issued envelopes it is the issuer's duty (LIP-3 §6), which neither family pins.
+- a claim that the LIP-4 receipt names the agent key (it is two hashes and a server signature), and a claim that LAP already defines the tamper-evident fan-out record (it does not; the proposed `delegated-authority` extension is a candidate carrier; an issuer's own chain is rewritable unless anchored or shared).
+- Code: a child that is not an object now hits rule 1's refusal instead of a `TypeError` in rule 6; the CLI's agreement marks are MATCH/MISMATCH so they are not read as provenance passing; the summary counts only admitted sets without provenance; Roy Tong is credited in the docstring.
+- Totals corrected to 4 agree, 3 via the library with caveats, 1 differs as predicted, 1 a different question, 12 out of scope (21). The README's earlier sum of 20 fixed.
+- Two concrete questions for his table came out of the reviews: 005a and 005b carry the same `billed_total_tokens`, so 005a is pinned on the snapshot signature rather than the bill; and no AgentMeasure vector sums N children against one parent budget.
+
+**Lesson:** a reply in the owner's name that vouches for a cross-project table needs a reviewer who reads the other project's files; both reviewers caught the same five overclaims the author (this session) had written with the sources open.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

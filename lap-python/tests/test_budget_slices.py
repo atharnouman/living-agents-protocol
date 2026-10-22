@@ -57,6 +57,9 @@ def test_provenance_catches_the_lie_the_arithmetic_cannot():
     # unprovable from the slices alone, a finding rather than a pass (suggested on A2A #2121).
     ok, _, _, prov = slice_check.check_slices(by_id["SL-03"]["parent"], by_id["SL-03"]["children"])
     assert ok and prov == "absent"
+    # A child that is not an object is refused by rule 1, not crashed on by rule 6.
+    ok, reason, _, prov = slice_check.check_slices(by_id["SL-03"]["parent"], [None, 7])
+    assert not ok and reason.startswith("child 0: cap is not an object") and prov == "absent"
 
 
 def test_the_24x_trap_is_what_the_debit_rule_refuses():

@@ -1,59 +1,59 @@
 # Cross-walk: AgentMeasure DELEGATION-001..007 against the slice rules
 
-Written 2026-10-22 after an exchange on A2A #2121. The AgentMeasure delegation family is in [roy-tong/AgentMeasure](https://github.com/roy-tong/AgentMeasure) (MIT): `conformance/vectors/delegation-001-003.json` at commit `d7706787` (2026-09-18), `conformance/vectors/delegation-004-007.json` and `conformance/runners/run_delegation.py` at `daa9384c` (2026-09-19). The vector files were read as data; the runner was read as text and not executed here. Our side is `slice_check.py` rules 1 to 6 and vectors SL-01 to SL-17 at the commit that adds this file. AgentMeasure is running our vectors through its invariants in the other direction and posting its own table.
+Written 2026-10-22 after an exchange on A2A #2121. The AgentMeasure delegation family is in [roy-tong/AgentMeasure](https://github.com/roy-tong/AgentMeasure) (MIT): `conformance/vectors/delegation-001-003.json` at commit `d7706787` (2026-09-18), `conformance/vectors/delegation-004-007.json` and `conformance/runners/run_delegation.py` at `daa9384c` (2026-09-19). The vector files were read as data and the runner as text; nothing from that repository was executed here. Our side is `slice_check.py` rules 1 to 6 and vectors SL-01 to SL-17 at the commit that adds this file. AgentMeasure has said it will run our vectors through its invariants in the other direction and post its own table.
 
-**Method.** Each of the 21 AgentMeasure vectors was classified by the layer it pins (allocation at issuance, measurement after spend, delegation structure, attribution), by whether one of the six slice rules says anything about the same situation, and by the verdict the slice rules would give on that situation. Where the shapes do not overlap, the vector is listed as out of scope rather than forced to a verdict.
+**Method.** These are hand-derived verdicts on analogous situations, not runs: the AgentMeasure runner takes counters and reports, the slice checker takes caps, so no vector was run through both tools. Each of the 21 AgentMeasure vectors was classified by the layer it pins, by whether one of the six slice rules (or the LIP-3 library behind them) says anything about the same situation, and by the verdict our side would give. Where the shapes do not overlap, the vector is listed as out of scope rather than forced to a verdict.
 
 ## The two families in one sentence
 
-The slice rules act **before spend**: a parent may only issue slices that fit inside what it holds, debited in the parent's window units. The AgentMeasure delegation family acts **after spend**: what a parent reports must match what its children actually spent, attributed to the agent that served each turn. The same failures appear in both, one layer apart: a child handed a view of the whole remainder (SL-02) is the inherited counter of DELEGATION-005a; children that are each fine alone and N× together (SL-08) are the shared-instance multiplication of 005c.
+The slice rules act at issuance: a parent may only issue slices that fit inside what it holds, debited in the parent's window units. The AgentMeasure family pins the delegation record and its accounting: 002 and 007 at delegation time (structure, and whether a budget reached the child), 001, 003, 004, 005 and 006 after spend (counting, roll-up, attribution). One shape appears in both: a number held by N parties as if each owned it (their 005c, our SL-02).
 
 ## Family table
 
-| AgentMeasure | What it pins | Layer | Slice rule(s) | Relation |
+| AgentMeasure | What it pins | When | Our side | Relation |
 |---|---|---|---|---|
-| 001 Delegation Must Not Be Counted as Operation | counting discipline | measurement | none | out of scope: the slice rules count nothing |
-| 002 Delegation Depth DAG Enforcement | structure: no cycles, bounded depth | structure | not in the checker; LIP-3 `depth` in the library | partial: a child envelope's remaining depth must be strictly smaller than its parent's, so chains terminate; cycles are not named |
-| 003 Cross-Harness Delegation Cost Attribution | aggregation labels, lineage, no double count | measurement | none | out of scope; 003b (double count) is the measurement twin of SL-02 |
-| 004 Under-count | child spend never rolls up | measurement | none | out of scope at this layer: an allocation is debited when issued, so a share cannot be invisible at issuance; the under-count exists only in reporting |
-| 005 Over-count | inherited cumulative counter; shared instance N× | measurement | rules 4, 5, 6 | same failure geometry: 005a ↔ SL-02 and SL-17, 005c ↔ SL-08; we refuse at issuance, they detect after the fact |
-| 006 Mis-attribution Across a Handoff | the billing record names the serving agent and model | attribution | none in the checker; LAP's receipt names the signing agent key per call | out of scope; handoff timing is not modelled |
-| 007 Non-propagation | a declared budget must reach the child | enforcement reach | rule 1 and the passport | overlap: a slice is the propagated budget; a child without a cap has no bound |
+| 001 Delegation Must Not Be Counted as Operation | counting discipline | after spend | none | out of scope: the slice rules count nothing |
+| 002 Delegation Depth DAG Enforcement | no cycles, bounded depth | delegation time | LIP-3 `depth` in the library, not the checker | partial: where an envelope carries `depth`, a child's must be at least one lower, so a hop from 0 is refused; without it there is no bound; cycles are never named, since no hop can widen authority |
+| 003 Cross-Harness Delegation Cost Attribution | aggregation labels, lineage, no double count | after spend | none | out of scope; a parent spending what it has sliced away is a ledger matter, not a slice rule |
+| 004 Under-count | child spend never rolls up | after spend | none | out of scope; within one issuance every share is debited, so none can go missing, but across separately issued envelopes one can, which LIP-3 §6 leaves to the issuer |
+| 005 Over-count | inherited cumulative counter; shared instance N× | after spend | rules 5 and 6 | 005c matches SL-02 (one number held by N parties); 005a is the predicted disagreement: a slice is an allowance, not a spent-so-far counter |
+| 006 Mis-attribution Across a Handoff | the billing record names the serving agent and model | after spend | none | out of scope; the slice rules carry no serving record and no model |
+| 007 Non-propagation | a declared budget must reach the child | delegation time | rule 1 and the passport | overlap: a slice is the propagated budget; a child without a cap has no bound |
 
 ## Per-vector table
 
-| Vector | AgentMeasure verdict | Under the slice rules | Agreement |
+| Vector | AgentMeasure verdict | Our side | Agreement |
 |---|---|---|---|
 | del-001a separate count | PASS | out of scope | n/a |
 | del-001b flattened count | FAIL | out of scope | n/a |
 | del-001c zero delegation | PASS | out of scope | n/a |
-| del-002a chain A→B→C, depth 0,1 | PASS | library: admissible when the root's remaining depth is at least 2 (each hop strictly decreases it) | agree in effect |
-| del-002b cycle A→B→A | FAIL | library: not a failure as such; B's re-delegation to A is one more attenuation, authority only shrinks, and depth exhausts the chain. Cycles are never named | different framing |
-| del-002c depth reaches the ceiling | FAIL (limit not enforced) | library: a hop from an envelope with remaining depth 0 is refused | agree in effect |
+| del-002a chain A→B→C, depth 0,1 | PASS | library: admissible when the root carries `depth` at least 2, since each hop must carry a smaller one; a root without `depth` is unbounded in both libraries, which 002 would fail | agree via the library, when depth is carried |
+| del-002b cycle A→B→A | FAIL | library: no hop can widen authority (subsumption is reflexive, so a child may equal its parent but never exceed it), and where `depth` is carried it runs out; the rules never name a cycle. Invariant 30 is about the measurement graph, where a cycle makes the roll-up undefined | different question; both can hold |
+| del-002c depth reaches the ceiling | FAIL (limit not enforced) | library: a hop from an envelope with `depth` 0 is refused | agree via the library |
 | del-003a parent aggregates, labelled | PASS | out of scope | n/a |
-| del-003b same cost in parent and child | FAIL | out of scope (the allocation twin, SL-02, is refused) | n/a |
+| del-003b same cost in parent and child | FAIL | out of scope: a parent spending what it sliced away is a ledger matter | n/a |
 | del-003c lineage preserved | PASS | out of scope | n/a |
-| del-004a silent under-count | FAIL | out of scope (cannot occur at issuance) | n/a |
+| del-004a silent under-count | FAIL | out of scope (see the 004 row) | n/a |
 | del-004b rolls up, labelled | PASS | out of scope | n/a |
 | del-004c disclosed exclusion | PASS | out of scope | n/a |
-| del-005a child inherits the parent's counter | FAIL | SL-02: a child handed the parent's whole remainder alongside a sibling is refused by conservation; SL-17: labels that say "whole remainder" are refused by provenance | agree, one layer apart |
+| del-005a child inherits the parent's spent counter | FAIL | no slice analogue: an allowance has no spent-so-far counter to inherit. The nearest shape, a sole child handed the whole remainder, is admissible (SL-01), and a parent's earlier spend is invisible to a static check | differs, as predicted |
 | del-005b child starts from zero | PASS | SL-01, SL-03: a slice of its own | agree |
-| del-005c shared instance, reported N× measured | FAIL | SL-08: N children each a fair share, N× together, refused by the debit in parent units | agree, one layer apart |
-| del-006a served by A, billed to B | FAIL | out of scope; the LAP receipt is signed over the call by the server and names the agent key that signed the request, so a billing record naming another agent contradicts the receipt | n/a |
+| del-005c shared instance, reported N× measured | FAIL | SL-02: one number held by N parties as if each owned it; refused at issuance by conservation, detected by 005c after spend | agree, one layer apart |
+| del-006a served by A, billed to B | FAIL | out of scope: no serving record, no model | n/a |
 | del-006b correct attribution | PASS | out of scope | n/a |
 | del-006c subagent spans flattened to root | FAIL | out of scope | n/a |
 | del-007a budget declared, not propagated; child overspends | FAIL | rule 1: a child without a cap is malformed; in LAP a child without an envelope has no authority at all, fail closed | agree |
 | del-007b propagated, child within it | PASS | SL-01, SL-03 shape | agree |
-| del-007c no budget declared, disclosed | PASS | the checker presumes a declared budget and is out of scope here; the LIP-3 library reads a parent without a cap as unbounded and admits any child, which matches the disclosed PASS | agree via the library; the checker does not apply |
+| del-007c no budget declared, disclosed | PASS | the checker presumes a declared budget and does not apply; the LIP-3 library reads a parent without a cap as unbounded and admits any child, silently, where 007c requires the absence to be disclosed | agree via the library, minus the disclosure |
 
-**Totals.** Agree in effect: 7 (002a, 002c, 005a, 005b, 005c, 007a, 007b). Different framing: 1 (002b). Checker out of scope, library agrees: 1 (007c). Out of scope: 12 (001, 003, 004, 006).
+**Totals (21).** Agree: 4 (005b, 005c, 007a, 007b). Agree via the library, with caveats: 3 (002a, 002c, 007c). Differs as predicted: 1 (005a). Different question: 1 (002b). Out of scope: 12 (001, 003, 004, 006).
 
 ## What each family cannot see
 
-- The slice rules cannot see spend. A child that stays inside its slice but is billed wrongly, or whose spend never rolls up, passes every slice rule. That is DELEGATION-003, 004 and 006.
-- The AgentMeasure family cannot see issuance. A parent that hands every child the whole remainder passes 004 and 007 until the children spend; 005 catches it only once the counters show the inheritance. SL-02, SL-08 and SL-17 refuse it before any spend.
-- Neither family is a ledger. Concurrent children drawing on one shared pool need reserve-then-settle at spend time (shape (b) in the A2A thread), which neither set of vectors models.
+- The slice rules cannot see spend. A child that stays inside its slice but is billed wrongly, or whose spend never rolls up, passes every slice rule (003, 004, 006). They also cannot see a parent's earlier spend, which is what 005a is about.
+- The AgentMeasure family has no vector that sums N children against one parent budget: 007b tests one `child_spend` against one declared budget. So over-issuance at delegation time (SL-02, SL-04, SL-08) has no counterpart there; 005 detects counter inheritance, which over-issuance does not produce, since a child handed a view of the remainder still starts its own counter at zero.
+- Neither family is a ledger. Within one issuance every share is debited, so none can go missing; across separately issued envelopes one can, and LIP-3 §6 leaves that to the issuer. Concurrent children drawing on one shared pool need reserve-then-settle at spend time (shape (b) in the A2A thread). Neither set of vectors models either.
 
 ## Provenance, three states
 
-Suggested by AgentMeasure on 2026-10-21 and adopted here: the checker reports the provenance outcome beside the verdict as `consistent`, `inconsistent` (a failure: SL-17) or `absent` (the fan-out is unprovable from the slices alone: a finding, not a pass). Hiding the fan-out from children can be a privacy property of the draft; the billable side still needs one party, an issuer record or a ledger, to hold `{parent, ordinal, of}` in a form it cannot edit after the fact, or a dispute has no arbiter. In LAP that party is the issuer's signed log, or an audit record of the delegation; which one is the draft's decision. `expect_provenance` pins the state on every vector.
+Suggested by AgentMeasure on 2026-10-21 and adopted: the checker reports the provenance outcome beside the verdict as `consistent`, `inconsistent` (which fails the set: SL-17) or `absent` (the fan-out is unprovable from the slices alone: the arithmetic verdict stands and the absence is reported as a finding). Hiding the fan-out from children can be a privacy property of the draft; the billable side still needs one party to hold `{parent, ordinal, of}` in a form it cannot edit after the fact, or a dispute has no arbiter. LAP does not define that record yet: LIP-3 §6 makes cross-sibling accounting an issuer duty without saying where the labels live, and the proposed `delegated-authority` audit-record extension is a candidate carrier for them. An issuer's own hash chain is not enough on its own, since the issuer can rewrite it, unless it is anchored or held by both parties. `expect_provenance` pins the state on every vector.
