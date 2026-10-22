@@ -17,3 +17,10 @@
 - The A2A issue text to be narrowed with a dated edit note; the reply drafted for the owner's approval.
 
 **Not done.** The in-process cache still cannot observe its own death; detecting dead executors (a lease) is the durable backend's job, now stated as a MUST.
+
+## Follow-up (haot3x, 2026-10-21, answering the question in the reply)
+
+> In the probe, yes—the fsynced temporary file lets us check whether the simulated effect happened; it is not a real payment. For a real service, I would query its system of record using a stable operation ID. If that is unavailable, my default would be to keep the intent indeterminate, with no automatic retry or new key, until explicit reconciliation or compensation. The v0.3 rule fits that case.
+
+**Taken (2026-10-22):** the stable operation identifier. Both drafts now say the reservation SHOULD record one (the idempotency key where the system accepts it, otherwise the identifier the system returns, written as soon as it is known), so reconciliation has something to query; without one the claim stays indeterminate until a person or a compensating action resolves it. His default for the non-queryable case was already the rule's.
+
