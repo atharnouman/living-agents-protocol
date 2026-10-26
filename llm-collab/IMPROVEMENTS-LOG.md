@@ -317,5 +317,14 @@ Before posting, the drafted reply, CROSSWALK.md and the three-state change were 
 
 **Lesson:** a reply in the owner's name that vouches for a cross-project table needs a reviewer who reads the other project's files; both reviewers caught the same five overclaims the author (this session) had written with the sources open.
 
+## Third reply on A2A #2121: both questions changed AgentMeasure's vectors (roy-tong, 2026-10-26)
+
+Source: `llm-collab/inbox/2026-10-26_roy-tong_a2a-2121-answers-and-008.md`; AgentMeasure commit `1b7d4e38`.
+
+- **Accepted by him:** the three-state provenance outcome ("no push-back ... you chose right") and the allowance-versus-counter distinction for 005a ("same invariant, enforced at different boundaries").
+- **Changed on his side, in answer to the two questions the reviews produced:** 005a's bill now carries the double count (258644) and the runner asserts the delta equals `double_counted_tokens`; DELEGATION-008 added, summing N children's spend against one parent budget, with deliberately over-subscribed slices (350 × 3 > 1000) named as the allocation-layer gap "neither family closes, the issuer does".
+- **Done here:** CROSSWALK.md updated for `1b7d4e38` (23 vectors: 5 agree, 3 via the library, 2 differ, 1 a different question, 12 out of scope); the new disagreement is 008b, which passes his roll-up on an allocation the slice rules refuse at issuance; SL-18 added with his numbers (18 vectors, Python 160/160); reply drafted for the owner's approval.
+- **Significance:** the first time a LAP contribution has changed a public test suite outside LAP. He is an identifiable project owner, so it counts for the 2026-12-01 review; he is not a maintainer of a venue.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*

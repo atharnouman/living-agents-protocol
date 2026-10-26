@@ -1,8 +1,8 @@
 # Cross-walk: AgentMeasure DELEGATION-001..007 against the slice rules
 
-Written 2026-10-22 after an exchange on A2A #2121. The AgentMeasure delegation family is in [roy-tong/AgentMeasure](https://github.com/roy-tong/AgentMeasure) (MIT): `conformance/vectors/delegation-001-003.json` at commit `d7706787` (2026-09-18), `conformance/vectors/delegation-004-007.json` and `conformance/runners/run_delegation.py` at `daa9384c` (2026-09-19). The vector files were read as data and the runner as text; nothing from that repository was executed here. Our side is `slice_check.py` rules 1 to 6 and vectors SL-01 to SL-17 at the commit that adds this file. AgentMeasure has said it will run our vectors through its invariants in the other direction and post its own table.
+Written 2026-10-22 after an exchange on A2A #2121. The AgentMeasure delegation family is in [roy-tong/AgentMeasure](https://github.com/roy-tong/AgentMeasure) (MIT): `conformance/vectors/delegation-001-003.json` at commit `d7706787` (2026-09-18), `conformance/vectors/delegation-004-007.json` and `conformance/runners/run_delegation.py` at `daa9384c` (2026-09-19). The vector files were read as data and the runner as text; nothing from that repository was executed here. Our side is `slice_check.py` rules 1 to 6 and vectors SL-01 to SL-18. Updated 2026-10-26 for AgentMeasure commit `1b7d4e38`, made in answer to the two questions below the first version of this table: 005a's bill now carries the double count, and DELEGATION-008 (`conformance/vectors/delegation-008.json`) sums N children against one parent budget. AgentMeasure has said it will run our vectors through its invariants in the other direction and post its own table.
 
-**Method.** These are hand-derived verdicts on analogous situations, not runs: the AgentMeasure runner takes counters and reports, the slice checker takes caps, so no vector was run through both tools. Each of the 21 AgentMeasure vectors was classified by the layer it pins, by whether one of the six slice rules (or the LIP-3 library behind them) says anything about the same situation, and by the verdict our side would give. Where the shapes do not overlap, the vector is listed as out of scope rather than forced to a verdict.
+**Method.** These are hand-derived verdicts on analogous situations, not runs: the AgentMeasure runner takes counters and reports, the slice checker takes caps, so no vector was run through both tools. Each of the 23 AgentMeasure vectors was classified by the layer it pins, by whether one of the six slice rules (or the LIP-3 library behind them) says anything about the same situation, and by the verdict our side would give. Where the shapes do not overlap, the vector is listed as out of scope rather than forced to a verdict.
 
 ## The two families in one sentence
 
@@ -19,6 +19,7 @@ The slice rules act at issuance: a parent may only issue slices that fit inside 
 | 005 Over-count | inherited cumulative counter; shared instance N× | after spend | rules 5 and 6 | 005c matches SL-02 (one number held by N parties); 005a is the predicted disagreement: a slice is an allowance, not a spent-so-far counter |
 | 006 Mis-attribution Across a Handoff | the billing record names the serving agent and model | after spend | none | out of scope; the slice rules carry no serving record and no model |
 | 007 Non-propagation | a declared budget must reach the child | delegation time | rule 1 and the passport | overlap: a slice is the propagated budget; a child without a cap has no bound |
+| 008 Roll-up (added 2026-10-26) | N children's spend summed against one parent budget | after spend | rule 5 (SL-04, SL-18) | the same input shows both layers: its slices are over-subscribed (350 × 3 > 1000), so the slice rules refuse both vectors at issuance, while the roll-up fails only the one whose spend exceeds the budget |
 
 ## Per-vector table
 
@@ -36,7 +37,7 @@ The slice rules act at issuance: a parent may only issue slices that fit inside 
 | del-004a silent under-count | FAIL | out of scope (see the 004 row) | n/a |
 | del-004b rolls up, labelled | PASS | out of scope | n/a |
 | del-004c disclosed exclusion | PASS | out of scope | n/a |
-| del-005a child inherits the parent's spent counter | FAIL | no slice analogue: an allowance has no spent-so-far counter to inherit. The nearest shape, a sole child handed the whole remainder, is admissible (SL-01), and a parent's earlier spend is invisible to a static check | differs, as predicted |
+| del-005a child inherits the parent's spent counter (since `1b7d4e38` the bill carries the double count: 258644 billed against 130072 true) | FAIL | no slice analogue: an allowance has no spent-so-far counter to inherit. The nearest shape, a sole child handed the whole remainder, is admissible (SL-01), and a parent's earlier spend is invisible to a static check | differs, as predicted |
 | del-005b child starts from zero | PASS | SL-01, SL-03: a slice of its own | agree |
 | del-005c shared instance, reported N× measured | FAIL | SL-02: one number held by N parties as if each owned it; refused at issuance by conservation, detected by 005c after spend | agree, one layer apart |
 | del-006a served by A, billed to B | FAIL | out of scope: no serving record, no model | n/a |
@@ -45,13 +46,15 @@ The slice rules act at issuance: a parent may only issue slices that fit inside 
 | del-007a budget declared, not propagated; child overspends | FAIL | rule 1: a child without a cap is malformed; in LAP a child without an envelope has no authority at all, fail closed | agree |
 | del-007b propagated, child within it | PASS | SL-01, SL-03 shape | agree |
 | del-007c no budget declared, disclosed | PASS | the checker presumes a declared budget and does not apply; the LIP-3 library reads a parent without a cap as unbounded and admits any child, silently, where 007c requires the absence to be disclosed | agree via the library, minus the disclosure |
+| del-008a every child within its slice, the sum over the parent budget (spend 1015 of 1000) | FAIL | SL-18: the three slices of 350 under a parent of 1000 are refused at issuance (1050 > 1000), before any child spends | agree on the failure, for different reasons: the roll-up sees the spend, the slice rules see the allocation |
+| del-008b sum of children within the parent budget (spend 915 of 1000) | PASS | SL-18: the same allocation is refused at issuance; what the children later spend does not change it | differs: the allocation-layer gap in the roll-up family, which its own failure reason names |
 
-**Totals (21).** Agree: 4 (005b, 005c, 007a, 007b). Agree via the library, with caveats: 3 (002a, 002c, 007c). Differs as predicted: 1 (005a). Different question: 1 (002b). Out of scope: 12 (001, 003, 004, 006).
+**Totals (23).** Agree: 5 (005b, 005c, 007a, 007b, 008a). Agree via the library, with caveats: 3 (002a, 002c, 007c). Differs: 2 (005a, as predicted; 008b, the two layers on one input). Different question: 1 (002b). Out of scope: 12 (001, 003, 004, 006).
 
 ## What each family cannot see
 
 - The slice rules cannot see spend. A child that stays inside its slice but is billed wrongly, or whose spend never rolls up, passes every slice rule (003, 004, 006). They also cannot see a parent's earlier spend, which is what 005a is about.
-- The AgentMeasure family has no vector that sums N children against one parent budget: 007b tests one `child_spend` against one declared budget. So over-issuance at delegation time (SL-02, SL-04, SL-08) has no counterpart there; 005 detects counter inheritance, which over-issuance does not produce, since a child handed a view of the remainder still starts its own counter at zero.
+- Until 2026-10-26 the AgentMeasure family had no vector that sums N children against one parent budget (007b tests one `child_spend`). DELEGATION-008 now does, after spend, and its own failure reason names the remaining gap: an over-subscribed allocation (slices summing past the budget) is invisible to a roll-up until the children spend, which is what SL-04 and SL-18 refuse at issuance. 005 detects counter inheritance, which over-issuance does not produce, since a child handed a view of the remainder still starts its own counter at zero.
 - Neither family is a ledger. Within one issuance every share is debited, so none can go missing; across separately issued envelopes one can, and LIP-3 §6 leaves that to the issuer. Concurrent children drawing on one shared pool need reserve-then-settle at spend time (shape (b) in the A2A thread). Neither set of vectors models either.
 
 ## Provenance, three states

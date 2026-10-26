@@ -4,7 +4,7 @@
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.10 (draft)` · `libraries 0.4.13` · `Node 69/69 · Python 159/159` · `two interoperating implementations` · `6 adversarial review rounds, ~160 verified fixes`
+`spec v0.4.10 (draft)` · `libraries 0.4.13` · `Node 69/69 · Python 160/160` · `two interoperating implementations` · `6 adversarial review rounds, ~160 verified fixes`
 
 > **Status, 17 October 2026: a research prototype by one author, under review until 1 December 2026.** What works today: the scope algebra with budget conservation (two implementations that agree on a shared fuzz digest and on 25 shared cap vectors), the MCP tool guard below (a tool that refuses to run outside a signed envelope and returns a signed receipt), and the test vectors. What it is not: a protocol anyone else has adopted. A protected tool needs a LAP-aware client, so Claude Desktop, Cursor and other mainstream MCP hosts cannot call it; the agent side and the tool side must both adopt it. On 17 October a cold-start usability test found the per-transaction cap accepting negative amounts in both implementations; fixed the same day in 0.4.13, with vectors. If no maintainer or standards author has engaged by 1 December, the project is parked with this note updated; the map, the vectors and the packages stay.
 
@@ -118,7 +118,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
 | [`examples/mcp-server/`](examples/mcp-server/) | **Tutorial:** add LAP to your MCP server in 15 minutes — a real MCP server + LAP-aware client speaking the extension over request and result `_meta` (stdio round-trip on SDK 1.x and 2.x, verified in CI) |
-| [`examples/budget-slices/`](examples/budget-slices/) | **Delegation budgets:** "a child gets a slice, not a view of the whole" as 17 vectors and a dependency-free checker, including the 24× trap and slice provenance; the Python algebra reproduces every verdict |
+| [`examples/budget-slices/`](examples/budget-slices/) | **Delegation budgets:** "a child gets a slice, not a view of the whole" as 18 vectors and a dependency-free checker, including the 24× trap and slice provenance; the Python algebra reproduces every verdict |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
 | [`CONFORMANCE.md`](CONFORMANCE.md) | Implement Micro-Core in an afternoon — a ten-check challenge against the shared test vectors |
 | [`THREAT-MODEL.md`](THREAT-MODEL.md) | What LAP defends against and what it does not: assets, actors, sixteen threats each tied to its enforcing code and regression test, residual risks stated plainly |

@@ -1,5 +1,5 @@
 {
- "_note": "Budget-slice vectors for delegation (2026-10-17; SL-16 and SL-17 added 2026-10-21, `expect_provenance` 2026-10-22, after replies on A2A #2121). Each vector is a parent cap and the slices it wants to issue to children (a child gets a slice, not a view of the whole; the debit is taken in the parent's window units). `expect` is `ok` when the set is admissible under LIP-3 sections 4 and 6 plus the optional provenance rule (rule 6 in slice_check.py). `expect_provenance` pins the three-state provenance outcome: `consistent`; `inconsistent`, which fails the set; or `absent`, which leaves the arithmetic verdict unchanged and is reported beside it as unprovable fan-out. Amounts are exact integers in the unit's minor denomination (cents for USD). Windows: `tx` = per call, `utc_hour`, `utc_day`, `epoch_total` = lifetime. Run: python slice_check.py vectors.json. The Python reference library reproduces every arithmetic verdict (lap-python/tests/test_budget_slices.py); provenance is the checker's alone.",
+ "_note": "Budget-slice vectors for delegation (2026-10-17; SL-16 and SL-17 added 2026-10-21, `expect_provenance` 2026-10-22, SL-18 2026-10-26, after replies on A2A #2121). Each vector is a parent cap and the slices it wants to issue to children (a child gets a slice, not a view of the whole; the debit is taken in the parent's window units). `expect` is `ok` when the set is admissible under LIP-3 sections 4 and 6 plus the optional provenance rule (rule 6 in slice_check.py). `expect_provenance` pins the three-state provenance outcome: `consistent`; `inconsistent`, which fails the set; or `absent`, which leaves the arithmetic verdict unchanged and is reported beside it as unprovable fan-out. Amounts are exact integers in the unit's minor denomination (cents for USD). Windows: `tx` = per call, `utc_hour`, `utc_day`, `epoch_total` = lifetime. Run: python slice_check.py vectors.json. The Python reference library reproduces every arithmetic verdict (lap-python/tests/test_budget_slices.py); provenance is the checker's alone.",
  "vectors": [
   {
    "id": "SL-01",
@@ -574,6 +574,39 @@
    ],
    "note": "the arithmetic passes (90000 <= 100000); the labels are the lie. This pins 'the budget was small' against 'I was told my share wrongly'",
    "expect_provenance": "inconsistent"
+  },
+  {
+   "id": "SL-18",
+   "title": "AgentMeasure DELEGATION-008's allocation: three slices of 350 under a parent of 1000",
+   "expect": "reject",
+   "expect_provenance": "absent",
+   "parent": {
+    "max_per_tx": 350,
+    "unit": "USD",
+    "window": "utc_day",
+    "max_cumulative": 1000
+   },
+   "children": [
+    {
+     "max_per_tx": 350,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 350
+    },
+    {
+     "max_per_tx": 350,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 350
+    },
+    {
+     "max_per_tx": 350,
+     "unit": "USD",
+     "window": "utc_day",
+     "max_cumulative": 350
+    }
+   ],
+   "note": "added 2026-10-26, mirroring the roll-up family's 008a/008b: the slices sum to 1050 > 1000, so the set is refused at issuance whatever the children later spend; the roll-up fails 008a (spend 1015) and passes 008b (spend 915) on the same allocation. One input, two layers"
   }
  ]
 }
