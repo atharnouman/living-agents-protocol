@@ -328,5 +328,18 @@ Source: `llm-collab/inbox/2026-10-26_roy-tong_a2a-2121-answers-and-008.md`; Agen
 - **Outcome (2026-10-26, 11:16 UTC):** he accepted the split-verdict reading entirely and annotated 008b (`ddf4f40`) so its PASS is a roll-up verdict only, naming the reading in the vector; our 23-vector table is the reference his mirror will use. Second change to his suite from this exchange.
 - **Significance:** the first time a LAP contribution has changed a public test suite outside LAP. He is an identifiable project owner, so it counts for the 2026-12-01 review; he is not a maintainer of a venue.
 
+## FSIG issue #17: the outline for Vinay, reviewed by two models before posting (2026-10-26)
+
+Two replies to the 2026-10-16 Financial Services IG post (from Vinay R, who runs the FSIG meetings, inviting an outline; and from Sankalp Gilda, pointing to his outline, issue #17) were found ten days late. The drafted outline comment was reviewed by Sonnet 5.5 and Opus 5.5 (read-only, against Sankalp's issue, his corpus issue #213, his draft and our files). Both said: do not post as drafted. Corrected:
+
+- **Wrong mapping of the finance case (High):** King Yew Choo's lost-response case (MCP #3394) is a stored completion with a dropped response; in LAP that is the replay path (same result, same receipt). The indeterminate claim covers only an executor that died between the effect and the stored completion. The draft had conflated them and claimed the rule was "written for" the case.
+- **"Held permit = indeterminate claim" and "not counted twice" (High):** #213's worked case permits the retry and keys it on `requestDigest` (action, arguments, resource); LAP refuses a retry while the claim is open and keys it on the agent's signed idempotency key. That difference became the one question the comment asks.
+- **`limitDigest` (High):** names the document setting a cumulative limit; a Micro-Core passport carries a per-call cap and lives minutes; its digest fits `delegation.authorityDigest` instead.
+- **Receipt (Medium):** proves what the server signed given a pinned key, not that the effect happened; in Sankalp's tiers it is the executor's own, voluntary claim, and refusals get none.
+- **Stale references and missed events:** the live draft is draft-gilda-audit-agent-audit-record-00 (the WIMSE draft is replaced; -01 unpublished); PR #18 was closed by a maintainer on 2026-10-24 ("going a bit too far with specific use cases"); Sankalp presents the case himself on the 29th; Sid's practitioner comment (no retry; cancel; a booking reference as the stable identifier) supports the identifier rule. Offers the champions already own were cut; the comment shrank from 585 to about 300 words; the agenda line goes in the 29 October section before the 48-hour deadline and the Discord reply comes after it.
+- **Internal finding:** the Python reference returns an uncoded error for a passport whose issuer is not a `did:key` (`crypto_util.py`), which the extension draft's error table does not allow. To fix in 0.4.14 with a test.
+
+**Lesson:** check every channel we have posted in whenever Discord is signed in; and a comment on another champion's outline is reviewed against that champion's documents, not from memory of them.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*
