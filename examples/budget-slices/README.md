@@ -2,7 +2,7 @@
 
 When an agent delegates work and passes a budget down, the number it passes can be read two ways. As a **view** ("the remainder is $500"), every child sees the same number, and n children in parallel can spend n times the remainder before any report comes back. As a **slice** ("your allocation is $200 of my $500"), the parent checks at delegation time that the slices it issues never total more than it holds, and each child is bounded by its own number.
 
-This folder is the slice rule as eighteen test vectors and a dependency-free checker of under 200 lines:
+This folder is the slice rule as eighteen test vectors and a dependency-free checker of about 200 lines:
 
 ```bash
 python slice_check.py vectors.json       # one line per vector; exit 1 if any verdict differs from `expect` or any provenance state from `expect_provenance`
@@ -20,7 +20,7 @@ The rules are LIP-3 sections 4 and 6 of the [Living Agents Protocol](../../outpu
 
 Rule 6 was added on 21 October 2026 after a reply on the A2A thread: three slices each labelled "1 of 1" pass the arithmetic (SL-17) and fail on their labels, which pins "the budget was small" against "I was told my share wrongly". The outcome has **three states**, pinned per vector by `expect_provenance`: `consistent`; `inconsistent`, which fails the set; and `absent`, which leaves the arithmetic verdict unchanged and is reported beside it as "fan-out UNPROVABLE (no provenance)", so an unlabelled set reads "admissible, unprovable", never "consistent". The states were suggested by Roy Tong of AgentMeasure on the A2A thread. Provenance reveals the fan-out width to every child, so hiding it can be a privacy property of the draft; the billable side still needs one party (an issuer record or a ledger) to hold `{parent, ordinal, of}` in a form it cannot edit after the fact, or a dispute has no arbiter. Which party is the draft's decision, not the checker's.
 
-[CROSSWALK.md](CROSSWALK.md) maps AgentMeasure's DELEGATION-001..007 vectors against these six rules, by hand, since no vector can run through both tools: five agree, three agree through the LIP-3 library with caveats, two differ (an inherited spent counter has no slice analogue; and their 008b passes a roll-up on an allocation the slice rules refuse at issuance, SL-18), one is a different question (cycles), and twelve are out of scope on one side or the other. The clean match is one number held by N parties as if each owned it: their 005c, our SL-02.
+[CROSSWALK.md](CROSSWALK.md) maps AgentMeasure's DELEGATION-001..008 vectors against these six rules, by hand, since no vector can run through both tools: five agree, three agree through the LIP-3 library with caveats, two differ (an inherited spent counter has no slice analogue; and their 008b passes a roll-up on an allocation the slice rules refuse when its slices are checked as one set, SL-18), one is a different question (cycles), and twelve are out of scope on one side or the other. The clean match is one number held by N parties as if each owned it: their 005c, our SL-02.
 
 Rule 4 is the one most implementations miss, so the vectors spend four cases on it (SL-05 to SL-08). The trap: a daily parent of 100,000 hands 24 hourly children 4,166 each. Every child is under 1/24 of the parent and passes a per-child check; together they may spend 24 × 24 × 4,166 ≈ 2.4 million a day. Debiting in the parent's units (4,166 × 24 = 99,984 per child) makes the first child consume the parent and refuses the second.
 

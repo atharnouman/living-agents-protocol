@@ -581,7 +581,7 @@
    "expect": "reject",
    "expect_provenance": "absent",
    "parent": {
-    "max_per_tx": 350,
+    "max_per_tx": 1000,
     "unit": "USD",
     "window": "utc_day",
     "max_cumulative": 1000
@@ -606,7 +606,7 @@
      "max_cumulative": 350
     }
    ],
-   "note": "added 2026-10-26, mirroring the roll-up family's 008a/008b: the slices sum to 1050 > 1000, so the set is refused at issuance whatever the children later spend; the roll-up fails 008a (spend 1015) and passes 008b (spend 915) on the same allocation. One input, two layers"
+   "note": "added 2026-10-26, mirroring the roll-up family's 008a/008b: the slices sum to 1050 > 1000, so the set is refused when the three slices are checked as one set, whatever the children later spend; the roll-up fails 008a (spend 1015) and passes 008b (spend 915) on the same allocation. One input, two layers. His amounts are floats and are read here as exact integers; the parent's per-call ceiling equals its budget and each child's equals its slice, so no per-call rule can be the cause of the refusal. Issued one at a time, each slice passes a per-envelope check; LIP-3 section 6 leaves the sum to the issuer"
   }
  ]
 }
