@@ -341,5 +341,13 @@ Two replies to the 2026-10-16 Financial Services IG post (from Vinay R, who runs
 
 **Lesson:** check every channel we have posted in whenever Discord is signed in; and a comment on another champion's outline is reviewed against that champion's documents, not from memory of them.
 
+## FSIG issue #17: the champion adopts the signed key; an open case on authority replacement (2026-10-27)
+
+Source: `llm-collab/inbox/2026-10-27_fsig-17_sankalp-kingyew-replies.md`.
+
+- **Uptake:** Sankalp Gilda, champion of the FSIG "Regulatory audit & attestation" item, replied that both questions in the outline comment "land on real gaps, and the first was a bug in #213": his next draft adds `decision.operationKey`, taken from the agent's signed request (LAP's idempotency key), each held entry carries it, and his corpus gained CS1 to CS17 at commit 8f9cdc4a. First venue-level uptake of a LAP concept.
+- **Open case (King Yew Choo):** a payment held when the limit document is replaced. Reproduced against the reference: the claim survives (keyed by agent key and idempotency key, not by the authority document), but a retry after a cut below the amount is refused by the cap check before the stored result is found, so the receipt is unrecoverable; and a key reused for a different request still returns the first result instead of being refused.
+- **Proposed, pending the owner's decision:** recognise an existing claim right after the passport and signature checks and before the cap check (replay or refuse as in flight or indeterminate), and refuse a reused key whose request digest differs; both ports, tests, LIP-4 and the extension draft. Then answer King Yew and Sankalp, after a two-model review, before the FSIG call of 2026-10-29.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*
