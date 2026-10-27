@@ -45,9 +45,10 @@ from .mcp_extension import (
     sign_tool_call,
     tool_meta,
 )
-from .mcp_middleware import verify_envelope
+from .mcp_middleware import last_call_meta, verify_envelope
 from .microcore import (
     IdempotencyCache,
+    LapRefusal,
     NoEffect,
     check_invocation,
     claim_scope,
@@ -95,9 +96,11 @@ __all__ = [
     "microcore_cap_is_valid",
     "make_idempotency_cache",
     "IdempotencyCache",
+    "LapRefusal",
     "NoEffect",
     "claim_scope",
     "request_identity",
+    "last_call_meta",
     "mint_receipt",
     "verify_receipt",
     "verify_envelope",

@@ -14,6 +14,7 @@ from living_agents import (
     claim_scope,
     did_key_from_raw_public_key,
     lap_auth_from_meta,
+    request_identity,
     sign_jws,
     sign_tool_call,
     verify_envelope,
@@ -73,9 +74,11 @@ def test_middleware_refuses_an_indeterminate_key_without_executing_and_replays_t
         return pay(lap_auth=auth, **args)
 
     # A durable backend found the executor of this claim dead after the effect may have happened.
-    # Claims live in the scope (tenant, agent); the tenant defaults to the verified issuer (0.4.14).
-    scope = claim_scope({"iss": principal_did, "sub": agent_did})
-    cache.claim(scope, "k1")
+    # Claims live in the slot (audience, agent, key) with the tenant (the verified issuer by default)
+    # and the request identity recorded (0.4.14); a reservation without an identity would fail closed.
+    scope = claim_scope({"iss": principal_did, "sub": agent_did}, aud=SERVER_ID)
+    identity = request_identity(sign_tool_call(args, RESOURCE, passport, agent_key, agent_did, now, "k1")["signature_base"])
+    cache.claim(scope, "k1", identity)
     cache.mark_indeterminate(scope, "k1")
     with pytest.raises(ValueError, match="LAP_ERR_REPLAY: .*awaiting reconciliation"):
         call()

@@ -45,8 +45,12 @@ export function verifyRequestSignature({ passportJwt, sub, signatureBase, signat
   }
   const lines = signatureBase.split("\n");
   const findLine = (prefix) => lines.find((l) => l.startsWith(prefix));
-  for (const comp of ['"@method":', '"@target-uri":', '"content-digest":', '"lap-passport-hash":', '"@signature-params":']) {
-    if (!findLine(comp)) throw new Error(`LAP_ERR_SIG_PARAMS: missing covered component ${comp}`);
+  for (const comp of ['"@method":', '"@target-uri":', '"content-digest":', '"lap-passport-hash":', '"@signature-params":', '"idempotency-key":']) {
+    const count = lines.filter((l) => l.startsWith(comp)).length;
+    if (count === 0 && comp !== '"idempotency-key":') throw new Error(`LAP_ERR_SIG_PARAMS: missing covered component ${comp}`);
+    // One line per component (0.4.14): a second content-digest line could carry another request's
+    // digest beside the one the server matches, and so another request's identity.
+    if (count > 1) throw new Error(`LAP_ERR_SIG_PARAMS: duplicate covered component ${comp}`);
   }
   const expectedDigest = `"content-digest": sha-256=:${sha256B64url(requestBody)}:`;
   if (!lines.includes(expectedDigest)) throw new Error("LAP_ERR_DIGEST");
@@ -98,42 +102,59 @@ export function checkInvocation(envelope, { act, resource, amount, unit, enforce
   return true;
 }
 
-// Step 3 (0.4.14): the identity of a request for idempotency purposes: the signed `@method`,
-// `@target-uri` and `content-digest` lines of a VERIFIED signature base. Not the passport hash (a
-// retry under a replaced passport is the same request), not the key itself.
-export function requestIdentity(signatureBase) {
+// Step 3 (0.4.14): the identity of a request for idempotency purposes: the signed `@method` and
+// `@target-uri` lines of a VERIFIED signature base, and the content-digest line the server computes
+// itself from `requestBody` (when given; otherwise the base's single content-digest line). Not the
+// passport hash (a retry under a replaced passport is the same request), not the key itself. Each
+// component must appear exactly once.
+export function requestIdentity(signatureBase, requestBody) {
   const lines = signatureBase.split("\n");
-  const find = (prefix) => lines.find((line) => line.startsWith(prefix));
-  const method = find('"@method":'), target = find('"@target-uri":'), digest = find('"content-digest":');
-  if (method === undefined || target === undefined || digest === undefined) {
-    throw new Error("LAP_ERR_SIG_PARAMS: request identity needs the @method, @target-uri and content-digest lines");
-  }
+  const onlyLine = (prefix) => {
+    const found = lines.filter((line) => line.startsWith(prefix));
+    if (found.length !== 1) throw new Error(`LAP_ERR_SIG_PARAMS: expected exactly one ${prefix} line`);
+    return found[0];
+  };
+  const method = onlyLine('"@method":'), target = onlyLine('"@target-uri":'), signedDigest = onlyLine('"content-digest":');
+  const digest = requestBody !== undefined && requestBody !== null ? `"content-digest": sha-256=:${sha256B64url(requestBody)}:` : signedDigest;
   return [method, target, digest];
 }
 
-// The scope an idempotency claim lives in: [tenant, sub] from a VERIFIED passport payload. The
-// tenant is the server's F1 mapping of the verified issuer (`tenantOf(payload)`), by default the
-// normalised `iss` itself, so two principals never share a claim even through one agent key. A
-// `tenantOf` that returns nothing is an unknown principal (LAP_ERR_ISSUER). Never the passport
-// hash, the envelope or the audience: a claim survives authority replacement.
-export function claimScope(passportPayload, tenantOf) {
+// The scope an idempotency claim lives in, from a VERIFIED passport payload: [tenant, sub], or
+// [aud, tenant, sub] when the server's audience is given, so that one store serving two server
+// identities keeps their claims apart. The tenant is the server's F1 mapping of the verified
+// issuer (`tenantOf(payload)`), by default the normalised `iss` itself. A claim records its tenant:
+// the same agent key and key under an issuer the server does not map to the same tenant is
+// `tenant_mismatch` (LAP_ERR_ISSUER), neither replayed nor run again. A `tenantOf` that returns
+// nothing is an unknown principal (LAP_ERR_ISSUER). Never the passport hash or the envelope: a
+// claim survives authority replacement by the same signer or a mapped one.
+export function claimScope(passportPayload, tenantOf, aud) {
   const sub = passportPayload.sub;
   if (!sub) throw new Error("LAP_ERR_PASSPORT: sub missing");
   const tenant = tenantOf ? tenantOf(passportPayload) : normalizeDid(passportPayload.iss ?? "");
   if (typeof tenant !== "string" || tenant === "") throw new Error("LAP_ERR_ISSUER: no tenant for this issuer");
-  return [tenant, sub];
+  return aud ? [aud, tenant, sub] : [tenant, sub];
 }
 
-// Step 6 helper: idempotency cache keyed by scope [tenant, agent] and key. NUL separators prevent
-// key-splicing collisions. F6: `claim()` reserves atomically within one process, closing the
-// check-then-await-then-store race. NOT distributed — production deployments MUST back this with a
-// shared store (a unique constraint on (tenant, agent, key) whose row also holds the identity, or
-// Redis SET NX with a value) or a load balancer replays a signed key once per replica.
+// [audience, tenant, agent did] with "" for an absent audience or tenant.
+function splitScope(scope) {
+  if (typeof scope === "string") return ["", "", scope];
+  if (scope.length === 2) return ["", scope[0] ?? "", scope[1]];
+  return [scope[0] ?? "", scope[1] ?? "", scope[2]];
+}
+
+// Step 6 helper: idempotency cache. A slot is (audience, agent, key); the entry records the tenant
+// that reserved it, the request identity, the state, the result and its receipt. NUL separators
+// prevent key-splicing collisions. F6: `claim()` reserves atomically within one process (Node runs
+// this on one thread). NOT distributed — production deployments MUST back this with a shared store
+// (a unique constraint on (audience, agent, key) whose row also holds the tenant and the identity,
+// or Redis SET NX with a value) and fence complete() to its reservation, or a load balancer
+// replays a signed key once per replica.
 // Request identity (0.4.14): a reservation records the identity of the request it was made for
 // (`requestIdentity`); a later request with the same key and a different identity is `key_reuse`
-// in every state, never a replay and never a second execution. `lookup()` reads without
-// reserving, so a server can recognise an existing claim before it consults the envelope (LIP-4
-// §2 step 3) and refuse without creating anything.
+// in every state, never a replay and never a second execution; a row without an identity (the
+// legacy `store()`) fails closed against a lookup that carries one; a lookup from another tenant
+// is `tenant_mismatch`. `lookup()` reads without reserving, so a server can recognise an existing
+// claim before it consults the envelope (LIP-4 §2 step 3) and refuse without creating anything.
 // Recovery rule (LIP-4, 2026-10-21; raised on A2A #2323): the reservation is written before the
 // external effect, the completion after it. A claim whose executor died between the two is
 // INDETERMINATE: the effect may or may not have happened. It is refused on retry, never
@@ -144,86 +165,97 @@ export function claimScope(passportPayload, tenantOf) {
 // Retention is a published server policy, independent of passport lifetime.
 export function makeIdempotencyCache() {
   const seen = new Map();
-  const k = (scope, idempotencyKey) => {
-    const [tenant, sub] = typeof scope === "string" ? ["", scope] : [scope[0] ?? "", scope[1]];
-    return `${tenant}\u0000${sub}\u0000${idempotencyKey}`;
+  const slot = (scope, idempotencyKey) => {
+    const [aud, , sub] = splitScope(scope);
+    return `${aud}\u0000${sub}\u0000${idempotencyKey}`;
   };
   const sameIdentity = (a, b) => a.length === b.length && a.every((line, i) => line === b[i]);
-  const status = (entry, identity) => {
-    if (identity && entry.identity && !sameIdentity([...identity], entry.identity)) return { status: "key_reuse" };
+  const status = (entry, tenant, identity) => {
+    if (entry.tenant !== tenant) return { status: "tenant_mismatch" };
+    if (identity && (entry.identity === null || !sameIdentity([...identity], entry.identity))) return { status: "key_reuse" };
     if (entry.state === "reserved") return { status: "in_flight" };
     if (entry.state === "indeterminate") return { status: "indeterminate" };
-    return { status: "completed", receipt: entry.result };
+    const out = { status: "completed", receipt: entry.result };
+    if (entry.lapReceipt !== null) out.lap_receipt = entry.lapReceipt;
+    return out;
+  };
+  const owned = (scope, idempotencyKey) => {
+    const entry = seen.get(slot(scope, idempotencyKey));
+    if (entry !== undefined && entry.tenant !== splitScope(scope)[1]) throw new Error("LAP_ERR_ISSUER: this claim belongs to another tenant");
+    return entry;
   };
   return {
-    // Recognise without reserving: absent | key_reuse | in_flight | indeterminate | completed.
+    // Recognise without reserving: absent | tenant_mismatch | key_reuse | in_flight | indeterminate | completed.
     lookup(scope, idempotencyKey, identity) {
-      const entry = seen.get(k(scope, idempotencyKey));
-      return entry === undefined ? { status: "absent" } : status(entry, identity);
+      const entry = seen.get(slot(scope, idempotencyKey));
+      return entry === undefined ? { status: "absent" } : status(entry, splitScope(scope)[1], identity);
     },
     // F1 (v0.4.10): atomic reservation. A binary null return could not tell a FRESH reservation
     // from an IN-FLIGHT one, so two concurrent mutating requests both saw "free" and both
     // executed. Callers proceed ONLY on {status:"reserved"}; {status:"in_flight"} is a duplicate
     // to reject (HTTP 409); {status:"indeterminate"} is a duplicate to reject until
     // reconciliation; {status:"completed"} returns the stored result; {status:"key_reuse"}
-    // (0.4.14) is the same key for a different request, refused in every state (HTTP 422).
-    // `meta` (the executing passport hash, the reservation time) stays with the reservation.
+    // (0.4.14) is the same key for a different request (HTTP 422) and {status:"tenant_mismatch"}
+    // the same key under an unmapped issuer, both refused in every state. `meta` (the executing
+    // passport hash, the reservation time) stays with the reservation.
     claim(scope, idempotencyKey, identity, meta) {
-      const key = k(scope, idempotencyKey);
+      const key = slot(scope, idempotencyKey);
       const entry = seen.get(key);
       if (entry === undefined) {
-        seen.set(key, { state: "reserved", identity: identity ? [...identity] : null, result: null, meta: { ...(meta ?? {}) } });
+        seen.set(key, { state: "reserved", tenant: splitScope(scope)[1], identity: identity ? [...identity] : null,
+                        result: null, lapReceipt: null, meta: { ...(meta ?? {}) } });
         return { status: "reserved" };
       }
-      return status(entry, identity);
+      return status(entry, splitScope(scope)[1], identity);
     },
-    // Store the result for a reserved claim, or for an indeterminate one once reconciliation
-    // found that the effect happened.
-    complete(scope, idempotencyKey, receipt) {
-      const key = k(scope, idempotencyKey);
-      const entry = seen.get(key) ?? { state: "reserved", identity: null, result: null, meta: {} };
+    // Store the result (and, apart from it, its receipt object) for a reserved claim, or for an
+    // indeterminate one once reconciliation found that the effect happened. Fenced: there must be
+    // a reservation, in this tenant, and a completed claim is never overwritten.
+    complete(scope, idempotencyKey, receipt, lapReceipt = null) {
+      const entry = owned(scope, idempotencyKey);
+      if (entry === undefined) throw new Error("LAP_ERR_REPLAY: complete() needs a reservation (claim() first)");
+      if (entry.state === "completed") throw new Error("LAP_ERR_REPLAY: claim already completed; a slow executor must not overwrite it");
       entry.state = "completed";
       entry.result = receipt;
-      seen.set(key, entry);
+      entry.lapReceipt = lapReceipt;
     },
     // The executor holding this in-flight claim died (or threw) before storing its completion.
     markIndeterminate(scope, idempotencyKey) {
-      const entry = seen.get(k(scope, idempotencyKey));
+      const entry = owned(scope, idempotencyKey);
       if (entry === undefined || entry.state !== "reserved") throw new Error("LAP_ERR_REPLAY: only an in-flight claim can become indeterminate");
       entry.state = "indeterminate";
     },
     // Reconciliation found that the effect did not happen: the next request with this key
     // executes fresh. An in-flight claim cannot be released; its executor may still be running.
     release(scope, idempotencyKey) {
-      const key = k(scope, idempotencyKey);
-      const entry = seen.get(key);
+      const entry = owned(scope, idempotencyKey);
       if (entry === undefined || entry.state !== "indeterminate") throw new Error("LAP_ERR_REPLAY: only an indeterminate claim can be released, after reconciliation");
-      seen.delete(key);
+      seen.delete(slot(scope, idempotencyKey));
     },
     // The executor that holds this reservation reports that the effect never began: forget it.
     // Only the reserving executor may say so, and only for an in-flight claim.
     abandon(scope, idempotencyKey) {
-      const key = k(scope, idempotencyKey);
-      const entry = seen.get(key);
+      const entry = owned(scope, idempotencyKey);
       if (entry === undefined || entry.state !== "reserved") throw new Error("LAP_ERR_REPLAY: only the in-flight claim of a tool that reported no effect can be abandoned");
-      seen.delete(key);
+      seen.delete(slot(scope, idempotencyKey));
     },
-    // What the reservation recorded (identity, executing passport hash, time), for reconciliation.
+    // What the reservation recorded (tenant, identity, executing passport hash, time), for reconciliation.
     meta(scope, idempotencyKey) {
-      const entry = seen.get(k(scope, idempotencyKey));
-      return entry === undefined ? null : { state: entry.state, identity: entry.identity, ...entry.meta };
+      const entry = seen.get(slot(scope, idempotencyKey));
+      return entry === undefined ? null : { state: entry.state, tenant: entry.tenant, identity: entry.identity, ...entry.meta };
     },
-    // Legacy read (pre-0.4.10): the stored result of a completed claim; undefined for no claim,
-    // null for one that is in flight or indeterminate (no result yet).
+    // Legacy read (pre-0.4.10): the stored result of a completed claim in this tenant; undefined
+    // for no claim, null for one that is in flight, indeterminate or another tenant's.
     check(scope, idempotencyKey) {
-      const entry = seen.get(k(scope, idempotencyKey));
+      const entry = seen.get(slot(scope, idempotencyKey));
       if (entry === undefined) return undefined;
-      return entry.state === "completed" ? entry.result : null;
+      return entry.state === "completed" && entry.tenant === splitScope(scope)[1] ? entry.result : null;
     },
-    // Legacy write (pre-0.4.10): complete without a prior reservation. Prefer claim() then complete().
+    // Legacy write (pre-0.4.10): complete without a prior reservation. Deprecated: a row stored
+    // without an identity fails closed against any lookup that carries one. Prefer claim() then complete().
     store(scope, idempotencyKey, receipt, identity) {
-      this.complete(scope, idempotencyKey, receipt);
-      if (identity) seen.get(k(scope, idempotencyKey)).identity = [...identity];
+      seen.set(slot(scope, idempotencyKey), { state: "completed", tenant: splitScope(scope)[1],
+        identity: identity ? [...identity] : null, result: receipt, lapReceipt: null, meta: {} });
     },
   };
 }

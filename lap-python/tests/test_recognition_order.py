@@ -88,7 +88,7 @@ def refuses(fn, pp, args, key, code, **kw):
 
 
 def scope_a():
-    return claim_scope({"iss": PRINCIPAL_A_DID, "sub": AGENT_DID})
+    return claim_scope({"iss": PRINCIPAL_A_DID, "sub": AGENT_DID}, aud=SERVER_ID)
 
 
 ARGS = {"invoice": "INV-1", "amount": 500, "unit": "USD"}
@@ -171,14 +171,18 @@ def test_a_held_claim_is_recognised_under_a_replaced_passport_not_refused_as_new
 
 
 def test_two_principals_sharing_an_agent_key_never_share_a_claim():
+    """A second signer presenting the same agent key and key (another principal, or the same
+    principal's rotated key without a tenant mapping) is refused: neither replayed nor run again."""
     cache = IdempotencyCache()
     pay, runs = tool(cache)
     pp_a = passport(envelope())
     pp_b = passport(envelope(), PRINCIPAL_B, PRINCIPAL_B_DID)
 
     call(pay, pp_a, ARGS, "k1")
-    second = call(pay, pp_b, ARGS, "k1")                                # same agent key, key and arguments
-    assert runs == ["INV-1", "INV-1"] and "_lap_replayed" not in second  # a separate operation, executed
+    refuses(pay, pp_b, ARGS, "k1", "LAP_ERR_ISSUER: idempotency key already held under another issuer")
+    refuses(pay, passport(envelope(cap=5000), PRINCIPAL_B, PRINCIPAL_B_DID), ARGS, "k1", "LAP_ERR_ISSUER")  # a raise by the other signer runs nothing
+    assert runs == ["INV-1"]                                            # not executed twice, not disclosed
+    assert cache.lookup(scope_a(), "k1")["status"] == "completed"       # the first tenant's claim is untouched
 
     one_tenant = IdempotencyCache()
     pay, runs = tool(one_tenant, tenant_of=lambda payload: "tenant-shared")

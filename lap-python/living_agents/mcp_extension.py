@@ -20,8 +20,8 @@ import json
 from typing import Any, Callable, Dict, Mapping, Optional
 
 from .crypto_util import b64url_encode, jcs, sha256_b64url, sha256_hex
-from .mcp_middleware import verify_envelope
-from .microcore import IdempotencyCache
+from .mcp_middleware import last_call_meta, verify_envelope
+from .microcore import IdempotencyCache, LapRefusal
 
 EXTENSION_ID = "io.github.atharnouman/lap-microcore"
 META_KEY = EXTENSION_ID  # the same key names the object in request _meta, result _meta and tool _meta
@@ -252,10 +252,13 @@ def lap_tool(
                 raise ToolError(f"LAP_ERR_AUTH_MISSING: request _meta lacks {META_KEY}")
             try:
                 result = guarded(*args, lap_auth=lap_auth, **kwargs)
-            except ValueError as e:  # a typed LAP_ERR_* refusal; nothing else about the server leaks
+            except LapRefusal as e:  # a typed LAP_ERR_* refusal, raised before the tool ran; nothing else leaks
                 raise ToolError(str(e)) from e
-            receipt = result.pop("_lap_receipt", None) if isinstance(result, dict) else None
-            replayed = bool(result.pop("_lap_replayed", False)) if isinstance(result, dict) else False
+            # A tool's own exception is not a refusal: it propagates to the SDK (the claim is
+            # indeterminate, or abandoned after NoEffect) and is reported as a tool error.
+            info = last_call_meta() or {}
+            receipt = (result.pop("_lap_receipt", None) if isinstance(result, dict) else None) or info.get("receipt")
+            replayed = (bool(result.pop("_lap_replayed", False)) if isinstance(result, dict) else False) or bool(info.get("replayed"))
             return _call_tool_result(types, result, receipt, replayed)
 
         # What the SDK inspects: the tool's own parameters plus the context, returning a CallToolResult.

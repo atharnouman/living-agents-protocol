@@ -15,7 +15,7 @@ V = json.loads(VECTORS_PATH.read_text(encoding="utf-8"))
 
 
 def _scope(scope):
-    return scope if isinstance(scope, str) else (scope[0], scope[1])
+    return scope if isinstance(scope, str) else tuple(scope)
 
 
 def _identity(name):
@@ -31,11 +31,14 @@ def run(vector):
             assert out["status"] == step["expect"], where
             if "expect_result" in step:
                 assert out["receipt"] == step["expect_result"], where
-        elif op == "complete":
-            cache.complete(_scope(step["scope"]), step["key"], step["result"])
-        elif op in ("mark_indeterminate", "release", "abandon"):
+        elif op == "store":
+            cache.store(_scope(step["scope"]), step["key"], step["result"], _identity(step.get("identity")))
+        elif op in ("complete", "mark_indeterminate", "release", "abandon"):
             try:
-                getattr(cache, op)(_scope(step["scope"]), step["key"])
+                if op == "complete":
+                    cache.complete(_scope(step["scope"]), step["key"], step["result"])
+                else:
+                    getattr(cache, op)(_scope(step["scope"]), step["key"])
                 got = "ok"
             except ValueError:
                 got = "error"
@@ -58,7 +61,8 @@ def test_replay_vector(vector):
     run(vector)
 
 
-def test_the_vector_file_covers_the_three_faults_the_reviews_found():
+def test_the_vector_file_covers_the_faults_the_reviews_found():
     names = " ".join(v["name"] for v in V["vectors"])
-    assert "cap was cut" in names and "another request" in names and "two principals" in names
-    assert len(V["vectors"]) >= 15
+    for phrase in ("cap was cut", "another request", "two principals", "without an identity", "never overwritten", "audiences"):
+        assert phrase in names, phrase
+    assert len(V["vectors"]) >= 18

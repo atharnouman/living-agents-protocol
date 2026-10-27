@@ -73,7 +73,7 @@ def build_chain(path=None):
             if key is not None:
                 auth["idempotency_key"] = key
         # Claims live in the scope (tenant, agent): the tenant is the verified issuer by default (0.4.14).
-        replay = (cache.check(claim_scope(claims), key) is not None) if (with_passport and key) else None
+        replay = (cache.check(claim_scope(claims, aud=SERVER_ID), key) is not None) if (with_passport and key) else None
         receipt = None
         try:
             if auth is None:

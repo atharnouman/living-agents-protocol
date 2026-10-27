@@ -8,14 +8,14 @@
 | `90986f3e0f93d6276df44dda80f697568c828fa4d9cd20bb6b423b6254dbb140` | lip/LIP-1-agent-passport-draft.md (v0.4.8, canonical base64url MUST) |
 | `81747e9475cc9c4125934dea4f2d9d83854f1fdfe997ea879d2abf5c172e88ac` | lip/LIP-2-meet-draft.md |
 | `a0d34f0fc066af9447a287b60e31a55d0f6e36670fdc20d7925b48b1985e8ffd` | lip/LIP-3-scope-algebra-v0-draft.md (v0.4, review pass) |
-| `f40a1ea98cc207c25122abf227d06c09b3730e0602be08749b80717dd6b8d00a` | lip/LIP-4-micro-core-draft.md (v0.4.10 hardening; errata 2026-10-17 on the amount rule and 2026-10-28 on recognition before authority, §2 step 3; re-stamped 2026-10-28, pending upgrade) |
+| `827d752e6c6035c82cb415e20921d5dbc198c87d26d65a2dc2d80c0951858d05` | lip/LIP-4-micro-core-draft.md (v0.4.10 hardening; errata 2026-10-17 on the amount rule and 2026-10-28 on recognition before authority, §2 step 3; re-stamped 2026-10-28, pending upgrade) |
 | `b389bf8335e928609c9cbdc7828d3e23c35486ece607527503cacc1adbf28fb5` | lip/test-vectors/vectors.json (unchanged since first stamp) |
 | `85df4217bc1cd7c675308c284f6a286fc9b6c0dceebfde5ff8d89c8bbbcec106` | lip/test-vectors/microcore-cap-vectors.json (25 cap and amount vectors, first stamped 2026-10-17, confirmed) |
-| `334177edf68c04f7950e88eaf819f13a93aa2ff6f244b0e649e9240ee7f8cfdb` | lip/test-vectors/microcore-replay-vectors.json (15 stateful replay vectors, first stamped 2026-10-28, pending upgrade) |
+| `e83f7646ca2458e37bad85bd266e340881e7e06d78a66e8732600b10ed434ebf` | lip/test-vectors/microcore-replay-vectors.json (18 stateful replay vectors, first stamped 2026-10-28 and restamped the same day after the third review, pending upgrade) |
 | `563deaa95bb6f4bef1fba1974abb6a36b6159026341a3d2c0404afd90485ab48` | LAP-position-paper.md (v1.2-draft) |
 | `4bf89b8a5b1a188d52584a20721881113ab7d2610fa2d4c60d44a29bb7f652ef` | LAP-essay.md (October 2026 byline; corrected 2026-10-16 per the A2A review, re-stamped, confirmed) |
-| `bcc2c52474a6d6336fbfef71a21bdf34bf60a9b52e6ce6e370b10bdcc9d7629a` | ../README.md as released with 0.4.14 (v0.4.10 spec; libraries 0.4.14; Node 85/85, Python 186/186; the 28 October status sentence; re-stamped 2026-10-28, pending upgrade) |
-| `f07ed1fbf08375a3d356dfdeb8ec0c126e94a3418643831fc5c23f80a9e04f3d` | lip/LIP-4-mcp-extension-draft.md (v0.4 draft, 2026-10-28: recognition before the envelope, tenant scope, request identity, two refusal codes; re-stamped 2026-10-28, pending upgrade) |
+| `67714e645946e56be14540a2347b5aa8707b981bb47664d1170d54aa0794e1db` | ../README.md as released with 0.4.14 (v0.4.10 spec; libraries 0.4.14; Node 88/88, Python 199/199; the 28 October status sentence; re-stamped 2026-10-28 (second stamping of the day), pending upgrade) |
+| `ee8db683fa6bb0ad7721f481cd1bffe2d69e7b8aab69936b8274ea16dffdb9cf` | lip/LIP-4-mcp-extension-draft.md (v0.4 draft, 2026-10-28: recognition before the envelope, tenant scope, request identity, two refusal codes, second pass after the third review; re-stamped 2026-10-28, pending upgrade) |
 
 ## Status and how to use
 

@@ -3,6 +3,7 @@ LIP-4 Micro-Core: Server-side verification invariant, idempotency cache, and tri
 """
 
 import hmac
+import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -65,6 +66,9 @@ def verify_microcore_passport(
     return payload
 
 
+COVERED_COMPONENTS = ('"@method":', '"@target-uri":', '"content-digest":', '"lap-passport-hash":', '"@signature-params":')
+
+
 def verify_request_signature(
     passport_jwt: str,
     sub: str,
@@ -78,8 +82,8 @@ def verify_request_signature(
 
     F2: the verification key is derived from the verified passport's ``sub``
     (holder-of-key), never from a caller-supplied DID. F3: the mandatory covered
-    components must be present, compared to server-observed method/target when given.
-    Byte-exact line matching stays strict (CRLF/trim tolerance rejected three times).
+    components must be present, exactly once each, compared to server-observed method/target
+    when given. Byte-exact line matching stays strict (CRLF/trim tolerance rejected three times).
     """
     if not sub:
         raise ValueError("LAP_ERR_REQ_SIG: sub (verified passport subject) required")
@@ -93,9 +97,14 @@ def verify_request_signature(
     def find_line(prefix: str) -> Optional[str]:
         return next((line for line in lines if line.startswith(prefix)), None)
 
-    for comp in ('"@method":', '"@target-uri":', '"content-digest":', '"lap-passport-hash":', '"@signature-params":'):
-        if find_line(comp) is None:
+    for comp in COVERED_COMPONENTS + ('"idempotency-key":',):
+        count = sum(1 for line in lines if line.startswith(comp))
+        if count == 0 and comp != '"idempotency-key":':
             raise ValueError(f"LAP_ERR_SIG_PARAMS: missing covered component {comp}")
+        if count > 1:
+            # One line per component (0.4.14): a second content-digest line could carry another
+            # request's digest beside the one the server matches, and so another request's identity.
+            raise ValueError(f"LAP_ERR_SIG_PARAMS: duplicate covered component {comp}")
 
     expected_digest = f'"content-digest": sha-256=:{sha256_b64url(request_body)}:'
     if expected_digest not in lines:
@@ -128,7 +137,7 @@ def is_exact_amount(value: Any) -> bool:
 def microcore_cap_is_valid(cap: Any) -> bool:
     """LIP-4 cap schema, checked before any comparison: ``max_per_tx`` a non-negative exact
     integer within the interop bound, ``unit`` a non-empty string. ``max_cumulative`` and
-    ``window`` are informational in Micro-Core (LIP-4 §2 step 4), so they are not validated
+    ``window`` are informational in Micro-Core (LIP-4 §2 step 5), so they are not validated
     here; the full LIP-3 shape is ``algebra.cap_is_valid``. Returns False, never raises."""
     if not isinstance(cap, dict):
         return False
@@ -182,8 +191,15 @@ def check_invocation(
 
 # --------------------------------------------------------------------------- idempotency (step 3 and step 6)
 
-Scope = Union[str, Tuple[Optional[str], str]]          # (tenant, agent did); a bare agent did means no tenant
-Identity = Tuple[str, str, str]                        # the signed "@method", "@target-uri" and "content-digest" lines
+Scope = Union[str, Tuple[Optional[str], str], Tuple[Optional[str], Optional[str], str]]
+# a bare agent did (no tenant, no audience); (tenant, agent did); or (audience, tenant, agent did)
+Identity = Tuple[str, str, str]  # the signed "@method" and "@target-uri" lines and the server's content-digest line
+
+
+class LapRefusal(ValueError):
+    """A typed ``LAP_ERR_*`` refusal raised by the middleware before the tool ran; the message
+    starts with the code. A tool's own exceptions are never wrapped in it, so a binding can tell
+    a refusal from the failure of a tool that did run (0.4.14)."""
 
 
 class NoEffect(Exception):
@@ -193,33 +209,41 @@ class NoEffect(Exception):
     (LIP-4 recovery rule): the effect may have happened, and only reconciliation can say."""
 
 
-def request_identity(signature_base: str) -> Identity:
+def request_identity(signature_base: str, request_body: Optional[str] = None) -> Identity:
     """The identity of a request for idempotency purposes (LIP-4 §2 step 3, 0.4.14): the signed
-    ``@method``, ``@target-uri`` and ``content-digest`` lines of a VERIFIED signature base. Not the
-    passport hash (a retry under a replaced passport is the same request), not the key itself.
-    Call it only after ``verify_request_signature`` accepted the base."""
+    ``@method`` and ``@target-uri`` lines of a VERIFIED signature base, and the content-digest line
+    the server computes itself from ``request_body`` (when given; otherwise the base's single
+    content-digest line). Not the passport hash (a retry under a replaced passport is the same
+    request), not the key itself. Each component must appear exactly once."""
     lines = signature_base.split("\n")
 
-    def find_line(prefix: str) -> Optional[str]:
-        return next((line for line in lines if line.startswith(prefix)), None)
+    def only_line(prefix: str) -> str:
+        found = [line for line in lines if line.startswith(prefix)]
+        if len(found) != 1:
+            raise ValueError(f"LAP_ERR_SIG_PARAMS: expected exactly one {prefix} line")
+        return found[0]
 
-    method, target, digest = find_line('"@method":'), find_line('"@target-uri":'), find_line('"content-digest":')
-    if method is None or target is None or digest is None:
-        raise ValueError("LAP_ERR_SIG_PARAMS: request identity needs the @method, @target-uri and content-digest lines")
+    method, target, signed_digest = only_line('"@method":'), only_line('"@target-uri":'), only_line('"content-digest":')
+    digest = f'"content-digest": sha-256=:{sha256_b64url(request_body)}:' if request_body is not None else signed_digest
     return (method, target, digest)
 
 
 def claim_scope(
     passport_payload: Dict[str, Any],
     tenant_of: Optional[Callable[[Dict[str, Any]], Optional[str]]] = None,
-) -> Tuple[str, str]:
-    """The scope an idempotency claim lives in: ``(tenant, sub)`` from a VERIFIED passport payload.
+    aud: Optional[str] = None,
+) -> Tuple[str, ...]:
+    """The scope an idempotency claim lives in, from a VERIFIED passport payload: ``(tenant, sub)``,
+    or ``(aud, tenant, sub)`` when the server's audience is given, so that one store serving two
+    server identities keeps their claims apart.
 
     The tenant is the server's F1 mapping of the verified issuer (``tenant_of(payload)``), by
-    default the normalised ``iss`` itself, so two principals never share a claim even through one
-    agent key, and a principal that rotates its key keeps its claims only when the server maps both
-    keys to one tenant. A ``tenant_of`` that returns nothing is an unknown principal (``LAP_ERR_ISSUER``).
-    Never the passport hash, the envelope or the audience: a claim survives authority replacement.
+    default the normalised ``iss`` itself. A claim records its tenant: the same agent key and key
+    under an issuer the server does not map to the same tenant is refused (``tenant_mismatch``,
+    reported as ``LAP_ERR_ISSUER``), neither replayed nor run again, so a signer change never
+    executes an operation twice and never discloses it across principals. A ``tenant_of`` that
+    returns nothing is an unknown principal (``LAP_ERR_ISSUER``). Never the passport hash or the
+    envelope: a claim survives authority replacement by the same signer or a mapped one.
     """
     sub = passport_payload.get("sub")
     if not sub:
@@ -227,22 +251,37 @@ def claim_scope(
     tenant = tenant_of(passport_payload) if tenant_of is not None else normalize_did(passport_payload.get("iss", ""))
     if not isinstance(tenant, str) or not tenant:
         raise ValueError("LAP_ERR_ISSUER: no tenant for this issuer")
-    return (tenant, sub)
+    return (aud, tenant, sub) if aud else (tenant, sub)
+
+
+def _split_scope(scope: Scope) -> Tuple[str, str, str]:
+    """``(audience, tenant, agent did)`` with ``""`` for an absent audience or tenant."""
+    if isinstance(scope, str):
+        return "", "", scope
+    if len(scope) == 2:
+        tenant, sub = scope
+        return "", tenant or "", sub
+    aud, tenant, sub = scope
+    return aud or "", tenant or "", sub
 
 
 class IdempotencyCache:
-    """Helper: in-memory idempotency cache keyed by scope ``(tenant, agent_did)`` and key.
+    """Helper: in-memory idempotency cache. A slot is ``(audience, agent_did, key)``; the entry
+    records the tenant that reserved it, the request identity, the state, the result and its receipt.
 
-    F6: ``claim()`` reserves atomically within one process, closing the check-then-store race. NOT
-    distributed: production deployments MUST back this with a shared store (a unique constraint on
-    (tenant, agent, key) whose row also holds the identity, or Redis ``SET NX`` with a value), or a
-    load balancer replays a signed key once per replica.
+    F6: ``claim()`` reserves atomically within one process (a lock closes the check-then-store
+    race between threads). NOT distributed: production deployments MUST back this with a shared
+    store (a unique constraint on (audience, agent, key) whose row also holds the tenant and the
+    identity, or Redis ``SET NX`` with a value) and fence ``complete()`` to the reservation it
+    belongs to, or a load balancer replays a signed key once per replica.
 
     Request identity (0.4.14): a reservation records the identity of the request it was made for
     (``request_identity``); a later request with the same key and a different identity is
-    ``key_reuse`` in every state, never a replay and never a second execution. ``lookup()`` reads
-    without reserving, so a server can recognise an existing claim before it consults the
-    envelope (LIP-4 §2 step 3) and refuse without creating anything.
+    ``key_reuse`` in every state, never a replay and never a second execution. A row without an
+    identity (the legacy ``store()``) fails closed against a lookup that carries one. A reservation
+    also records its tenant; a lookup from another tenant is ``tenant_mismatch``. ``lookup()`` reads
+    without reserving, so a server can recognise an existing claim before it consults the envelope
+    (LIP-4 §2 step 3) and refuse without creating anything.
 
     Recovery rule (LIP-4, 2026-10-21; raised on A2A #2323): the reservation is written before the
     external effect, the completion after it. A claim whose executor died between the two is
@@ -256,102 +295,129 @@ class IdempotencyCache:
 
     def __init__(self) -> None:
         self._seen: Dict[str, Dict[str, Any]] = {}
+        self._lock = threading.RLock()
 
     @staticmethod
-    def _key(scope: Scope, idempotency_key: str) -> str:
-        if isinstance(scope, str):
-            tenant, sub = "", scope
-        else:
-            tenant, sub = scope
-        return f"{tenant or ''}\u0000{sub}\u0000{idempotency_key}"
+    def _slot(scope: Scope, idempotency_key: str) -> str:
+        aud, _tenant, sub = _split_scope(scope)
+        return f"{aud}\u0000{sub}\u0000{idempotency_key}"
 
     @staticmethod
-    def _status(entry: Dict[str, Any], identity: Optional[Identity]) -> Dict[str, Any]:
-        stored = entry.get("identity")
-        if identity is not None and stored is not None and tuple(identity) != tuple(stored):
+    def _status(entry: Dict[str, Any], tenant: str, identity: Optional[Identity]) -> Dict[str, Any]:
+        if entry["tenant"] != tenant:
+            return {"status": "tenant_mismatch"}
+        if identity is not None and (entry["identity"] is None or tuple(identity) != tuple(entry["identity"])):
             return {"status": "key_reuse"}
         if entry["state"] == "reserved":
             return {"status": "in_flight"}
         if entry["state"] == "indeterminate":
             return {"status": "indeterminate"}
-        return {"status": "completed", "receipt": entry["result"]}
+        out: Dict[str, Any] = {"status": "completed", "receipt": entry["result"]}
+        if entry["lap_receipt"] is not None:
+            out["lap_receipt"] = entry["lap_receipt"]
+        return out
+
+    def _entry(self, scope: Scope, idempotency_key: str) -> Optional[Dict[str, Any]]:
+        entry = self._seen.get(self._slot(scope, idempotency_key))
+        if entry is not None and entry["tenant"] != _split_scope(scope)[1]:
+            raise ValueError("LAP_ERR_ISSUER: this claim belongs to another tenant")
+        return entry
 
     def lookup(self, scope: Scope, idempotency_key: str, identity: Optional[Identity] = None) -> Dict[str, Any]:
-        """Recognise without reserving: ``absent``, ``key_reuse``, ``in_flight``, ``indeterminate`` or
-        ``completed`` (with the stored result under ``receipt``). Nothing is written."""
-        entry = self._seen.get(self._key(scope, idempotency_key))
-        if entry is None:
-            return {"status": "absent"}
-        return self._status(entry, identity)
+        """Recognise without reserving: ``absent``, ``tenant_mismatch``, ``key_reuse``, ``in_flight``,
+        ``indeterminate`` or ``completed`` (with the stored result under ``receipt`` and, when one
+        was minted, its receipt object under ``lap_receipt``). Nothing is written."""
+        with self._lock:
+            entry = self._seen.get(self._slot(scope, idempotency_key))
+            if entry is None:
+                return {"status": "absent"}
+            return self._status(entry, _split_scope(scope)[1], identity)
 
     def claim(self, scope: Scope, idempotency_key: str, identity: Optional[Identity] = None,
               meta: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """F1 (v0.4.10): atomic reservation. Callers proceed ONLY on {"status": "reserved"};
         "in_flight" is a duplicate to reject; "indeterminate" is a duplicate to reject until
         reconciliation; "completed" returns the stored result; "key_reuse" (0.4.14) is the same key
-        presented for a different request, refused in every state. ``meta`` (the executing passport
-        hash, the reservation time) is kept with the reservation for reconciliation and audit."""
-        key = self._key(scope, idempotency_key)
-        entry = self._seen.get(key)
-        if entry is None:
-            self._seen[key] = {"state": "reserved", "identity": tuple(identity) if identity else None,
-                               "result": None, "meta": dict(meta or {})}
-            return {"status": "reserved"}
-        return self._status(entry, identity)
+        presented for a different request, and "tenant_mismatch" the same key under an issuer the
+        server does not map to this tenant, both refused in every state. ``meta`` (the executing
+        passport hash, the reservation time) is kept with the reservation for reconciliation and audit."""
+        with self._lock:
+            slot = self._slot(scope, idempotency_key)
+            entry = self._seen.get(slot)
+            if entry is None:
+                self._seen[slot] = {"state": "reserved", "tenant": _split_scope(scope)[1],
+                                    "identity": tuple(identity) if identity else None,
+                                    "result": None, "lap_receipt": None, "meta": dict(meta or {})}
+                return {"status": "reserved"}
+            return self._status(entry, _split_scope(scope)[1], identity)
 
-    def complete(self, scope: Scope, idempotency_key: str, receipt: Any) -> None:
-        """Store the result (with its receipt) for a reserved claim, or for an indeterminate
-        one once reconciliation found that the effect happened."""
-        key = self._key(scope, idempotency_key)
-        entry = self._seen.setdefault(key, {"state": "reserved", "identity": None, "result": None, "meta": {}})
-        entry["state"], entry["result"] = "completed", receipt
+    def complete(self, scope: Scope, idempotency_key: str, receipt: Any, lap_receipt: Optional[Dict[str, str]] = None) -> None:
+        """Store the result (``receipt`` is its legacy parameter name; ``lap_receipt`` is the receipt
+        object, kept apart so that a result that is not a dict still has one) for a reserved claim,
+        or for an indeterminate one once reconciliation found that the effect happened. Fenced:
+        there must be a reservation, in this tenant, and a completed claim is never overwritten."""
+        with self._lock:
+            entry = self._entry(scope, idempotency_key)
+            if entry is None:
+                raise ValueError("LAP_ERR_REPLAY: complete() needs a reservation (claim() first)")
+            if entry["state"] == "completed":
+                raise ValueError("LAP_ERR_REPLAY: claim already completed; a slow executor must not overwrite it")
+            entry["state"], entry["result"], entry["lap_receipt"] = "completed", receipt, lap_receipt
 
     def mark_indeterminate(self, scope: Scope, idempotency_key: str) -> None:
         """The executor holding this in-flight claim is known to have died (or raised) before
         storing its completion. Only an in-flight claim can become indeterminate."""
-        entry = self._seen.get(self._key(scope, idempotency_key))
-        if entry is None or entry["state"] != "reserved":
-            raise ValueError("LAP_ERR_REPLAY: only an in-flight claim can become indeterminate")
-        entry["state"] = "indeterminate"
+        with self._lock:
+            entry = self._entry(scope, idempotency_key)
+            if entry is None or entry["state"] != "reserved":
+                raise ValueError("LAP_ERR_REPLAY: only an in-flight claim can become indeterminate")
+            entry["state"] = "indeterminate"
 
     def release(self, scope: Scope, idempotency_key: str) -> None:
         """Reconciliation found that the effect did not happen: forget the claim, so the next
         request with this key executes fresh. Only an indeterminate claim can be released;
         an in-flight one may still be executing."""
-        key = self._key(scope, idempotency_key)
-        entry = self._seen.get(key)
-        if entry is None or entry["state"] != "indeterminate":
-            raise ValueError("LAP_ERR_REPLAY: only an indeterminate claim can be released, after reconciliation")
-        del self._seen[key]
+        with self._lock:
+            entry = self._entry(scope, idempotency_key)
+            if entry is None or entry["state"] != "indeterminate":
+                raise ValueError("LAP_ERR_REPLAY: only an indeterminate claim can be released, after reconciliation")
+            del self._seen[self._slot(scope, idempotency_key)]
 
     def abandon(self, scope: Scope, idempotency_key: str) -> None:
         """The executor that holds this reservation reports that the effect never began
         (``NoEffect``): forget the reservation. Only the reserving executor may say so, and only
         for an in-flight claim; a dead executor's claim goes through ``mark_indeterminate``."""
-        key = self._key(scope, idempotency_key)
-        entry = self._seen.get(key)
-        if entry is None or entry["state"] != "reserved":
-            raise ValueError("LAP_ERR_REPLAY: only the in-flight claim of a tool that raised NoEffect can be abandoned")
-        del self._seen[key]
+        with self._lock:
+            entry = self._entry(scope, idempotency_key)
+            if entry is None or entry["state"] != "reserved":
+                raise ValueError("LAP_ERR_REPLAY: only the in-flight claim of a tool that raised NoEffect can be abandoned")
+            del self._seen[self._slot(scope, idempotency_key)]
 
     def meta(self, scope: Scope, idempotency_key: str) -> Optional[Dict[str, Any]]:
-        """What the reservation recorded (identity, executing passport hash, time), for reconciliation."""
-        entry = self._seen.get(self._key(scope, idempotency_key))
-        if entry is None:
-            return None
-        return {"state": entry["state"], "identity": entry["identity"], **entry["meta"]}
+        """What the reservation recorded (tenant, identity, executing passport hash, time), for reconciliation."""
+        with self._lock:
+            entry = self._seen.get(self._slot(scope, idempotency_key))
+            if entry is None:
+                return None
+            return {"state": entry["state"], "tenant": entry["tenant"], "identity": entry["identity"], **entry["meta"]}
 
     def check(self, scope: Scope, idempotency_key: str) -> Optional[Any]:
-        """Legacy read (pre-0.4.10): the stored result of a completed claim, else None."""
-        entry = self._seen.get(self._key(scope, idempotency_key))
-        return entry["result"] if entry is not None and entry["state"] == "completed" else None
+        """Legacy read (pre-0.4.10): the stored result of a completed claim in this tenant, else None."""
+        with self._lock:
+            entry = self._seen.get(self._slot(scope, idempotency_key))
+            if entry is None or entry["tenant"] != _split_scope(scope)[1] or entry["state"] != "completed":
+                return None
+            return entry["result"]
 
     def store(self, scope: Scope, idempotency_key: str, receipt: Any, identity: Optional[Identity] = None) -> None:
-        """Legacy write (pre-0.4.10): complete without a prior reservation. The middleware never
-        uses it; prefer ``claim`` then ``complete``."""
-        self.complete(scope, idempotency_key, receipt)
-        if identity is not None:
-            self._seen[self._key(scope, idempotency_key)]["identity"] = tuple(identity)
+        """Legacy write (pre-0.4.10): complete without a prior reservation. Deprecated: the middleware
+        never uses it, and a row stored without an identity fails closed against any lookup that
+        carries one. Prefer ``claim`` then ``complete``."""
+        with self._lock:
+            self._seen[self._slot(scope, idempotency_key)] = {
+                "state": "completed", "tenant": _split_scope(scope)[1],
+                "identity": tuple(identity) if identity else None,
+                "result": receipt, "lap_receipt": None, "meta": {}}
 
 
 def make_idempotency_cache() -> IdempotencyCache:

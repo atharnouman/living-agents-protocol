@@ -11,9 +11,9 @@ const V = JSON.parse(
   readFileSync(new URL("../../output/lip/test-vectors/microcore-replay-vectors.json", import.meta.url), "utf8"),
 );
 
-const scopeOf = (scope) => (typeof scope === "string" ? scope : [scope[0], scope[1]]);
+const scopeOf = (scope) => (typeof scope === "string" ? scope : [...scope]);
 const identityOf = (name) => (name === undefined || name === null ? undefined : V.identities[name]);
-const snake = { mark_indeterminate: "markIndeterminate", release: "release", abandon: "abandon" };
+const method = { complete: "complete", mark_indeterminate: "markIndeterminate", release: "release", abandon: "abandon" };
 
 function run(vector) {
   const cache = makeIdempotencyCache();
@@ -23,11 +23,15 @@ function run(vector) {
       const out = cache[step.op](scopeOf(step.scope), step.key, identityOf(step.identity));
       assert.equal(out.status, step.expect, where);
       if (step.expect_result !== undefined) assert.deepEqual(out.receipt, step.expect_result, where);
-    } else if (step.op === "complete") {
-      cache.complete(scopeOf(step.scope), step.key, step.result);
-    } else if (step.op in snake) {
+    } else if (step.op === "store") {
+      cache.store(scopeOf(step.scope), step.key, step.result, identityOf(step.identity));
+    } else if (step.op in method) {
       let got;
-      try { cache[snake[step.op]](scopeOf(step.scope), step.key); got = "ok"; } catch { got = "error"; }
+      try {
+        if (step.op === "complete") cache.complete(scopeOf(step.scope), step.key, step.result);
+        else cache[method[step.op]](scopeOf(step.scope), step.key);
+        got = "ok";
+      } catch { got = "error"; }
       assert.equal(got, step.expect ?? "ok", where);
     } else if (step.op === "check_invocation") {
       let got;
@@ -49,8 +53,10 @@ for (const vector of V.vectors) {
   test(`REPLAY VECTORS ${vector.id}: ${vector.name}`, () => run(vector));
 }
 
-test("REPLAY VECTORS: the file covers the three faults the reviews found", () => {
+test("REPLAY VECTORS: the file covers the faults the reviews found", () => {
   const names = V.vectors.map((v) => v.name).join(" ");
-  assert.ok(names.includes("cap was cut") && names.includes("another request") && names.includes("two principals"));
-  assert.ok(V.vectors.length >= 15);
+  for (const phrase of ["cap was cut", "another request", "two principals", "without an identity", "never overwritten", "audiences"]) {
+    assert.ok(names.includes(phrase), phrase);
+  }
+  assert.ok(V.vectors.length >= 18);
 });
