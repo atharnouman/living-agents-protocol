@@ -349,5 +349,14 @@ Source: `llm-collab/inbox/2026-10-27_fsig-17_sankalp-kingyew-replies.md`.
 - **Open case (King Yew Choo):** a payment held when the limit document is replaced. Reproduced against the reference: the claim survives (keyed by agent key and idempotency key, not by the authority document), but a retry after a cut below the amount is refused by the cap check before the stored result is found, so the receipt is unrecoverable; and a key reused for a different request still returns the first result instead of being refused.
 - **Proposed, pending the owner's decision:** recognise an existing claim right after the passport and signature checks and before the cap check (replay or refuse as in flight or indeterminate), and refuse a reused key whose request digest differs; both ports, tests, LIP-4 and the extension draft. Then answer King Yew and Sankalp, after a two-model review, before the FSIG call of 2026-10-29.
 
+## Two-model review of the claim-alignment proposal (2026-10-28)
+
+Files: `llm-collab/inbox/2026-10-28_alignment-review-brief.md`, `..._review-fable.md`, `..._review-sonnet.md`, `..._converged-design.md`.
+
+- The proposal (recognition before the cap; request digest on the claim; claim keyed by (sub, key)) went to a fresh Fable 5.1 agent and a fresh Sonnet 5.5 agent, read-only, with two alternatives stated neutrally. Both changed it in the same three places: the request identity must be compared before any stored result is returned and must include method and target (one shared cache replayed `pay` to `refund`); the scope must include the tenant (both reproduced a cross-principal replay with the same agent key); and the draft's eviction sentence contradicts the goal. Both found "both ports" an overclaim.
+- Found beyond the brief, all re-checked: a tool exception leaves the claim in flight forever; identical request and response bytes under distinct keys give byte-identical receipts, so section 5.6's receipt-equality sentence is unsound; LIP-4 section 2 gives 401/403 for every refusal.
+- One fork left to the owner: replay under any valid passport for the same tenant and agent (Fable) or only while the presented passport still covers the action, resource and unit, with a typed "executed earlier; result withheld" otherwise (Sonnet). The session recommends the second, with the cap magnitude exempt. A second, smaller fork: new error codes against the extension's identifier rule.
+- Lesson kept: a proposal drafted in one session reads as sound to that session; the independent reviews changed every one of its three parts.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*
