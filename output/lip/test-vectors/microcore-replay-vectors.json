@@ -1,0 +1,164 @@
+{
+  "_note": "LIP-4 Micro-Core replay vectors (2026-10-28, libraries 0.4.14): the idempotency claim under authority replacement and key reuse (LIP-4 section 2 step 3 and step 6; MCP extension draft v0.4 sections 4.1, 5.6). Each vector is a sequence of steps against one fresh idempotency cache (claim / lookup / complete / mark_indeterminate / release / abandon, as in both reference caches) and the envelope check (check_invocation / checkInvocation, with enforce_magnitude false for the disclosure check of a replay). A scope is [tenant, agent did] or a bare agent did (no tenant); an identity is the signed @method, @target-uri and content-digest lines of a verified signature base, named here for readability. These vectors are stateful, so they are an extra set for servers that keep claims, not part of the ten CONFORMANCE checks. Written after two independent reviews reproduced three faults in 0.4.13: a retry after a cap cut was refused by the cap before the stored result was found; one key reused for a different request, or by another tool sharing the cache, replayed the first result; and a second principal with the same agent key replayed the first principal's execution. Both reference test suites load this file.",
+  "envelopes": {
+    "pay_1000": {"act": ["finance:pay"], "res": "mcp://tools.example.com/billing/**", "cap": {"max_per_tx": 1000, "unit": "USD", "window": "tx"}},
+    "pay_100_cut": {"act": ["finance:pay"], "res": "mcp://tools.example.com/billing/**", "cap": {"max_per_tx": 100, "unit": "USD", "window": "tx"}},
+    "pay_5000_raise": {"act": ["finance:pay"], "res": "mcp://tools.example.com/billing/**", "cap": {"max_per_tx": 5000, "unit": "USD", "window": "tx"}},
+    "pay_no_cap": {"act": ["finance:pay"], "res": "mcp://tools.example.com/billing/**"},
+    "read_only": {"act": ["data:read"], "res": "mcp://tools.example.com/billing/**", "cap": {"max_per_tx": 1000, "unit": "USD", "window": "tx"}},
+    "other_resource": {"act": ["finance:pay"], "res": "mcp://tools.example.com/admin/**", "cap": {"max_per_tx": 1000, "unit": "USD", "window": "tx"}},
+    "pay_eur": {"act": ["finance:pay"], "res": "mcp://tools.example.com/billing/**", "cap": {"max_per_tx": 1000, "unit": "EUR", "window": "tx"}}
+  },
+  "identities": {
+    "pay-500": ["\"@method\": tools/call", "\"@target-uri\": mcp://tools.example.com/billing/pay", "\"content-digest\": sha-256=:PAY500PAY500PAY500PAY500PAY500PAY500PAY500P:"],
+    "pay-900": ["\"@method\": tools/call", "\"@target-uri\": mcp://tools.example.com/billing/pay", "\"content-digest\": sha-256=:PAY900PAY900PAY900PAY900PAY900PAY900PAY900P:"],
+    "refund-500": ["\"@method\": tools/call", "\"@target-uri\": mcp://tools.example.com/billing/refund", "\"content-digest\": sha-256=:PAY500PAY500PAY500PAY500PAY500PAY500PAY500P:"]
+  },
+  "resource": "mcp://tools.example.com/billing/pay",
+  "vectors": [
+    {
+      "id": "RP-01",
+      "name": "a retry after the cap was cut is recognised and replayed; a fresh execution of the same amount would be refused",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "complete", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "result": {"status": "paid", "amount": 500}},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "completed", "expect_result": {"status": "paid", "amount": 500}},
+        {"op": "check_invocation", "envelope": "pay_100_cut", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": 500, "unit": "USD", "enforce_magnitude": false, "expect": "ok"},
+        {"op": "check_invocation", "envelope": "pay_100_cut", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": 500, "unit": "USD", "enforce_magnitude": true, "expect": "LAP_ERR_CAP"}
+      ]
+    },
+    {
+      "id": "RP-02",
+      "name": "a raise or no cap at all: the replay is disclosed",
+      "steps": [
+        {"op": "check_invocation", "envelope": "pay_5000_raise", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": 500, "unit": "USD", "enforce_magnitude": false, "expect": "ok"},
+        {"op": "check_invocation", "envelope": "pay_no_cap", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": 500, "unit": "USD", "enforce_magnitude": false, "expect": "ok"}
+      ]
+    },
+    {
+      "id": "RP-03",
+      "name": "the action was removed from the envelope: recognised, result withheld (LAP_ERR_ACT inside LAP_ERR_REPLAY_WITHHELD)",
+      "steps": [
+        {"op": "check_invocation", "envelope": "read_only", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": 500, "unit": "USD", "enforce_magnitude": false, "expect": "LAP_ERR_ACT"}
+      ]
+    },
+    {
+      "id": "RP-04",
+      "name": "the resource is no longer covered: withheld",
+      "steps": [
+        {"op": "check_invocation", "envelope": "other_resource", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": 500, "unit": "USD", "enforce_magnitude": false, "expect": "LAP_ERR_RES"}
+      ]
+    },
+    {
+      "id": "RP-05",
+      "name": "the unit changed: withheld; the magnitude alone is exempt",
+      "steps": [
+        {"op": "check_invocation", "envelope": "pay_eur", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": 500, "unit": "USD", "enforce_magnitude": false, "expect": "LAP_ERR_CAP"}
+      ]
+    },
+    {
+      "id": "RP-06",
+      "name": "a capped envelope now and no amount then: F5 still fails closed on a replay",
+      "steps": [
+        {"op": "check_invocation", "envelope": "pay_1000", "act": "finance:pay", "resource": "mcp://tools.example.com/billing/pay", "amount": null, "unit": "USD", "enforce_magnitude": false, "expect": "LAP_ERR_CAP"}
+      ]
+    },
+    {
+      "id": "RP-07",
+      "name": "the same key for a different request, after completion: key reuse, never a replay",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "complete", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "result": {"status": "paid", "amount": 500}},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-900", "expect": "key_reuse"},
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-900", "expect": "key_reuse"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "completed"}
+      ]
+    },
+    {
+      "id": "RP-08",
+      "name": "the same key for a different request while the first is in flight: key reuse, not a wait on another operation",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-900", "expect": "key_reuse"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "in_flight"}
+      ]
+    },
+    {
+      "id": "RP-09",
+      "name": "the same key for a different request while the first is indeterminate: key reuse",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "mark_indeterminate", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "expect": "ok"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-900", "expect": "key_reuse"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "indeterminate"}
+      ]
+    },
+    {
+      "id": "RP-10",
+      "name": "two tools sharing one cache: the same key and arguments at another target is another request",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "complete", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "result": {"status": "paid", "amount": 500}},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "refund-500", "expect": "key_reuse"}
+      ]
+    },
+    {
+      "id": "RP-11",
+      "name": "two principals through one agent key: a claim is scoped by tenant, so the second is absent and executes fresh",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "complete", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "result": {"status": "paid", "amount": 500}},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalB", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "absent"},
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalB", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"}
+      ]
+    },
+    {
+      "id": "RP-12",
+      "name": "a new key is a new operation even for the same request (the control case)",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "complete", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "result": {"status": "paid", "amount": 500}},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "identity": "pay-500", "expect": "absent"},
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "identity": "pay-500", "expect": "reserved"}
+      ]
+    },
+    {
+      "id": "RP-13",
+      "name": "a tool that reports no effect frees its key; only an in-flight claim can be abandoned",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "abandon", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "expect": "ok"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "absent"},
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "complete", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "result": {"status": "paid", "amount": 500}},
+        {"op": "abandon", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "expect": "error"},
+        {"op": "abandon", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "never-claimed", "expect": "error"}
+      ]
+    },
+    {
+      "id": "RP-14",
+      "name": "an indeterminate claim resolves only by reconciliation: completed replays, released runs fresh",
+      "steps": [
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "mark_indeterminate", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "expect": "ok"},
+        {"op": "release", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "expect": "ok"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "absent"},
+        {"op": "claim", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "identity": "pay-500", "expect": "reserved"},
+        {"op": "release", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "expect": "error"},
+        {"op": "mark_indeterminate", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "expect": "ok"},
+        {"op": "mark_indeterminate", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "expect": "error"},
+        {"op": "complete", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "result": {"status": "paid", "amount": 500, "reconciled": true}},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k2", "identity": "pay-500", "expect": "completed", "expect_result": {"status": "paid", "amount": 500, "reconciled": true}}
+      ]
+    },
+    {
+      "id": "RP-15",
+      "name": "a bare agent did is the scope with no tenant, the same slot as [null, agent]",
+      "steps": [
+        {"op": "claim", "scope": "did:key:z6MkAgent", "key": "k1", "identity": "pay-500", "expect": "reserved"},
+        {"op": "lookup", "scope": [null, "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "in_flight"},
+        {"op": "lookup", "scope": ["did:key:z6MkPrincipalA", "did:key:z6MkAgent"], "key": "k1", "identity": "pay-500", "expect": "absent"}
+      ]
+    }
+  ]
+}

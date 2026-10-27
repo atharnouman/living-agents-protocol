@@ -11,7 +11,7 @@ from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from living_agents import IdempotencyCache, did_key_from_raw_public_key, jcs, sha256_hex, sign_jws, verify_envelope
+from living_agents import IdempotencyCache, claim_scope, did_key_from_raw_public_key, jcs, sha256_hex, sign_jws, verify_envelope
 from living_agents.audit_record import (AuditChain, lap_tool_call_record, manifest, utc_millis,
                                         validate_extensions, validate_manifest, validate_skeleton,
                                         verify_chain_segment, verify_lap_receipt_in_record)
@@ -24,7 +24,8 @@ NOW = 1787000000                                    # the shared vectors' clock
 SERVER_ID = "did:web:tools.example.com"
 RESOURCE = "mcp://tools.example.com/billing/pay"
 # Steps that run only after the passport AND the agent's call signature verified (LIP-4 section 2, steps 4-6).
-POST_AUTH_CODES = {"LAP_ERR_ACT", "LAP_ERR_RES", "LAP_ERR_CAP", "LAP_ERR_IDEMPOTENCY", "LAP_ERR_REPLAY"}
+POST_AUTH_CODES = {"LAP_ERR_ACT", "LAP_ERR_RES", "LAP_ERR_CAP", "LAP_ERR_IDEMPOTENCY", "LAP_ERR_REPLAY",
+                   "LAP_ERR_KEY_REUSE", "LAP_ERR_REPLAY_WITHHELD"}  # the last two from 0.4.14 (LIP-4 section 2 step 3)
 
 
 def key_from(label: str):
@@ -71,7 +72,8 @@ def build_chain(path=None):
                     "signature_b64url": sig["signature"], "request_body": jcs(args), "now": NOW}
             if key is not None:
                 auth["idempotency_key"] = key
-        replay = (cache.check(agent_did, key) is not None) if (with_passport and key) else None
+        # Claims live in the scope (tenant, agent): the tenant is the verified issuer by default (0.4.14).
+        replay = (cache.check(claim_scope(claims), key) is not None) if (with_passport and key) else None
         receipt = None
         try:
             if auth is None:

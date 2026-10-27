@@ -124,6 +124,7 @@ def test_mutating_tool_replays_the_cached_result_without_re_executing(actors):
     second = pay(lap_auth=auth, **args)
 
     assert calls == ["INV-2001"]  # executed once
+    assert second.pop("_lap_replayed") is True and "_lap_replayed" not in first  # the replay is marked (0.4.14)
     assert second == first and second is not first  # same result and receipt, a copy
     assert second["_lap_receipt"]["receipt_base"] == first["_lap_receipt"]["receipt_base"]
 

@@ -16,14 +16,14 @@ examples/mcp-server/
 3. The signature covers the **exact arguments** (canonical JSON) and **this tool's resource**: a signature cannot be replayed with different arguments or against another tool.
 4. The **action and resource** are inside the passport's envelope.
 5. The **amount** is a non-negative exact integer within the envelope's per-transaction cap, in the declared unit. A negative, fractional, boolean or non-numeric amount is refused before the comparison (0.4.13; earlier versions compared `-500 <= cap` as true).
-6. For a mutating tool, the **signed idempotency key** is claimed before execution: a retry returns the cached receipt, never a second payment, and a concurrent duplicate is refused.
+6. For a mutating tool, the **signed idempotency key** is recognised right after the passport and signature verify, before the envelope is consulted, and claimed before execution: a retry returns the stored receipt (marked `replayed`), never a second payment, even after the passport was replaced by a narrower one; a concurrent duplicate is refused; the same key for a different request is refused (`LAP_ERR_KEY_REUSE`, 0.4.14). Claims are scoped by the issuer, so two principals never share one.
 
 **Not provided by this example** (stated plainly): authentication of the connection (over HTTP, combine with MCP's authorization framework; over stdio the client process is the boundary); a distributed idempotency store (the in-process cache is single-process); and principal *proofing*: the demo passport is `self-asserted`, which is why the decorator offers `min_proof_class`.
 
 ## 1. Install (2 min)
 
 ```bash
-pip install "living-agents[mcp]>=0.4.13"   # the LAP library from PyPI plus the official MCP SDK (1.2+ or 2.x; both run in CI)
+pip install "living-agents[mcp]>=0.4.14"   # the LAP library from PyPI plus the official MCP SDK (1.2+ or 2.x; both run in CI)
 # from a checkout instead:  pip install -e ../../lap-python mcp
 ```
 
@@ -128,12 +128,13 @@ On mcp 2.x the client also declares the extension in its capabilities (`ClientSe
 python client.py
 ```
 
-There is nothing to start first: `client.py` launches `server.py` itself as a subprocess and talks to it over stdio. You should see two paid calls (the second a retry that got the cached receipt back) and six refusals, each with its reason:
+There is nothing to start first: `client.py` launches `server.py` itself as a subprocess and talks to it over stdio. You should see two paid calls (the second a retry that got the stored receipt back, marked as a replay) and seven refusals, each with its reason:
 
 ```
   PAID     in-scope: $4200 (cap $5000)          -> paid INV-1001 $4200  receipt verified (server did:key:z6Mk...)
   PAID     retry with the same idempotency key  -> paid INV-1001 $4200  receipt verified (server did:key:z6Mk...)
-           same receipt, no second payment: yes
+           same receipt, no second payment: yes; marked replayed: yes
+  REFUSED  same key, different amount: $100     -> LAP_ERR_KEY_REUSE: idempotency key already used for a different request
   REFUSED  over cap: $6000                      -> LAP_ERR_CAP: amount 6000 exceeds max_per_tx 5000
   REFUSED  negative amount: -$500               -> LAP_ERR_CAP: amount must be a non-negative exact integer (got -500)
   REFUSED  tampered: signed $100, sent $4200    -> LAP_ERR_DIGEST: content-digest line mismatch
@@ -157,7 +158,8 @@ Every refusal happens **before** `pay_invoice` runs. The receipt (result `_meta`
 
 - **Only a LAP-aware client can call a protected tool.** Claude Desktop, Cursor and other mainstream MCP hosts do not speak the extension, so they get `LAP_ERR_AUTH_MISSING`. This tutorial fits where one party writes both the agent and the server.
 - **Key custody and passport renewal are yours.** The principal key signs passports; where it lives, and who issues a new passport when a short one expires, is deployment design (LIP-1 discusses proof classes and custody), not something the library decides.
-- **An idempotency key reused with different arguments returns the first call's result**, as LIP-4 specifies, with no error. The cached receipt binds the first request's hash, so a client that verifies the receipt against its own arguments, as `client.py` does, sees the mismatch. Never reuse a key for a different request.
+- **An idempotency key reused with different arguments is refused** (`LAP_ERR_KEY_REUSE`, from 0.4.14; up to 0.4.13 it returned the first call's result with no error, and only a client that verified the receipt against its own arguments saw the mismatch). The reservation records the request's identity (method, tool resource, content digest), so this holds while the first request is in flight, indeterminate or completed, and across tools that share one cache. Never reuse a key for a different request.
+- **A retry after the passport was replaced** by one that still covers the tool's action, resource and unit gets the stored result back, whatever the new cap says; one under a passport that no longer covers them is told the key executed earlier and the result is withheld (`LAP_ERR_REPLAY_WITHHELD`), never run again. A tool that raises leaves its key indeterminate until reconciled; raise `living_agents.NoEffect` when nothing was sent, and the key is free again.
 - **Signature age is not checked beyond the passport's validity window.** A `created` an hour old is accepted while the passport is valid; servers may add a tighter freshness rule.
 
 Spec references: [the MCP extension draft](../../output/lip/LIP-4-mcp-extension-draft.md) (this binding), [LIP-4 Micro-Core](../../output/lip/LIP-4-micro-core-draft.md) (the server invariant), [LIP-3 Scope Algebra](../../output/lip/LIP-3-scope-algebra-v0-draft.md) (what `act`/`res`/`cap` mean), [LIP-1 Passport](../../output/lip/LIP-1-agent-passport-draft.md).

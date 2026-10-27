@@ -4,9 +4,9 @@
 
 [![ci](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/atharnouman/living-agents-protocol/actions/workflows/ci.yml) [![license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE) [![spec: CC-BY-4.0](https://img.shields.io/badge/spec-CC--BY--4.0-lightgrey.svg)](LICENSE-SPEC.md)
 
-`spec v0.4.10 (draft)` · `libraries 0.4.13` · `Node 69/69 · Python 160/160` · `two interoperating implementations` · `6 adversarial review rounds, ~160 verified fixes`
+`spec v0.4.10 (draft)` · `libraries 0.4.14` · `Node 85/85 · Python 186/186` · `two interoperating implementations` · `6 adversarial review rounds, ~160 verified fixes`
 
-> **Status, 17 October 2026: a research prototype by one author, under review until 1 December 2026.** What works today: the scope algebra with budget conservation (two implementations that agree on a shared fuzz digest and on 25 shared cap vectors), the MCP tool guard below (a tool that refuses to run outside a signed envelope and returns a signed receipt), and the test vectors. What it is not: a protocol anyone else has adopted. A protected tool needs a LAP-aware client, so Claude Desktop, Cursor and other mainstream MCP hosts cannot call it; the agent side and the tool side must both adopt it. On 17 October a cold-start usability test found the per-transaction cap accepting negative amounts in both implementations; fixed the same day in 0.4.13, with vectors. If no maintainer or standards author has engaged by 1 December, the project is parked with this note updated; the map, the vectors and the packages stay.
+> **Status, 17 October 2026: a research prototype by one author, under review until 1 December 2026.** What works today: the scope algebra with budget conservation (two implementations that agree on a shared fuzz digest and on 25 shared cap vectors), the MCP tool guard below (a tool that refuses to run outside a signed envelope and returns a signed receipt), and the test vectors. What it is not: a protocol anyone else has adopted. A protected tool needs a LAP-aware client, so Claude Desktop, Cursor and other mainstream MCP hosts cannot call it; the agent side and the tool side must both adopt it. On 17 October a cold-start usability test found the per-transaction cap accepting negative amounts in both implementations; fixed the same day in 0.4.13, with vectors. On 28 October two independent model reviews of a retry rule found the reference answering a retry after a cap cut with a cap refusal that hid the earlier execution, replaying one key for a different request, and replaying across principals; fixed in 0.4.14, with vectors. If no maintainer or standards author has engaged by 1 December, the project is parked with this note updated; the map, the vectors and the packages stay.
 
 ## The map: seven layers, and who owns them today
 
@@ -53,14 +53,14 @@ Before `pay_invoice` runs, the server checks a principal-signed passport address
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/atharnouman/living-agents-protocol?quickstart=1)
 *Zero install: the Codespace arrives with Node, Python, and the test suite already run — then try the two-process demo.*
 
-**Use it from your own code** (libraries 0.4.13; the MCP extension binding needs `living-agents` 0.4.13 or later; the specification is v0.4.10):
+**Use it from your own code** (libraries 0.4.14; the MCP extension binding needs `living-agents` 0.4.14 or later; the specification is v0.4.10):
 
 ```bash
 npm install @living-agents/reference        # Node ≥ 20, zero dependencies
 ```
 
 ```bash
-pip install "living-agents[mcp]>=0.4.13"         # Python ≥ 3.10; the extra adds the official MCP SDK (1.x or 2.x)
+pip install "living-agents[mcp]>=0.4.14"         # Python ≥ 3.10; the extra adds the official MCP SDK (1.x or 2.x)
 ```
 
 **Or run everything from this checkout:**

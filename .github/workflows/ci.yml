@@ -50,13 +50,14 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ./lap-python "${{ matrix.mcp }}"
-      - name: client spawns the LAP-protected server; expect two paid calls (the second a cached replay) + five refusals
+      - name: client spawns the LAP-protected server; expect two paid calls (the second a marked replay) + seven refusals
         run: |
           cd examples/mcp-server
           python client.py | tee out.txt
           test "$(grep -c 'receipt verified' out.txt)" = "2"
-          grep -q "same receipt, no second payment: yes" out.txt
-          test "$(grep -c REFUSED out.txt)" = "6"
+          grep -q "same receipt, no second payment: yes; marked replayed: yes" out.txt
+          grep -q "LAP_ERR_KEY_REUSE" out.txt
+          test "$(grep -c REFUSED out.txt)" = "7"
 
   packaging:
     name: Packages build and pass checks (npm pack, PyPI build + twine)

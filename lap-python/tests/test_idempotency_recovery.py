@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from living_agents import (
     EXTENSION_ID,
     IdempotencyCache,
+    claim_scope,
     did_key_from_raw_public_key,
     lap_auth_from_meta,
     sign_jws,
@@ -72,12 +73,14 @@ def test_middleware_refuses_an_indeterminate_key_without_executing_and_replays_t
         return pay(lap_auth=auth, **args)
 
     # A durable backend found the executor of this claim dead after the effect may have happened.
-    cache.claim(agent_did, "k1")
-    cache.mark_indeterminate(agent_did, "k1")
+    # Claims live in the scope (tenant, agent); the tenant defaults to the verified issuer (0.4.14).
+    scope = claim_scope({"iss": principal_did, "sub": agent_did})
+    cache.claim(scope, "k1")
+    cache.mark_indeterminate(scope, "k1")
     with pytest.raises(ValueError, match="LAP_ERR_REPLAY: .*awaiting reconciliation"):
         call()
     assert runs == []                                               # never executed again
     # Reconciliation against the system of record: the payment had gone through.
-    cache.complete(agent_did, "k1", {"status": "paid", "invoice": "INV-9", "amount": 5, "reconciled": True})
+    cache.complete(scope, "k1", {"status": "paid", "invoice": "INV-9", "amount": 5, "reconciled": True})
     assert call()["reconciled"] is True                             # the retry gets the reconciled result
     assert runs == []

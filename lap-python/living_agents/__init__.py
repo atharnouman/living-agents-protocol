@@ -48,17 +48,20 @@ from .mcp_extension import (
 from .mcp_middleware import verify_envelope
 from .microcore import (
     IdempotencyCache,
+    NoEffect,
     check_invocation,
+    claim_scope,
     is_exact_amount,
     make_idempotency_cache,
     microcore_cap_is_valid,
     mint_receipt,
+    request_identity,
     verify_microcore_passport,
     verify_receipt,
     verify_request_signature,
 )
 
-__version__ = "0.4.13"
+__version__ = "0.4.14"
 
 __all__ = [
     "b58encode",
@@ -92,6 +95,9 @@ __all__ = [
     "microcore_cap_is_valid",
     "make_idempotency_cache",
     "IdempotencyCache",
+    "NoEffect",
+    "claim_scope",
+    "request_identity",
     "mint_receipt",
     "verify_receipt",
     "verify_envelope",

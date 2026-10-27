@@ -13,7 +13,7 @@ Zero runtime dependencies beyond `cryptography`.
 
 ```bash
 pip install living-agents            # the library (one dependency: cryptography)
-pip install "living-agents[mcp]>=0.4.13"   # plus the official MCP SDK, 1.x or 2.x (0.4.12 added the MCP extension binding; 0.4.13 refuses negative and non-integer amounts at the cap)
+pip install "living-agents[mcp]>=0.4.14"   # plus the official MCP SDK, 1.x or 2.x (0.4.12 added the MCP extension binding; 0.4.13 refuses negative and non-integer amounts at the cap; 0.4.14 recognises a retried key before the envelope and refuses a key reused for a different request)
 ```
 
 From a checkout, for development:
@@ -60,7 +60,7 @@ When an agent calls `pay_invoice`, before your function runs:
 1. the passport in the request `_meta` is verified against the principal's `did:key`, its audience and its validity window;
 2. the agent's RFC 9421 signature is verified over the canonical arguments, this tool's resource and the passport hash;
 3. the action, the resource and the spending cap (`amount <= max_per_tx`, in the right unit) are checked against the envelope;
-4. the signed idempotency key is claimed, so a retry returns the cached receipt instead of paying twice.
+4. the signed idempotency key is recognised before the envelope and claimed before execution, so a retry returns the stored receipt (marked `replayed`) instead of paying twice, even after the passport was replaced; the same key for a different request is refused.
 
 A refusal reaches the caller as a tool error with its typed `LAP_ERR_*` reason. A success returns a `CallToolResult` whose `_meta` carries a receipt signed by the server; the client verifies it with `verify_receipt`. The transport-independent decorator `@verify_envelope` remains available for servers that carry the passport and signature in HTTP headers (LIP-4).
 

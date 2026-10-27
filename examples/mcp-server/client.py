@@ -114,7 +114,12 @@ async def _run():
             args = {"invoice": "INV-1001", "amount": 4200, "unit": "USD"}
             first = await call("in-scope: $4200 (cap $5000)", args, "pay-1001")
             again = await call("retry with the same idempotency key", args, "pay-1001")
-            print(f"           same receipt, no second payment: {'yes' if again and again == first else 'NO'}")
+            same = bool(first) and bool(again) and all(again.get(k) == first.get(k) for k in
+                                                        ("receipt_base", "receipt_signature_b64url", "server_did"))
+            print(f"           same receipt, no second payment: {'yes' if same else 'NO'}; "
+                  f"marked replayed: {'yes' if again and again.get('replayed') is True else 'NO'}")
+            # The same key for a DIFFERENT request is refused, never replayed and never run (0.4.14).
+            await call("same key, different amount: $100", {"invoice": "INV-1001", "amount": 100, "unit": "USD"}, "pay-1001")
             await call("over cap: $6000", {"invoice": "INV-1002", "amount": 6000, "unit": "USD"}, "pay-1002")
             # A negative amount is not "under the cap": the amount must be a non-negative exact integer.
             await call("negative amount: -$500", {"invoice": "INV-1007", "amount": -500, "unit": "USD"}, "pay-1007")
@@ -125,7 +130,8 @@ async def _run():
             await call("no idempotency key", {"invoice": "INV-1005", "amount": 10, "unit": "USD"}, None)
             await call("no passport at all (plain call)", {"invoice": "INV-1006", "amount": 10, "unit": "USD"}, "pay-1006", meta={})
     print("\nEvery refusal happened BEFORE the tool ran. Every success carries a server-signed receipt in the"
-          "\nresult _meta, and the retry got the cached receipt back instead of a second payment.\n")
+          "\nresult _meta; the retry got the stored receipt back, marked replayed, instead of a second payment,"
+          "\nand the same key for a different request was refused.\n")
 
 
 async def main():

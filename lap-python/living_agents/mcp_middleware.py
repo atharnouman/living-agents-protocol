@@ -6,15 +6,19 @@ Provides the @verify_envelope decorator to authorize tool invocations and emit t
 import copy
 import functools
 import inspect
+import time
 from typing import Any, Callable, Dict, Optional
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from .crypto_util import jcs
+from .crypto_util import jcs, sha256_hex
 from .microcore import (
     IdempotencyCache,
+    NoEffect,
     check_invocation,
+    claim_scope,
     mint_receipt,
+    request_identity,
     verify_microcore_passport,
     verify_request_signature,
 )
@@ -33,6 +37,7 @@ def verify_envelope(
     bind_target: bool = True,
     idempotency_cache: Optional[IdempotencyCache] = None,
     unit: Optional[str] = None,
+    tenant_of: Optional[Callable[[Dict[str, Any]], Optional[str]]] = None,
 ) -> Callable:
     """
     Decorator for MCP tool functions enforcing LAP LIP-4 Micro-Core authorization.
@@ -49,12 +54,22 @@ def verify_envelope(
         min_proof_class: Optional floor on the passport's proof class (F1)
         bind_target: Compare the signed ``@target-uri`` to ``resource`` (default; LIP-4 F3)
         idempotency_cache: Mark the tool as MUTATING: ``lap_auth["idempotency_key"]`` becomes
-            mandatory and must be a covered component of the signature; ``(sub, key)`` is
-            claimed atomically before execution (LIP-4 section 2 step 5, F6). A completed
-            claim returns the cached result and receipt without re-executing; an in-flight
-            duplicate is refused. The in-process cache is single-process only.
+            mandatory and must be a covered component of the signature. The key is recognised
+            right after the passport and the signature verify, before the envelope is consulted
+            (LIP-4 section 2 step 3, 0.4.14): a completed claim returns the stored result and
+            receipt without re-executing, marked ``_lap_replayed`` (replayed only while the
+            passport presented now still covers the action, resource and unit; otherwise
+            ``LAP_ERR_REPLAY_WITHHELD``); an in-flight or indeterminate claim is refused
+            (``LAP_ERR_REPLAY``); the same key for a different request is refused
+            (``LAP_ERR_KEY_REUSE``). A fresh key is claimed atomically after every check passed
+            (step 6, F6), in the scope ``(tenant, sub)``. A tool that raises leaves its claim
+            indeterminate unless it raises ``NoEffect``. The in-process cache is single-process only.
         unit: The fixed unit of the amount, for a capped tool that has no unit argument
             (``unit="USD"``); the alternative to ``unit_param``, never both.
+        tenant_of: Maps the verified passport payload to the server's tenant for its issuer
+            (LIP-4 F1); claims are scoped by it. Default: the normalised ``iss`` itself, so two
+            principals never share a claim. Return ``None`` for an unknown principal
+            (``LAP_ERR_ISSUER``).
 
     Configuration mistakes (a missing audience, an ``amount_param`` that is not one of the
     tool's parameters) raise ``TypeError`` when the decorator is applied, so a misconfigured
@@ -129,39 +144,90 @@ def verify_envelope(
                 expected_target=(resource if bind_target else None),
             )
 
-            # Steps 3-4: Verify Action, Resource Path, and Budget Cap (bound amount). The amount
-            # must be a non-negative exact integer; check_invocation refuses anything else
-            # before comparing it with the cap (0.4.13).
             amount = call_args.get(amount_param) if amount_param else None
             call_unit = call_args.get(unit_param) if unit_param else unit
-            check_invocation(envelope, act=action, resource=resource, amount=amount, unit=call_unit)
 
-            # Step 5 (LIP-4 section 2 step 5, F6): a mutating tool claims (sub, idempotency key)
-            # atomically BEFORE executing. The key must sit inside the signed base (LIP-4 section 1),
-            # so a captured key cannot be re-attached to a different request. A completed claim
-            # returns the cached result (with its receipt) without re-executing; a concurrent
-            # in-flight duplicate is refused rather than run twice (three-state claim, v0.4.10).
+            def settle(found: Dict[str, Any]) -> Any:
+                """An existing claim for this key, found before or at the reservation (0.4.14)."""
+                status = found["status"]
+                if status == "key_reuse":
+                    # Sankalp's rule and draft-ietf-httpapi-idempotency-key-header: one key, one request.
+                    raise ValueError("LAP_ERR_KEY_REUSE: idempotency key already used for a different request")
+                if status == "in_flight":
+                    raise ValueError("LAP_ERR_REPLAY: duplicate request already in flight")
+                if status == "indeterminate":
+                    # LIP-4 recovery rule: the earlier execution may have completed; never run it
+                    # again, never guess from the missing receipt; the operator reconciles.
+                    raise ValueError("LAP_ERR_REPLAY: an earlier execution of this key may have completed; "
+                                     "awaiting reconciliation, not retried")
+                # Completed: the result is evidence of an effect that happened under the authority valid
+                # then. It is disclosed only while the passport presented NOW still covers the stored
+                # request's action, resource and unit; the cap magnitude is exempt, a replay spends
+                # nothing. Otherwise the server says it executed and withholds the result: recognised,
+                # never re-executed, never a new entry (MCP spec issue 3394's rule, read literally).
+                try:
+                    check_invocation(envelope, act=action, resource=resource, amount=amount, unit=call_unit,
+                                     enforce_magnitude=False)
+                except ValueError as refusal:
+                    raise ValueError("LAP_ERR_REPLAY_WITHHELD: this key executed earlier; its result is withheld "
+                                     f"under the current envelope ({str(refusal).split(':')[0]})") from None
+                stored = copy.deepcopy(found["receipt"])  # the stored result, receipt included
+                if isinstance(stored, dict):
+                    stored["_lap_replayed"] = True
+                return stored
+
+            # Step 3 (LIP-4 section 2 step 3, 0.4.14): a mutating tool RECOGNISES an existing claim for
+            # (tenant, sub, key) before the envelope is consulted, so a retry after the authority was
+            # replaced is never mistaken for a fresh request and refused by the cap. The key must sit
+            # inside the signed base (LIP-4 section 1), so a captured key cannot be re-attached to a
+            # different request; the reservation records the request's identity (method, target,
+            # content digest), so the same key for a different request is refused in every state.
+            # The lookup reserves nothing: a refusal consumes no claim.
             idem_key = lap_auth.get("idempotency_key")
+            scope = identity = None
             if idempotency_cache is not None:
                 if not idem_key:
                     raise ValueError("LAP_ERR_IDEMPOTENCY: idempotency_key required for a mutating tool")
                 if f'"idempotency-key": {idem_key}' not in signature_base.split("\n"):
                     raise ValueError("LAP_ERR_SIG_PARAMS: idempotency-key is not a covered component")
-                claim = idempotency_cache.claim(sub, idem_key)
-                if claim["status"] == "completed":
-                    return copy.deepcopy(claim["receipt"])  # the stored result, receipt included
-                if claim["status"] == "in_flight":
-                    raise ValueError("LAP_ERR_REPLAY: duplicate request already in flight")
-                if claim["status"] == "indeterminate":
-                    # LIP-4 recovery rule: the earlier execution may have completed; never run it
-                    # again, never guess from the missing receipt; the operator reconciles.
-                    raise ValueError("LAP_ERR_REPLAY: an earlier execution of this key may have completed; "
-                                     "awaiting reconciliation, not retried")
+                scope = claim_scope(passport_payload, tenant_of)
+                identity = request_identity(signature_base)
+                known = idempotency_cache.lookup(scope, idem_key, identity)
+                if known["status"] != "absent":
+                    return settle(known)
 
-            # Execute the tool function
-            result = fn(*args, **kwargs)
+            # Steps 4-5: Verify Action, Resource Path, and Budget Cap (bound amount) for a FRESH
+            # execution. The amount must be a non-negative exact integer; check_invocation refuses
+            # anything else before comparing it with the cap (0.4.13).
+            check_invocation(envelope, act=action, resource=resource, amount=amount, unit=call_unit)
 
-            # Step 6: Mint Tripartite Receipt if server key is configured
+            # Step 6 (F6): claim the key atomically BEFORE executing. A twin may have won the slot
+            # between the lookup and the claim, so every outcome is handled again (three-state claim,
+            # v0.4.10; key reuse, 0.4.14). The reservation keeps the executing passport hash and the
+            # time for reconciliation and audit.
+            if idempotency_cache is not None:
+                claim = idempotency_cache.claim(scope, idem_key, identity,
+                                                meta={"passport_hash": "sha256:" + sha256_hex(passport_jwt),
+                                                      "reserved_at": int(time.time())})
+                if claim["status"] != "reserved":
+                    return settle(claim)
+
+            # Step 7: execute the tool function. The reservation is held across the call: an exception
+            # means the effect may or may not have happened, so the claim becomes INDETERMINATE (LIP-4
+            # recovery rule) and a retry is refused until reconciliation, unless the tool itself says
+            # the effect never began (NoEffect), in which case the key is free again.
+            try:
+                result = fn(*args, **kwargs)
+            except NoEffect:
+                if idempotency_cache is not None:
+                    idempotency_cache.abandon(scope, idem_key)
+                raise
+            except BaseException:
+                if idempotency_cache is not None:
+                    idempotency_cache.mark_indeterminate(scope, idem_key)
+                raise
+
+            # Step 7, continued: mint the tripartite receipt if a server key is configured
             if server_private_key and server_did:
                 response_body = jcs(result) if isinstance(result, (dict, list)) else str(result)
                 receipt = mint_receipt(server_private_key, server_did, request_body, response_body)
@@ -170,7 +236,7 @@ def verify_envelope(
 
             if idempotency_cache is not None:
                 # Single-process cache (F6): production backs this with a shared store.
-                idempotency_cache.complete(sub, idem_key, copy.deepcopy(result))
+                idempotency_cache.complete(scope, idem_key, copy.deepcopy(result))
 
             return result
 

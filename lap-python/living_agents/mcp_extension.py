@@ -4,7 +4,7 @@ MCP extension binding for LAP Micro-Core (LIP-4): ``io.github.atharnouman/lap-mi
 Specification draft: ``output/lip/LIP-4-mcp-extension-draft.md``. Wire format, all under one key:
 
 - request  ``params._meta[EXTENSION_ID]`` = ``{passport, signature_base, signature[, idempotency_key]}``
-- result   ``_meta[EXTENSION_ID]``        = ``{receipt_base, receipt_signature_b64url, server_did}``
+- result   ``_meta[EXTENSION_ID]``        = ``{receipt_base, receipt_signature_b64url, server_did[, replayed]}``
 - tool     ``_meta[EXTENSION_ID]``        = ``{action, resource[, amount_param, unit_param, mutating]}``
 - server   ``capabilities.extensions[EXTENSION_ID]`` = ``{aud[, min_proof_class, receipts, server_did]}``
 
@@ -169,21 +169,25 @@ def _raw_arguments(request_context: Any) -> Optional[Mapping[str, Any]]:
     return arguments if isinstance(arguments, Mapping) else None
 
 
-def _call_tool_result(types: Any, result: Any, receipt: Optional[Dict[str, str]]) -> Any:
+def _call_tool_result(types: Any, result: Any, receipt: Optional[Dict[str, str]], replayed: bool = False) -> Any:
     """A CallToolResult for either SDK major: text content, structured content for a dict result,
-    and the receipt under ``_meta[META_KEY]``."""
+    and the receipt under ``_meta[META_KEY]``, with ``replayed: true`` added (unsigned; an optional
+    member, extension draft section 5.2) when the result came from an earlier execution."""
     text = result if isinstance(result, str) else json.dumps(result, ensure_ascii=False, default=str)
     fields = types.CallToolResult.model_fields
     structured = "structuredContent" if "structuredContent" in fields else "structured_content"
     body: Dict[str, Any] = {"content": [types.TextContent(type="text", text=text)]}
     if isinstance(result, dict):
         body[structured] = result
-    if not receipt:
+    entry: Dict[str, Any] = dict(receipt or {})
+    if replayed:
+        entry["replayed"] = True
+    if not entry:
         return types.CallToolResult(**body)
     try:
-        return types.CallToolResult(**body, **{"_meta": {META_KEY: receipt}})
+        return types.CallToolResult(**body, **{"_meta": {META_KEY: entry}})
     except Exception:  # a model that accepts only the field name, not the wire alias
-        return types.CallToolResult(**body, meta={META_KEY: receipt})
+        return types.CallToolResult(**body, meta={META_KEY: entry})
 
 
 def lap_tool(
@@ -201,6 +205,7 @@ def lap_tool(
     idempotency_cache: Optional[IdempotencyCache] = None,
     tool_kwargs: Optional[Dict[str, Any]] = None,
     unit: Optional[str] = None,
+    tenant_of: Optional[Callable[[Dict[str, Any]], Optional[str]]] = None,
 ) -> Callable:
     """Register a tool that REQUIRES the extension on a FastMCP (mcp 1.x) or MCPServer (mcp 2.x) instance.
 
@@ -209,8 +214,10 @@ def lap_tool(
     from the request ``_meta`` through the SDK's context, the LIP-4 invariant runs via
     ``verify_envelope`` before the function executes, a refusal reaches the caller as a ``ToolError``
     carrying its ``LAP_ERR_*`` reason, and a success returns a ``CallToolResult`` whose ``_meta``
-    carries the server-signed receipt. Pass ``idempotency_cache`` for a mutating tool; ``unit="USD"``
-    for a capped tool that has no unit argument. Synchronous functions only (an ``async def`` tool
+    carries the server-signed receipt (plus ``replayed: true`` when the result came from an earlier
+    execution of the same idempotency key). Pass ``idempotency_cache`` for a mutating tool, and
+    ``tenant_of`` to scope its claims by your tenant for the issuer (default: the issuer itself);
+    ``unit="USD"`` for a capped tool that has no unit argument. Synchronous functions only (an ``async def`` tool
     raises ``TypeError`` here; wrap the async work or run it on a thread). ``tool_kwargs`` are
     forwarded to ``server.tool()`` (title, description, ...). Configuration mistakes raise
     ``TypeError`` at decoration time, not on the first call.
@@ -231,7 +238,7 @@ def lap_tool(
             action=action, resource=resource, amount_param=amount_param, unit_param=unit_param,
             server_private_key=server_private_key, server_did=server_did, expected_aud=expected_aud,
             allowed_issuers=allowed_issuers, min_proof_class=min_proof_class,
-            idempotency_cache=idempotency_cache, unit=unit,
+            idempotency_cache=idempotency_cache, unit=unit, tenant_of=tenant_of,
         )(fn)
         with_ctx = list(signature.parameters.values()) + [
             inspect.Parameter("ctx", inspect.Parameter.KEYWORD_ONLY, annotation=Context)
@@ -248,7 +255,8 @@ def lap_tool(
             except ValueError as e:  # a typed LAP_ERR_* refusal; nothing else about the server leaks
                 raise ToolError(str(e)) from e
             receipt = result.pop("_lap_receipt", None) if isinstance(result, dict) else None
-            return _call_tool_result(types, result, receipt)
+            replayed = bool(result.pop("_lap_replayed", False)) if isinstance(result, dict) else False
+            return _call_tool_result(types, result, receipt, replayed)
 
         # What the SDK inspects: the tool's own parameters plus the context, returning a CallToolResult.
         wrapper.__signature__ = signature.replace(parameters=with_ctx, return_annotation=types.CallToolResult)
