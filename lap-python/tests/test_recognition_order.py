@@ -149,6 +149,27 @@ def test_the_same_key_for_a_different_request_is_refused_in_every_state():
     assert runs == ["INV-1", "INV-1"]
 
 
+def test_a_held_claim_is_recognised_under_a_replaced_passport_not_refused_as_new():
+    """King Yew's held case: the first attempt is still running (or its executor died) when the
+    limit document is replaced. The claim is a record; a retry under the cut is refused as a
+    replay, never as a fresh call by the cap, and never counted as a new operation."""
+    cache = IdempotencyCache()
+    pay, runs = tool(cache)
+    pp = passport(envelope(cap=1000))
+    identity = request_identity(sign_tool_call(ARGS, PAY, pp, AGENT, AGENT_DID, NOW, "k1")["signature_base"])
+    cache.claim(scope_a(), "k1", identity)                              # in flight on another executor
+    cut = passport(envelope(cap=100))
+
+    refuses(pay, cut, ARGS, "k1", "LAP_ERR_REPLAY: duplicate request already in flight")
+    cache.mark_indeterminate(scope_a(), "k1")                           # that executor died
+    refuses(pay, cut, ARGS, "k1", "LAP_ERR_REPLAY: .*awaiting reconciliation")
+    assert runs == [] and cache.lookup(scope_a(), "k1")["status"] == "indeterminate"
+
+    cache.complete(scope_a(), "k1", {"status": "paid", "invoice": "INV-1", "amount": 500, "reconciled": True})
+    assert call(pay, cut, ARGS, "k1")["reconciled"] is True            # replayed under the cut once reconciled
+    assert runs == []
+
+
 def test_two_principals_sharing_an_agent_key_never_share_a_claim():
     cache = IdempotencyCache()
     pay, runs = tool(cache)
