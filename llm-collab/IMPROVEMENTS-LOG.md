@@ -376,6 +376,7 @@ File: `llm-collab/inbox/2026-10-28_alignment-review-opus.md`. Asked for after th
 - **Not done:** signed full-sequence vectors (the Node port has no middleware to run them; the sequence is tested end to end in Python, and the drafts say so).
 - Tests: `tests/test_review_probes_0414.py` (nine probes) and three new vectors (RP-16 to RP-18). Python 199/199, Node 88/88 (1 skipped). The tutorial still shows seven refusals and a marked replay.
 - Lesson kept: two reviews converging on a design did not make the implementation right; the third, asked to probe the code rather than the proposal, found what the first two could not see because the code did not exist yet.
+- Published 2026-10-28, 03:40–04:01 UTC: push and tag the night before (CI green); PyPI and npm 0.4.14 with hashes verified against the local builds; GitHub release v0.4.14; the reply on #17 (11th comment, identical to the reviewed text); the four OpenTimestamps proofs confirmed in blocks 973452/973453.
 
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*
