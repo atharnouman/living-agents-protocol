@@ -378,5 +378,7 @@ File: `llm-collab/inbox/2026-10-28_alignment-review-opus.md`. Asked for after th
 - Lesson kept: two reviews converging on a design did not make the implementation right; the third, asked to probe the code rather than the proposal, found what the first two could not see because the code did not exist yet.
 - Published 2026-10-28, 03:40–04:01 UTC: push and tag the night before (CI green); PyPI and npm 0.4.14 with hashes verified against the local builds; GitHub release v0.4.14; the reply on #17 (11th comment, identical to the reviewed text); the four OpenTimestamps proofs confirmed in blocks 973452/973453.
 
+- 2026-10-28, 08:05 and 10:11 UTC: the post-release errata (db071e7: extension draft check (7), the mcp 1.x refusal prefix, retention wording and open question 8, LIP-4 same-agent-key condition; 43a3156: tutorial replay line reads the marker, not the receipt) pushed on the owner's "publish", CI run 40654409393 green. The Discord reply to Vinay R (Bloomberg) in #financial-services-ig posted at 10:11 UTC as a reply to his 19 October agenda-template note (https://discord.com/channels/1358869848138059966/1405263188034977865/1564944647845969932): the outline is on issue 17 under Sankalp and King Yew's item 1, no separate agenda item, the owner joins Thursday's call if his meeting ends in time. The comment for MCP spec issue 3394 (reviewed by Opus 5.5 and Sonnet 5.5, text approved) is scheduled for 2026-10-29.
+
 ## Pending triage
 *(none — inbox batches of 2026-08-28, 2026-08-29, and 2026-08-30 (×2) fully processed)*
