@@ -133,7 +133,7 @@ There is nothing to start first: `client.py` launches `server.py` itself as a su
 ```
   PAID     in-scope: $4200 (cap $5000)          -> paid INV-1001 $4200  receipt verified (server did:key:z6Mk...)
   PAID     retry with the same idempotency key  -> paid INV-1001 $4200  receipt verified (server did:key:z6Mk...)
-           same receipt, no second payment: yes; marked replayed: yes
+           same receipt: yes; marked replayed: yes (the marker, not the receipt, shows no second payment)
   REFUSED  same key, different amount: $100     -> LAP_ERR_KEY_REUSE: idempotency key already used for a different request
   REFUSED  over cap: $6000                      -> LAP_ERR_CAP: amount 6000 exceeds max_per_tx 5000
   REFUSED  negative amount: -$500               -> LAP_ERR_CAP: amount must be a non-negative exact integer (got -500)

@@ -116,8 +116,9 @@ async def _run():
             again = await call("retry with the same idempotency key", args, "pay-1001")
             same = bool(first) and bool(again) and all(again.get(k) == first.get(k) for k in
                                                         ("receipt_base", "receipt_signature_b64url", "server_did"))
-            print(f"           same receipt, no second payment: {'yes' if same else 'NO'}; "
-                  f"marked replayed: {'yes' if again and again.get('replayed') is True else 'NO'}")
+            print(f"           same receipt: {'yes' if same else 'NO'}; "
+                  f"marked replayed: {'yes' if again and again.get('replayed') is True else 'NO'} "
+                  "(the marker, not the receipt, shows no second payment)")
             # The same key for a DIFFERENT request is refused, never replayed and never run (0.4.14).
             await call("same key, different amount: $100", {"invoice": "INV-1001", "amount": 100, "unit": "USD"}, "pay-1001")
             await call("over cap: $6000", {"invoice": "INV-1002", "amount": 6000, "unit": "USD"}, "pay-1002")

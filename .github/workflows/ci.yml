@@ -55,7 +55,7 @@ jobs:
           cd examples/mcp-server
           python client.py | tee out.txt
           test "$(grep -c 'receipt verified' out.txt)" = "2"
-          grep -q "same receipt, no second payment: yes; marked replayed: yes" out.txt
+          grep -q "same receipt: yes; marked replayed: yes (the marker, not the receipt, shows no second payment)" out.txt
           grep -q "LAP_ERR_KEY_REUSE" out.txt
           test "$(grep -c REFUSED out.txt)" = "7"
 
