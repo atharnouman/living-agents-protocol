@@ -1,0 +1,48 @@
+# Publishes lap-reference to npm through npm's trusted publishing (GitHub Actions OIDC):
+# no token is stored anywhere. It never runs on its own: it is started by hand from the
+# Actions tab for a tag that is already pushed, and only after the trusted publisher has been
+# added on npmjs.com (package settings; see the runbook, Appendix B.6). Prepared 2026-10-28,
+# before npm ends direct publishing with granular tokens in January 2027; untested until the
+# first release that uses it.
+name: publish-npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Pushed release tag to publish from, e.g. v0.4.15 (must equal lap-reference/package.json version)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write   # the OIDC token npm exchanges for a short-lived publish credential
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lap-reference
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: npm 11.5.1 or newer (trusted publishing needs it)
+        run: |
+          npm install -g npm@latest
+          npm --version
+      - name: The package version must equal the tag
+        run: |
+          v="v$(node -p "require('./package.json').version")"
+          if [ "$v" != "${{ inputs.tag }}" ]; then
+            echo "package.json is $v, tag is ${{ inputs.tag }}"; exit 1
+          fi
+      - name: Tests
+        run: node --test test/
+      - name: Publish (trusted publisher; provenance is attached automatically)
+        run: npm publish
