@@ -178,14 +178,11 @@ GUARD = dict(action="finance:pay", server_private_key=SERVER_KEY, server_did=SER
 
 # The code must open the text, after the SDK's own prefix: a tool's exception message may quote a code.
 CODE = re.compile(r"^(?:Error executing tool \S+: )?(LAP_ERR_[A-Z_]+):")
-# These end a call only on its FIRST presentation. After an earlier attempt they show only that the server holds no
-# claim now, which proves nothing after a restart of an in-process store or past a retention window (draft 5.6, 7).
-ENDS_A_FIRST_CALL = ("LAP_ERR_ACT", "LAP_ERR_RES", "LAP_ERR_CAP", "LAP_ERR_KEY_REUSE")
 
 
 @dataclass
 class Answer:
-    # done | replayed | withheld | refused | says_nothing | unresolved | lost | tool_error | unknown | earlier_done
+    # done | replayed | withheld | refused | unresolved | lost | tool_error | unknown | earlier_done | earlier_withheld
     kind: str
     text: str = ""
 
@@ -207,9 +204,7 @@ async def present(session, tool, args, key) -> Answer:
             return Answer("unresolved", text)
         if code == "LAP_ERR_REPLAY_WITHHELD":  # the key EXECUTED; only the result is withheld (draft 5.6)
             return Answer("withheld", text)
-        if code in ENDS_A_FIRST_CALL:
-            return Answer("refused", text)
-        return Answer("says_nothing" if code else "tool_error", text)
+        return Answer("refused" if code else "tool_error", text)
     entry = (getattr(result, "meta", None) or {}).get(EXTENSION_ID, {})
     return Answer("replayed" if entry.get("replayed") else "done", text)
 
@@ -239,34 +234,43 @@ class SameArguments:
 
 class ResolveFirst:
     """Record the call and its key BEFORE the first send, handle one call at a time per tool, and re-present the record
-    after any answer that is not definite, sending nothing else on that tool until then. A refusal ends a call only on
-    its first presentation. WITHHELD means the key executed: the record stays, so no new key is minted. The table is
-    what a real client must keep durable; it is a dict here, and a case below shows what losing it costs."""
+    after any answer that is not definite, sending nothing else on that tool until then. A refusal received means that
+    attempt did not run (draft, section 6), so a refusal ends a call only while every attempt of it was answered with one.
+    After an attempt whose answer was lost, that ended in a tool error or that a crash cut off, a refusal shows less: from
+    before recognition it says nothing about the key, and from after it only that the server holds no claim now, which
+    proves nothing after a restart of an in-process store or past a retention window. WITHHELD means the key executed:
+    the record stays, so no new key is minted. The table is what a real client must keep durable; it is a dict here, and
+    a case below shows what losing it costs."""
     label = "client resolves first"
 
     def __init__(self, session, table=None):
         self.session = session
-        self.held = {} if table is None else table  # tool -> [args, key, attempts]
+        self.held = {} if table is None else table  # tool -> [args, key, attempts, attempts answered with a refusal]
         self.locks = {}
 
     async def call(self, tool, args):
         async with self.locks.setdefault(tool, anyio.Lock()):
             record = self.held.get(tool)
             if record is None:
-                record = self.held[tool] = [args, uuid.uuid4().hex, 0]  # written before the first send
+                record = self.held[tool] = [args, uuid.uuid4().hex, 0, 0]  # written before the first send
             held_args, key = record[0], record[1]
             fresh = record[2] == 0
             for _ in range(2 if fresh else 1):  # a fresh call gets one immediate re-present
                 record[2] += 1                  # counted before the send, so a crash mid-call still counts as an attempt
                 answer = await present(self.session, tool, held_args, key)
-                if answer.kind in ("done", "replayed", "withheld") or (answer.kind == "refused" and record[2] == 1):
+                if answer.kind == "refused":
+                    record[3] += 1
+                if answer.kind in ("done", "replayed", "withheld") or (answer.kind == "refused" and record[3] == record[2]):
                     break
             else:
                 return Answer("unknown", "the outcome of this call is unknown; nothing new will be sent on this tool "
                                          "until it is resolved" if fresh else
                                          "the outcome of your earlier call is unknown; nothing new was sent")
-            if answer.kind == "withheld":
-                return answer  # reported as an execution, never as a refusal to call again
+            if answer.kind == "withheld":  # reported as an execution, never as a refusal to call again
+                if held_args == args:
+                    return answer
+                return Answer("earlier_withheld", "your earlier call executed; its result is withheld under the current "
+                                                  "authority; this call was not sent: " + answer.text)
             del self.held[tool]
             if held_args == args:
                 return answer
@@ -364,6 +368,24 @@ async def authority_narrowed_then_restored(app, world):
     return await app.call(TOOL, ARGS)
 
 
+async def authority_narrowed_then_other(app, world):
+    world.faults.on_lost = lambda: CURRENT.update(passport=mint_passport(envelope=NARROWED))
+    await app.call(TOOL, ARGS)
+    other = await app.call(TOOL, OTHER)
+    world.ledger.wrong = other.kind == "withheld"  # a call that was not sent must not be reported as executed
+    CURRENT["passport"] = reissued()
+    await app.call(TOOL, OTHER)
+    return await app.call(TOOL, OTHER)
+
+
+async def passport_expired(app, world):
+    CURRENT["passport"] = expired()
+    await app.call(TOOL, ARGS)
+    last = await app.call(TOOL, ARGS)
+    world.ledger.wrong = bool(world.table)  # every attempt was refused, so nothing ran and nothing may stay held
+    return last
+
+
 async def wants_two(app, world):
     await app.call(TOOL, ARGS)
     return await app.call(TOOL, ARGS)
@@ -431,6 +453,10 @@ CASES = [
      ("1 refused", "1 replayed", "1 replayed")),
     ("response lost, authority narrowed, then restored", 1, dict(drop_responses=1), authority_narrowed_then_restored,
      ("2 done", "1 replayed", "1 replayed")),
+    ("response lost, authority narrowed, model asks for another", 2, dict(drop_responses=1), authority_narrowed_then_other,
+     ("3 done", "2 replayed", "2 done")),
+    ("passport expired, model repeats", 0, dict(), passport_expired,
+     ("0 refused", "0 refused", "0 refused")),
     ("two refunds wanted, no fault", 2, dict(), wants_two,
      ("2 done", "1 replayed", "2 done")),
     ("two different refunds in flight, answers lost", 2, dict(drop_responses=4), two_in_flight,
@@ -460,7 +486,7 @@ async def part_one():
     print("Part 1. Refunds made and the last answer the model saw, per client wiring")
     print("        (a * marks a count other than the refunds wanted)")
     print()
-    print(f"{'case':50}{'wanted':>7}" + "".join(f"{w.label:>24}" for w in WIRINGS))
+    print(f"{'case':58}{'wanted':>7}" + "".join(f"{w.label:>24}" for w in WIRINGS))
     failures = 0
     for name, wanted, fault, script, expected in CASES:
         cells = []
@@ -471,7 +497,7 @@ async def part_one():
             different = got != want or ledger.wrong
             failures += different
             cells.append(f"{count}{'' if count == wanted else '*'} {last.kind}" + (f" != {want}" if different else ""))
-        print(f"{name:50}{wanted:>7}" + "".join(f"{c:>24}" for c in cells))
+        print(f"{name:58}{wanted:>7}" + "".join(f"{c:>24}" for c in cells))
     return failures + await stale_call_limit()
 
 

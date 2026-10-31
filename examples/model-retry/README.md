@@ -29,6 +29,8 @@ Refunds made. A star marks a count other than the refunds wanted. The saved outp
 | Lost twice, passport expires, then reissued | 1 | 2* | 1 | 1 |
 | Response lost, cap cut below the amount | 1 | 1 | 1 | 1 |
 | Response lost, authority narrowed, then restored | 1 | 2* | 1 | 1 |
+| Response lost, authority narrowed, model asks for another refund | 2 | 3* | 2 | 2 |
+| Passport expired, model repeats | 0 | 0 | 0 | 0 |
 | Two refunds wanted, no fault | 2 | 2 | 1* | 2 |
 | Two different refunds in flight, answers lost | 2 | 5* | 2 | 2 |
 | Lost twice, client restarts, record lost | 1 | 2* | 1 | 2* |
@@ -44,9 +46,9 @@ Refunds made. A star marks a count other than the refunds wanted. The saved outp
 What counts as definite for that third wiring:
 
 - **A result**, fresh or marked `replayed`, clears the record.
-- **`LAP_ERR_REPLAY_WITHHELD`** means the key executed. The record stays, so no new key is minted, and the model is told it ran, not given a refusal to call again.
-- **`LAP_ERR_ACT`, `LAP_ERR_RES`, `LAP_ERR_CAP` or `LAP_ERR_KEY_REUSE`** end a call only on its first presentation. After an earlier attempt they show only that the server holds no claim now, which proves nothing after a restart of an in-process store. So the record stays and the model is told the outcome is unknown ("Response lost, server restarts, cap cut").
-- **Anything else is not definite:** a timeout, a tool error, `LAP_ERR_REPLAY`, and a refusal from before recognition, such as an expired passport.
+- **`LAP_ERR_REPLAY_WITHHELD`** means the key executed. The record stays, so no new key is minted, and the model is told it ran, not given a refusal to call again. A call for something else on that tool while the record stays is told that it was not sent.
+- **A refusal** ends a call only while every attempt of it was answered with a refusal, since a refusal received means that attempt did not run (draft, section 6). After an attempt whose answer was lost, that ended in a tool error or that a crash cut off, a refusal shows less. One from before recognition, such as an expired passport, says nothing about the key. One from after it shows only that the server holds no claim now, which proves nothing after a restart of an in-process store. So the record stays and the model is told the outcome is unknown ("Response lost, server restarts, cap cut").
+- **Anything else is not definite:** a timeout, a tool error and `LAP_ERR_REPLAY`.
 
 There is no wire change, but that wiring has costs and limits:
 
