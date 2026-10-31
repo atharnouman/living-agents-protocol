@@ -33,7 +33,7 @@ from living_agents import IdempotencyCache, lap_tool   # mcp = FastMCP(...) or M
           amount_param="amount", unit="USD",                     # the cap applies to `amount`, always in USD
           expected_aud="did:web:tools.example.com",              # every passport must name this server
           server_private_key=SERVER_KEY, server_did=SERVER_DID,  # signs the receipt
-          idempotency_cache=IdempotencyCache())                   # a mutating tool: a retry never pays twice
+          idempotency_cache=IdempotencyCache())                   # a mutating tool: a retry with the same key never pays twice
 def pay_invoice(invoice: str, amount: int) -> dict:
     return {"status": "paid", "invoice": invoice, "amount": amount}
 ```
@@ -118,6 +118,7 @@ The full reference model (LAP-7 layers, trust states, ownership & transfer, life
 | `lap-demo/` | The two-agent overnight demo + morning replay verifier |
 | `lap-git/` | **Experimental:** "Micro-Core for commits" — agent passport + path envelope enforced before commit + verifiable tree signature |
 | [`examples/mcp-server/`](examples/mcp-server/) | **Tutorial:** add LAP to your MCP server in 15 minutes — a real MCP server + LAP-aware client speaking the extension over request and result `_meta` (stdio round-trip on SDK 1.x and 2.x, verified in CI) |
+| [`examples/model-retry/`](examples/model-retry/) | **Lost responses:** what keeps an operation's identity when the model decides to call again. Three client wirings and the suggested booking cases over a real MCP session, with the fault between the two SDK sessions; the model is a script; every outcome asserted, the failures included |
 | [`examples/budget-slices/`](examples/budget-slices/) | **Delegation budgets:** "a child gets a slice, not a view of the whole" as 18 vectors and a dependency-free checker, including the 24× trap and slice provenance; the Python algebra reproduces every verdict |
 | [`CASE-STUDY.md`](CASE-STUDY.md) | The commit nobody signed: what happened when AI agents worked here *without* an accountability layer |
 | [`CONFORMANCE.md`](CONFORMANCE.md) | Implement Micro-Core in an afternoon — a ten-check challenge against the shared test vectors |

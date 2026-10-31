@@ -58,6 +58,11 @@ jobs:
           grep -q "same receipt: yes; marked replayed: yes (the marker, not the receipt, shows no second payment)" out.txt
           grep -q "LAP_ERR_KEY_REUSE" out.txt
           test "$(grep -c REFUSED out.txt)" = "7"
+      - name: model-retry fixture (scripted model, fault between the SDK sessions); every count and answer asserted, the failures included
+        run: |
+          cd examples/model-retry
+          python run.py | tee out.txt
+          grep -q "all outcomes as asserted" out.txt
 
   packaging:
     name: Packages build and pass checks (npm pack, PyPI build + twine)

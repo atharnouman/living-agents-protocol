@@ -10,8 +10,8 @@ What the extension enforces on EVERY call, before your code runs:
   3. the signature covers the exact tool arguments (canonical JSON) and this tool's resource;
   4. the action and resource are inside the passport's envelope;
   5. the amount is within the envelope's per-transaction cap, in the right unit;
-  6. the signed idempotency key is claimed before execution: a retry gets the cached receipt,
-     never a second payment.
+  6. the signed idempotency key is claimed before execution: a retry with the same key gets the
+     cached receipt, never a second payment.
 On success the result _meta carries a tripartite receipt signed by this server.
 """
 import logging

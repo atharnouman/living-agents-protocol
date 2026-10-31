@@ -1,0 +1,38 @@
+mcp SDK 2.3.0; living-agents 0.4.14; the model is a script
+
+Part 1. Refunds made and the last answer the model saw, per client wiring
+        (a * marks a count other than the refunds wanted)
+
+case                                               wanted        new key per call      key from arguments   client resolves first
+response lost, model repeats                            1                 2* done              1 replayed              1 replayed
+response lost twice, model repeats                      1                 2* lost                  1 lost              1 replayed
+lost twice, model changes one argument                  1                 2* lost                 2* lost          1 earlier_done
+request lost, model repeats                             1                  1 done                  1 done                  1 done
+executor dies after the effect, model repeats           1                 2* done            1 unresolved               1 unknown
+lost twice, passport expires, then reissued             1                 2* done              1 replayed              1 replayed
+response lost, cap cut below the amount                 1               1 refused              1 replayed              1 replayed
+response lost, authority narrowed, then restored        1                 2* done              1 replayed              1 replayed
+two refunds wanted, no fault                            2                  2 done             1* replayed                  2 done
+two different refunds in flight, answers lost           2                 5* done              2 replayed                  2 done
+lost twice, client restarts, record lost                1                 2* lost                  1 lost                 2* done
+lost twice, client restarts, record kept                1                 2* lost                  1 lost              1 replayed
+client killed mid-call, restarts, record kept           1                 2* done              1 replayed              1 replayed
+response lost, server restarts, cap cut                 1               1 refused               1 refused               1 unknown
+response lost, agent key rotated                        1                 2* done                 2* done                 2* done
+
+Limit of resolving first: request lost twice, model changes one argument: 1 refund, with the earlier arguments; the model is told afterwards (earlier_done). as expected
+
+Part 2. The booking cases (bookings and cancellations counted in the system of record)
+
+1   booked, response lost; the retry replays             bookings 1  cancels 0  as expected  [lost > replayed > booked]
+1b  booked, executor dies; lookup finds it               bookings 1  cancels 0  as expected  [tool_error > unresolved > booked > replayed]
+2   not committed; lookup negative, operator releases    bookings 1  cancels 0  as expected  [tool_error > unresolved > not_found > unresolved > done]
+2b  released on a negative read, effect lands late       bookings 2  cancels 0  as expected  [tool_error > not_found > done]
+2c  the same, reference unique at the system of record   bookings 1  cancels 0  as expected  [tool_error > not_found > done]
+3   cancelled and confirmed; the retry replays           bookings 1  cancels 1  as expected  [done > replayed]
+4   cancel times out; the retry replays                  bookings 1  cancels 1  as expected  [lost > replayed]
+4b  cancel, executor dies; refused, not cancelled twice  bookings 1  cancels 1  as expected  [tool_error > unresolved > cancelled > replayed]
+
+Not covered: held spend. The reference enforces a per-call cap only; a cumulative hold is the authorizer's.
+
+all outcomes as asserted
