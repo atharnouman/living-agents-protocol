@@ -22,3 +22,4 @@ local/
 lap-python/dist/
 lap-python/build/
 *.tgz
+.claude/
