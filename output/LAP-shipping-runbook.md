@@ -2,6 +2,22 @@
 
 *The single document that takes LAP from "nothing public" to "launched and measured." Working doc, not spec. Revised after a gap review; everything marked ✅ was verified, not assumed.*
 
+## Direction since 2026-11-01
+
+Agreed by Athar on 2026-11-01 after the direction review (`llm-collab/inbox/2026-11-01_direction-review-fable.md`). Where the phases, gates and review rules below differ, this section wins.
+
+- **Goal:** influence on the standards, with credit: LAP's concepts carried into other people's drafts, registries and test suites. Adoption of LAP's own packages is not the goal, since no mainstream MCP host can call a protected tool.
+- **The `_meta` binding:** no further binding work (status probe, TypeScript middleware, draft question 9) unless a deployment asks. New effort goes to King Yew Choo's shared extension draft on FSIG issue 17 (`io.github.kingyewchoo/call-outcome`, posted 2026-11-02). The public wording, a frozen profile for deployments where one organisation runs both sides, waits until after the FSIG call of 2026-11-05, because that draft keeps `_meta` for host-managed keys.
+- **1 December review, three yes/no checks:** (1) Athar is named or credited in draft-gilda-audit-agent-audit-record -04 or later. (2) `delegated-authority` is accepted by the audit-record-contract maintainer, under any name (requested as #5 on 2026-11-03). (3) Athar has a named role in King Yew's draft or its follow-up. Two or more yes: continue for 60 days. Fewer: park, with the README note updated; the map, the vectors and the packages stay. The scheduled task `lap-review-2026-12-01` prepares it.
+- **7 December bar** (at least 3 external PRs or a framework plugin): no longer decides whether to continue; meeting it reopens adoption work. Task `lap-gate-2026-12-07`.
+- **Watching:** `local/venue_watch.py`, run by the task `lap-weekly-venue-check` on Mondays at 19:00 PKT. A venue it cannot read is reported as unknown, never as quiet.
+- **Dropped:** the MCP spec issue 3394 comment.
+- **Public comments:** describe protocol additions, as the FSIG notes of 2026-10-29 ask; no link to this repository unless someone asks for the fixture; cite the group's own idempotency document (https://docs.google.com/document/d/1b8PE-yoWLLIFPg_DLSY1PYPgYGw8MEvFuN4C-xpl2ic) where it applies.
+- **Struck from the plan below,** kept as history: Show HN, arXiv, W3C CG membership, the OWASP mapping, the ERC-8004 and AGNTCY notes, the Rust and Go conformance challenge. The W3C list stays a venue to read.
+- **Bookkeeping:** one log line per public act; restamp only at a release; the weekly metrics row is replaced by the venue check and the three checks; stars and downloads are no longer logged.
+- **Hours:** about 6 hours a week (Fable's suggestion; Athar may change the number), and no public posting between 00:00 and 07:00 PKT.
+- **Athar's side:** the employer's written confirmation that LAP is outside its IP (raised 2026-10-16, still open); the credit request to Sankalp (`outreach/Sankalp-credit-note-2026-11-03.md`); the LinkedIn reply to Jeff; the PyPI token of 2026-10-28.
+
 ## How to use this (it doubles as a resume-prompt)
 
 - Work the phases **in order**; the critical path is real (venue filings need a live repo URL; the endorser needs a readable PDF).

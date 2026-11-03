@@ -6,7 +6,7 @@
 
 `spec v0.4.10 (draft)` · `libraries 0.4.14` · `Node 88/88 · Python 199/199` · `two interoperating implementations` · `6 adversarial review rounds, ~160 verified fixes`
 
-> **Status, 17 October 2026: a research prototype by one author, under review until 1 December 2026.** What works today: the scope algebra with budget conservation (two implementations that agree on a shared fuzz digest and on 25 shared cap vectors), the MCP tool guard below (a tool that refuses to run outside a signed envelope and returns a signed receipt), and the test vectors. What it is not: a protocol anyone else has adopted. A protected tool needs a LAP-aware client, so Claude Desktop, Cursor and other mainstream MCP hosts cannot call it; the agent side and the tool side must both adopt it. On 17 October a cold-start usability test found the per-transaction cap accepting negative amounts in both implementations; fixed the same day in 0.4.13, with vectors. On 28 October two independent model reviews of a retry rule found the reference answering a retry after a cap cut with a cap refusal that hid the earlier execution, replaying one key for a different request, and replaying across principals; fixed in 0.4.14, with vectors. If no maintainer or standards author has engaged by 1 December, the project is parked with this note updated; the map, the vectors and the packages stay.
+> **Status, 17 October 2026: a research prototype by one author, under review until 1 December 2026.** What works today: the scope algebra with budget conservation (two implementations that agree on a shared fuzz digest and on 25 shared cap vectors), the MCP tool guard below (a tool that refuses to run outside a signed envelope and returns a signed receipt), and the test vectors. What it is not: a protocol anyone else has adopted. A protected tool needs a LAP-aware client, so Claude Desktop, Cursor and other mainstream MCP hosts cannot call it; the agent side and the tool side must both adopt it. On 17 October a cold-start usability test found the per-transaction cap accepting negative amounts in both implementations; fixed the same day in 0.4.13, with vectors. On 28 October two independent model reviews of a retry rule found the reference answering a retry after a cap cut with a cap refusal that hid the earlier execution, replaying one key for a different request, and replaying across principals; fixed in 0.4.14, with vectors. At the 1 December review the project continues only if this work has reached other people's drafts and registries, with credit; otherwise it is parked with this note updated, and the map, the vectors and the packages stay.
 
 ## The map: seven layers, and who owns them today
 
@@ -33,12 +33,12 @@ from living_agents import IdempotencyCache, lap_tool   # mcp = FastMCP(...) or M
           amount_param="amount", unit="USD",                     # the cap applies to `amount`, always in USD
           expected_aud="did:web:tools.example.com",              # every passport must name this server
           server_private_key=SERVER_KEY, server_did=SERVER_DID,  # signs the receipt
-          idempotency_cache=IdempotencyCache())                   # a mutating tool: a retry with the same key never pays twice
+          idempotency_cache=IdempotencyCache())                   # a mutating tool: a retry with the same key gets the first receipt
 def pay_invoice(invoice: str, amount: int) -> dict:
     return {"status": "paid", "invoice": invoice, "amount": amount}
 ```
 
-Before `pay_invoice` runs, the server checks a principal-signed passport addressed to this server, the agent's signature over these exact arguments, the action, the resource, and the cap (a non-negative exact integer at or under `max_per_tx`, in the declared unit). A retry with the same idempotency key gets the cached receipt instead of a second payment. The client side, and what the refusals look like, is the [15-minute tutorial](examples/mcp-server/): two paid calls and six refusals, verified in CI on MCP SDK 1.x and 2.x. **Limit, stated plainly:** the client must speak the extension; a mainstream MCP host cannot call this tool.
+Before `pay_invoice` runs, the server checks a principal-signed passport addressed to this server, the agent's signature over these exact arguments, the action, the resource, and the cap (a non-negative exact integer at or under `max_per_tx`, in the declared unit). A retry with the same idempotency key gets the cached receipt instead of a second payment. The cache in this sample lives in memory, so a server restart forgets it and a retry after the restart runs again; production needs a durable store (a unique constraint, `SET NX`), which this library does not ship. The client side, and what the refusals look like, is the [15-minute tutorial](examples/mcp-server/): two paid calls and six refusals, verified in CI on MCP SDK 1.x and 2.x. **Limit, stated plainly:** the client must speak the extension; a mainstream MCP host cannot call this tool.
 
 ## See it run
 
@@ -66,7 +66,7 @@ pip install "living-agents[mcp]>=0.4.14"         # Python ≥ 3.10; the extra ad
 **Or run everything from this checkout:**
 
 ```bash
-cd lap-reference && node --test test/     # 67 tests: crypto, algebra, Micro-Core, Merkle log, Rekor, integrity + audit canaries
+cd lap-reference && node --test test/     # 88 passing tests: crypto, algebra, Micro-Core, Merkle log, Rekor, integrity + audit canaries
 ```
 
 ```bash

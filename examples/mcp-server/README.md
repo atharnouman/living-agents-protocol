@@ -150,7 +150,7 @@ Every refusal happens **before** `pay_invoice` runs. The receipt (result `_meta`
 - **HTTP transport:** the same decorator works over Streamable HTTP; add MCP's authorization framework for connection authentication. The HTTP-header form of LIP-4 (`LAP-Passport` / `LAP-Signature`, via `@verify_envelope`) remains available for servers that are not MCP.
 - **Persist the server key** and publish its DID, so receipts remain verifiable across restarts (a restart is a nap, not a death). Clients pin that DID.
 - **Set policy:** `allowed_issuers` and `min_proof_class` for anything touching money or PII.
-- **Idempotency store:** back `IdempotencyCache` with a shared store (a unique constraint, `SET NX`) when you run more than one replica.
+- **Idempotency store:** back `IdempotencyCache` with a shared store (a unique constraint, `SET NX`) when you run more than one replica, or when claims must survive a restart: the class keeps them in memory, so a restart forgets them and a retry then runs again.
 - **Send every argument explicitly** on mcp 1.x: the SDK hides the raw request from tools, so the reference derives the signed body from the bound arguments; an omitted default would fail the digest check (closed, not open). On 2.x the raw arguments are used.
 - **Register births:** `lap-demo/register-genesis.mjs` shows how to put an agent's genesis in Sigstore's public Rekor log.
 
