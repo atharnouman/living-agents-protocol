@@ -98,12 +98,12 @@ On 2026-11-02 King Yew Choo posted a draft extension on [FSIG issue 17](https://
 | K3c. The same, key closed, the worker checks the claim first | 0 | 0 | tool error; closed, `none`; a repeat is refused |
 | K4. The window closes the key, the booking lands late past the server | 1 | 1 | tool error; `unknown`; the window ends, `none`; the repeat is refused; the late booking, `occurred`; cancelled once under its own key; a second pass replays |
 
-- **The reference has no closure.** Its operator acts are `complete` and `release`, and `release` forgets the claim so that the key can run again, the opposite of closing. So K2 and K3 book once where the draft expects none. K2c, K3c and K4 use `ClosingCache`, a subclass in this fixture: a tombstone that refuses admission, also for a key the server has not seen, and that a worker reads before its effect.
+- **The reference has no closed state.** Its reconciliation acts are `complete` and `release`, and `release` forgets the claim so that the key can run again, the opposite of closing. In K2 and K3 the operator does nothing, and each books once where the draft expects none. An operator could still block an unseen key by claiming it in its place: the late request is then refused as key reuse, and the lookup says `unknown`, not `none`. K2c, K3c and K4 use `ClosingCache`, a subclass in this fixture: a tombstone that refuses admission, also for a key the server has not seen, and that a worker reads before its effect.
 - **A closed key has no answer of its own here.** The refusal reads as unresolved (`LAP_ERR_REPLAY`); only the lookup says `none`.
-- **Closing stops only what is still at the server.** K4 follows the FX practice described on the issue (siddhartha1310, 2026-11-03): the key lives as long as the quote's listening window and is closed when it ends. A booking already past the server lands anyway, and is cancelled once under a cancellation key of its own.
-- **Not modelled:** the race between closure and dispatch (one process cannot race), a durable tombstone (a restart would forget the closure; the draft requires intact claim history), real middleware hops, held spend.
+- **Closing stops only what is still at the server.** K4 follows the FX practice described on the issue (siddhartha1310, 2026-11-03): the key lives as long as the quote's listening window and is closed when it ends. A booking already past the server lands anyway, and is cancelled once under a cancellation key of its own. The `none` in K4 is the fixture's rule (a closed key, nothing at the system of record); the draft also requires that nothing can still cause the effect, and the late booking shows that was not so.
+- **Not modelled:** the race between closure and dispatch (one process cannot race; in this store a completion after a closure overwrites it), a durable tombstone (a restart would forget the closure; the draft requires intact claim history), the draft's lookup method and `outcome` field, real middleware hops, held spend.
 
-Reverting the closure in a copy of the script (admission no longer refused, the worker no longer checks) fails K2c, K3c and K4.
+Reverting the closure in a copy of the script (the closed state no longer answered at admission, the worker no longer checking) fails K2c on the answer kind, K3c on the count and K4 on the answer kind.
 
 ## Limits
 

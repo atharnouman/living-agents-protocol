@@ -705,7 +705,7 @@ async def part_two():
 # ---- Part 3: the checks King Yew asked for on FSIG issue 17 (call-outcome draft, 2026-11-02) ----------------------------
 
 class ClosingCache(IdempotencyCache):
-    """A closure the reference does not have. King Yew's draft makes closing a key a separate, authorized operator act
+    """A closed state the reference does not have. King Yew's draft makes closing a key a separate, authorized operator act
     that durably blocks admission, also for a key the server has not seen. Here it turns the key's slot into a tombstone:
     admission is refused, and a worker that checks the claim before its effect does not run. The reference has no code
     of its own for a closed key, so the refusal reads as an unresolved one; `call_outcome` reports `none`. In memory,
@@ -767,7 +767,8 @@ async def _request_delayed(system, cache, session, faults, close):
 
 
 async def case_delivered_without_closure(system, cache, session, faults):
-    """The reference cannot close: release() needs an indeterminate claim, and an unseen key has none. One booking."""
+    """No closed state in the reference: release() works only on an indeterminate claim and forgets it, and nothing
+    marks a key closed. The operator does nothing here, and the delayed request books once."""
     steps = await _request_delayed(system, cache, session, faults, close=False)
     return steps, len(system.bookings) == 1 and steps == ["lost", "unknown", "done"]
 
@@ -778,7 +779,7 @@ async def case_closed_before_delivery(system, cache, session, faults):
 
 
 async def case_queued_without_closure(system, cache, session, faults):
-    """No closure, and a worker that does not check: the queued job runs when the worker resumes. One booking."""
+    """No closed state, and a worker that does not check: the queued job runs when the worker resumes. One booking."""
     faults.queue_effect = 1
     first = await present(session, "book_trade", BOOK, BOOK_KEY)
     miss = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
@@ -841,8 +842,8 @@ async def part_three():
         state = "as expected" if ok else "DIFFERENT"
         print(f"{name:56} bookings {len(system.bookings)}  cancels {len(system.cancellations)}  {state}  [{' > '.join(steps)}]")
     print()
-    print("K2 and K3 book once where the draft expects none: the reference has no closure. K2c, K3c and K4 add one in the")
-    print("fixture. K4: closing at the server cannot stop a booking already past it; the cancellation, under its own key, can.")
+    print("K2 and K3 book once where the draft expects none: the reference has no closed state. K2c, K3c and K4 add one in")
+    print("the fixture. K4: closing at the server cannot stop a booking already past it; the cancellation, under its own key, can.")
     return failures
 
 

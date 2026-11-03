@@ -46,7 +46,7 @@ K3  job queued, no closure (the reference)               bookings 1  cancels 0  
 K3c job queued, key closed, worker checks first          bookings 0  cancels 0  as expected  [tool_error > none > unresolved]
 K4  window closes the key; late booking cancelled once   bookings 1  cancels 1  as expected  [tool_error > unknown > none > unresolved > occurred > done > replayed]
 
-K2 and K3 book once where the draft expects none: the reference has no closure. K2c, K3c and K4 add one in the
-fixture. K4: closing at the server cannot stop a booking already past it; the cancellation, under its own key, can.
+K2 and K3 book once where the draft expects none: the reference has no closed state. K2c, K3c and K4 add one in
+the fixture. K4: closing at the server cannot stop a booking already past it; the cancellation, under its own key, can.
 
 all outcomes as asserted
