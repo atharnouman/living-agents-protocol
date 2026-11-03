@@ -37,4 +37,16 @@ Part 2. The booking cases (bookings and cancellations counted in the system of r
 
 Not covered: held spend. The reference enforces a per-call cap only; a cumulative hold is the authorizer's.
 
+Part 3. The checks asked for on FSIG issue 17 (call-outcome draft, 2026-11-02); outcomes in its words
+
+K1  booking delayed past a lookup miss, then delivered   bookings 1  cancels 0  as expected  [tool_error > unknown > unresolved > occurred]
+K2  request delayed, no closure (the reference)          bookings 1  cancels 0  as expected  [lost > unknown > done]
+K2c request delayed, key closed before delivery          bookings 0  cancels 0  as expected  [lost > unknown > none > unresolved]
+K3  job queued, no closure (the reference)               bookings 1  cancels 0  as expected  [tool_error > unknown]
+K3c job queued, key closed, worker checks first          bookings 0  cancels 0  as expected  [tool_error > none > unresolved]
+K4  window closes the key; late booking cancelled once   bookings 1  cancels 1  as expected  [tool_error > unknown > none > unresolved > occurred > done > replayed]
+
+K2 and K3 book once where the draft expects none: the reference has no closure. K2c, K3c and K4 add one in the
+fixture. K4: closing at the server cannot stop a booking already past it; the cancellation, under its own key, can.
+
 all outcomes as asserted

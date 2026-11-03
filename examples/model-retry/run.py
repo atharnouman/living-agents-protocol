@@ -9,8 +9,9 @@ What is not: the provider is a fake, and the model is a script that always repea
 answer. So this shows what each client wiring does IF the model repeats the call, not how often a model does.
 
 Part 1 compares three client wirings. Part 2 runs the four booking cases suggested on FSIG issue 17 (VibeMirror-coder,
-2026-10-30) and four variants of the author's. Every count and every answer kind is asserted, the failures included,
-and the script exits 1 on a difference.
+2026-10-30) and four variants of the author's. Part 3 runs the checks King Yew Choo asked for on the same issue
+(call-outcome draft, 2026-11-02), with a closure the reference lacks added in the fixture. Every count and every
+answer kind is asserted, the failures included, and the script exits 1 on a difference.
 
 Run:  python run.py
 """
@@ -101,6 +102,7 @@ class Faults:
     die_after_effect: int = 0   # the executor raises after the effect committed
     die_before_effect: int = 0  # the executor raises before the effect committed
     stall_effect: int = 0       # as above, but the effect lands later (flushed by the fixture)
+    queue_effect: int = 0       # the server queues the job before dispatch; a worker runs it later (resumed by the fixture)
     on_lost: Optional[Callable[[], None]] = None  # runs once, when the relay drops an answer
     watched: set = field(default_factory=set)
 
@@ -520,6 +522,7 @@ class BookingSystem:
     def __init__(self, unique=False):
         self.unique = unique
         self.bookings, self.cancellations, self.stalled = [], [], []
+        self.queued = []  # jobs waiting at the server, before dispatch (Part 3)
 
     def book(self, reference):
         if not (self.unique and reference in self.bookings):
@@ -532,6 +535,13 @@ class BookingSystem:
         for reference in self.stalled:
             self.book(reference)
         self.stalled.clear()
+
+    def resume(self, may_run=lambda reference: True):
+        """The worker picks up the queued jobs. A worker that checks the claim first passes `may_run`."""
+        for reference in self.queued:
+            if may_run(reference):
+                self.book(reference)
+        self.queued.clear()
 
     def lookup(self, reference):
         if reference in self.cancellations:
@@ -552,6 +562,10 @@ def booking_server(system, cache, faults):
             faults.stall_effect -= 1
             system.stalled.append(reference)
             raise RuntimeError("executor stalled; the effect is still on its way")
+        if faults.queue_effect > 0:
+            faults.queue_effect -= 1
+            system.queued.append(reference)
+            raise RuntimeError("queued; a worker will run it")
         system.book(reference)
         if faults.die_after_effect > 0:
             faults.die_after_effect -= 1
@@ -688,10 +702,154 @@ async def part_two():
     return failures
 
 
+# ---- Part 3: the checks King Yew asked for on FSIG issue 17 (call-outcome draft, 2026-11-02) ----------------------------
+
+class ClosingCache(IdempotencyCache):
+    """A closure the reference does not have. King Yew's draft makes closing a key a separate, authorized operator act
+    that durably blocks admission, also for a key the server has not seen. Here it turns the key's slot into a tombstone:
+    admission is refused, and a worker that checks the claim before its effect does not run. The reference has no code
+    of its own for a closed key, so the refusal reads as an unresolved one; `call_outcome` reports `none`. In memory,
+    like the rest of this store, so a restart would forget the closure: the draft requires intact claim history."""
+
+    def close(self, scope, key):
+        with self._lock:
+            entry = self._entry(scope, key)
+            if entry is not None and entry["state"] == "completed":
+                raise ValueError("a completed claim is not closed: its effect happened")
+            if entry is None:
+                self.claim(scope, key)  # an unseen key gets a slot of its own, in this tenant
+                entry = self._entry(scope, key)
+            entry["state"] = "closed"
+
+    @staticmethod
+    def _status(entry, tenant, identity):
+        if entry["state"] == "closed" and entry["tenant"] == tenant:
+            return {"status": "indeterminate"}  # refused at admission, before the identity check
+        return IdempotencyCache._status(entry, tenant, identity)
+
+
+def call_outcome(cache, system, key, reference):
+    """The draft's lookup, as the fixture's own function: `occurred` when the claim completed or the system of record
+    holds the effect; `none` only for a closed key with nothing at the system of record; otherwise `unknown`, since a
+    miss is not `none` while a delayed request or worker can still cause the effect."""
+    state = (cache.meta(SCOPE, key) or {}).get("state")
+    if state == "completed" or system.lookup(reference) != "not_found":
+        return "occurred"
+    return "none" if state == "closed" else "unknown"
+
+
+def checks_first(cache, key):
+    return lambda reference: (cache.meta(SCOPE, key) or {}).get("state") != "closed"
+
+
+async def case_delayed_after_a_miss(system, cache, session, faults):
+    """Delay a booking until after a lookup miss: `unknown`, then delivered while the quote is valid; one booking."""
+    faults.queue_effect = 1
+    first = await present(session, "book_trade", BOOK, BOOK_KEY)       # the job waits at the server
+    miss = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])    # a miss: unknown, not none
+    held = await present(session, "book_trade", BOOK, BOOK_KEY)        # the repeat is held, not run
+    system.resume()                                                    # delivered while the quote is valid
+    after = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
+    return [first.kind, miss, held.kind, after], (
+        len(system.bookings) == 1 and miss == "unknown" and held.kind == "unresolved" and after == "occurred")
+
+
+async def _request_delayed(system, cache, session, faults, close):
+    faults.drop_requests = 1
+    first = await present(session, "book_trade", BOOK, BOOK_KEY)       # the request is delayed in transit
+    miss = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
+    steps = [first.kind, miss]
+    if close:
+        cache.close(SCOPE, BOOK_KEY)                                   # the operator closes a key the server has not seen
+        steps.append(call_outcome(cache, system, BOOK_KEY, BOOK["reference"]))
+    late = await present(session, "book_trade", BOOK, BOOK_KEY)        # the delayed request arrives
+    return steps + [late.kind]
+
+
+async def case_delivered_without_closure(system, cache, session, faults):
+    """The reference cannot close: release() needs an indeterminate claim, and an unseen key has none. One booking."""
+    steps = await _request_delayed(system, cache, session, faults, close=False)
+    return steps, len(system.bookings) == 1 and steps == ["lost", "unknown", "done"]
+
+
+async def case_closed_before_delivery(system, cache, session, faults):
+    steps = await _request_delayed(system, cache, session, faults, close=True)
+    return steps, len(system.bookings) == 0 and steps == ["lost", "unknown", "none", "unresolved"]
+
+
+async def case_queued_without_closure(system, cache, session, faults):
+    """No closure, and a worker that does not check: the queued job runs when the worker resumes. One booking."""
+    faults.queue_effect = 1
+    first = await present(session, "book_trade", BOOK, BOOK_KEY)
+    miss = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
+    system.resume()
+    return [first.kind, miss], len(system.bookings) == 1 and miss == "unknown"
+
+
+async def case_closed_while_queued(system, cache, session, faults):
+    """Closed while the job is queued, and a worker that checks the claim before its effect. Zero bookings. In one
+    process the check and the closure cannot race; the draft makes them compete for one atomic transition."""
+    faults.queue_effect = 1
+    first = await present(session, "book_trade", BOOK, BOOK_KEY)
+    cache.close(SCOPE, BOOK_KEY)
+    system.resume(checks_first(cache, BOOK_KEY))
+    closed = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
+    retry = await present(session, "book_trade", BOOK, BOOK_KEY)       # refused after none: no second attempt runs
+    return [first.kind, closed, retry.kind], (
+        len(system.bookings) == 0 and closed == "none" and retry.kind == "unresolved")
+
+
+async def case_window_then_late_effect(system, cache, session, faults):
+    """Sid's FX practice: the key lives as long as the quote's listening window, and at its end the server closes it,
+    so the outcome is `none`. A booking that already left the server can still land through the hops before the system
+    of record; it is then cancelled once, under a cancellation key of its own, and a second pass cancels nothing more."""
+    faults.stall_effect = 1
+    first = await present(session, "book_trade", BOOK, BOOK_KEY)       # left the server, stalled downstream
+    during = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
+    cache.close(SCOPE, BOOK_KEY)                                       # the window ends
+    at_end = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
+    retry = await present(session, "book_trade", BOOK, BOOK_KEY)
+    system.flush()                                                     # the late booking lands anyway
+    found = call_outcome(cache, system, BOOK_KEY, BOOK["reference"])
+    cancel = await present(session, "cancel_booking", BOOK, CANCEL_KEY)
+    again = await present(session, "cancel_booking", BOOK, CANCEL_KEY)
+    steps = [first.kind, during, at_end, retry.kind, found, cancel.kind, again.kind]
+    return steps, (len(system.bookings) == 1 and len(system.cancellations) == 1 and steps
+                   == ["tool_error", "unknown", "none", "unresolved", "occurred", "done", "replayed"])
+
+
+CALL_OUTCOME_CASES = [
+    ("K1  booking delayed past a lookup miss, then delivered", case_delayed_after_a_miss, IdempotencyCache),
+    ("K2  request delayed, no closure (the reference)", case_delivered_without_closure, IdempotencyCache),
+    ("K2c request delayed, key closed before delivery", case_closed_before_delivery, ClosingCache),
+    ("K3  job queued, no closure (the reference)", case_queued_without_closure, IdempotencyCache),
+    ("K3c job queued, key closed, worker checks first", case_closed_while_queued, ClosingCache),
+    ("K4  window closes the key; late booking cancelled once", case_window_then_late_effect, ClosingCache),
+]
+
+
+async def part_three():
+    print()
+    print("Part 3. The checks asked for on FSIG issue 17 (call-outcome draft, 2026-11-02); outcomes in its words")
+    print()
+    failures = 0
+    for name, case, store in CALL_OUTCOME_CASES:
+        system, cache, faults = BookingSystem(), store(), Faults()
+        async with connected(booking_server(system, cache, faults), faults) as session:
+            steps, ok = await case(system, cache, session, faults)
+        failures += not ok
+        state = "as expected" if ok else "DIFFERENT"
+        print(f"{name:56} bookings {len(system.bookings)}  cancels {len(system.cancellations)}  {state}  [{' > '.join(steps)}]")
+    print()
+    print("K2 and K3 book once where the draft expects none: the reference has no closure. K2c, K3c and K4 add one in the")
+    print("fixture. K4: closing at the server cannot stop a booking already past it; the cancellation, under its own key, can.")
+    return failures
+
+
 async def main():
     print(f"mcp SDK {pkg_version('mcp')}; living-agents {living_agents.__version__}; the model is a script")
     print()
-    failures = await part_one() + await part_two()
+    failures = await part_one() + await part_two() + await part_three()
     print()
     print("all outcomes as asserted" if not failures else f"{failures} outcome(s) differ from the assertions")
     return failures
